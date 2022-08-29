@@ -36,4 +36,4 @@ async def load():
 
 
 asyncio.run(load())
-ce.run('OTQzOTQyMzU2MTQxNDgyMDc0.GUmEbN.tepFChtGTRHRByHzWR7Ey0Upm2XjGRTpugfJQs')
+ce.run(token)
