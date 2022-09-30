@@ -3,7 +3,9 @@
 import logging.handlers
 import discord
 
-TOKEN = 'OTQzOTQyMzU2MTQxNDgyMDc0.GUmEbN.tepFChtGTRHRByHzWR7Ey0Upm2XjGRTpugfJQs'
+# do not push your token on github
+# kid named token:
+TOKEN = 'token'
 
 prefix = '.'
 
