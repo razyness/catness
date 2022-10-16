@@ -18,12 +18,12 @@ ce = commands.Bot(command_prefix=prefix, intents=intents)
 async def load():
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
-            print(filename + ' was loaded')
+            print(f':D {filename} was loaded')
             await ce.load_extension(f'cogs.{filename[:-3]}')
         else:
-            print(filename + ' was not loaded')
+            print(f':c {filename} was not loaded')
     await ce.load_extension('jishaku')
-    print('all extensions loaded')
+    print(':) all extensions loaded!!')
 
 
 asyncio.run(load())
