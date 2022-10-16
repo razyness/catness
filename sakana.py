@@ -3,7 +3,7 @@
 import logging.handlers
 import discord
 
-TOKEN = 'MTAyOTg2NDYyMTA0NzMwNDIwMw.GDgMi-.G-O0LjHPuJqydXEs7ZYTLc_OveWNiVGnmK95Tg'
+TOKEN = 'the token'
 
 prefix = '.'
 
