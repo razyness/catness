@@ -26,6 +26,8 @@ class Youtube(commands.Cog):
             elif 'youtu' not in link:
                 await message.delete()
                 return
+        else:
+            return
 
         maxUpload = 8000000
 
