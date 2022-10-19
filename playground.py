@@ -3,10 +3,10 @@ import asyncio
 from discord.ext import commands
 from sakana import *
 
-logger.setLevel(logging.DEBUG)
-logging.getLogger('discord.http').setLevel(logging.INFO)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# logger.setLevel(logging.DEBUG)
+# logging.getLogger('discord.http').setLevel(logging.INFO)
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
 
 intents.members = True
 intents.presences = True
