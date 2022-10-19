@@ -3,7 +3,7 @@
 import logging.handlers
 import discord
 
-TOKEN = 'the token in question'
+TOKEN = "the token in question"
 
 prefix = '.'
 
