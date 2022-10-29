@@ -20,13 +20,13 @@ async def load():
         if filename.endswith('.py'):
             try:
                 await ce.load_extension(f'cogs.{filename[:-3]}')
-                print(f'🟪 {filename} was loaded')
+                print(f'🟨 {filename} was loaded')
             
-            except:
-                print(f'🟥 {filename} was not loaded')
+            except Exception as e:
+                print(f'🟥 {filename} was not loaded - {e}')
 
     await ce.load_extension('jishaku')
-    print('🟨 all extensions loaded!!')
+    print('🟪 all extensions loaded!!')
 
 
 asyncio.run(load())

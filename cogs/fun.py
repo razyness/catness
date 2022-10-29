@@ -4,6 +4,7 @@ import random
 import pytube
 import binascii
 import os
+from discord import app_commands
 from discord.ext import commands
 
 mp4path = 'cache/mp4dl'
@@ -30,36 +31,32 @@ class Fun(commands.Cog):
     def __init__(self, ce):
         self.ce = ce
 
-    @commands.command(brief='bartholomew :D', description='bartholomew :D')
-    async def bartholomew(self, ctx):
-        await ctx.message.delete()
-        thing = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        await thing.reply(
-            'https://cdn.discordapp.com/attachments/841451660059869194/1008905457978585088/MemeFeedBot.gif')
-
-    @commands.command(brief='HTTP cats', description='sends http cats from http.cat')
-    async def errorcat(self, ctx, number: str = None):
+    @app_commands.command(name='errorcat', description='sends http cats from http.cat')
+    @app_commands.describe(number = 'The status code')
+    async def errorcat(self, interaction, number: str = None):
         if number is None:
             number = random.choice(statuscodes)
 
         if number not in statuscodes:
-            await ctx.reply(f'`{number}` is not a valid status code')
+            await interaction.response.send_message(f'i could not find `{number}`', ephemeral=True)
             return
 
         embed = discord.Embed()
         embed.set_image(url=f'https://http.cat/{number}.jpg')
         embed.set_footer(text=f'Type .errorcat [status code] to find the one you\'re looking for')
-        await ctx.reply(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    @commands.command(brief='Spotify activity', description='View the user\'s spotify activity', aliases=['s'])
-    async def spotify(self, ctx, member: discord.Member = None):
+    @app_commands.command(name='spotify', description='View the user\'s spotify activity')
+    @app_commands.describe(member='The activity user')
 
-        member = member or ctx.author
+    async def spotify(self, interaction, member: discord.Member = None):
+
+        member = interaction.guild.get_member(member) or interaction.guild.get_member(interaction.user.id)
 
         song = discord.utils.find(lambda a: isinstance(a, discord.Spotify), member.activities)
 
         if song is None:
-            await ctx.send(f'`{member.name}#{member.discriminator}` is not playing a song')
+            await interaction.response.send_message(f'`{str(member)}` is not playing a song', ephemeral=True)
             return
 
         else:
@@ -72,40 +69,40 @@ class Fun(commands.Cog):
             embed.set_thumbnail(url=song.album_cover_url)
             embed.set_footer(text=f'track id: {song.track_id}')
             embed.set_author(name=f'Now playing - {member.display_name}', icon_url=member.avatar.url)
-            await ctx.reply(embed=embed, view=view)
+            await interaction.response.send_message(embed=embed, view=view)
 
-    @commands.command(aliases=['should i'])
-    async def shouldi(self, ctx, *, decision='do this'):
-
-        responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.",
-                     "Concentrate and ask again.",
-                     "Don’t count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.",
-                     "My sources say no.",
-                     "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.",
-                     "Very doubtful.", "Without a doubt.",
-                     "Yes.", "Yes – definitely.", "You may rely on it."]
-        idk = ['idk', 'i don\'t know']
-
-        if decision != 'do this':
-            decision = f'`{decision}`'
-
-        await ctx.send(f'Are you sure you want to {decision}? yes / no / i don\'t know')
-
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
-
-        conf = await self.ce.wait_for('message', check=check)
-
-        if conf.content.lower() == 'yes':
-            await ctx.reply('Always reflect on your decisions!')
-
-        elif conf.content.lower() in idk:
-            picking = await ctx.reply('Let me pick for you...')
-            time.sleep(2)
-            await picking.edit(content=random.choice(responses))
-
-        else:
-            await ctx.reply('Got it.')
+#    @app_commands.command()
+#    async def shouldi(self, ctx, *, decision='do this'):
+#
+#        responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.",
+#                     "Concentrate and ask again.",
+#                     "Don’t count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.",
+#                     "My sources say no.",
+#                     "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.",
+#                     "Very doubtful.", "Without a doubt.",
+#                     "Yes.", "Yes – definitely.", "You may rely on it."]
+#        idk = ['idk', 'i don\'t know']
+#
+#        if decision != 'do this':
+#            decision = f'`{decision}`'
+#
+#        await ctx.send(f'Are you sure you want to {decision}? yes / no / i don\'t know')
+#
+#        def check(m):
+#            return m.author == ctx.author and m.channel == ctx.channel
+#
+#        conf = await self.ce.wait_for('message', check=check)
+#
+#        if conf.content.lower() == 'yes':
+#            await ctx.reply('Always reflect on your decisions!')
+#
+#        elif conf.content.lower() in idk:
+#            picking = await ctx.reply('Let me pick for you...')
+#            time.sleep(2)
+#            await picking.edit(content=random.choice(responses))
+#
+#        else:
+#            await ctx.reply('Got it.')
 
     @commands.command(aliases=["yt", "ytdownload", "youtube"])
     async def ytdl(self, ctx, link, filetype='mp4'):
