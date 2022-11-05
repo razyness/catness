@@ -51,7 +51,8 @@ class Fun(commands.Cog):
 
     async def spotify(self, interaction, member: discord.Member = None):
 
-        member = interaction.guild.get_member(member) or interaction.guild.get_member(interaction.user.id)
+        if not member:
+            member = interaction.guild.get_member(interaction.user.id)
 
         song = discord.utils.find(lambda a: isinstance(a, discord.Spotify), member.activities)
 
@@ -104,13 +105,23 @@ class Fun(commands.Cog):
 #        else:
 #            await ctx.reply('Got it.')
 
-    @commands.command(aliases=["yt", "ytdownload", "youtube"])
-    async def ytdl(self, ctx, link, filetype='mp4'):
+    @commands.command(name='youtube')
+    async def ytdl(self, ctx, link:str, filetype:str='mp4'):
 
         if filetype not in ['mp3', 'mp4']:
             await ctx.send(f"`{filetype}` is not a supported filetype")
             await fmsg.delete()
             return
+
+        if filetype == 'mp4':
+            thingy = "progressive=True, file_extension='mp4'"
+            what = "video"
+            extension = "mp4"
+            
+        else:
+            thingy = "only_audio=True"
+            what = "audio"
+            extension = "mp3"
 
         if 14 >= ctx.guild.premium_subscription_count >= 7:
             maxUpload = 50000000
@@ -122,9 +133,6 @@ class Fun(commands.Cog):
             maxUpload = 8000000
             maxUploadMB = 8
 
-        if filetype is None:
-            filetype = 'mp4'
-
         embed1 = discord.Embed(title=f'Searching {link}')
         fmsg = await ctx.send(embed=embed1)
 
@@ -132,72 +140,44 @@ class Fun(commands.Cog):
 
         before = time.monotonic()
 
-        if filetype == 'mp4':
-            checkbed = discord.Embed(title=f'Your file is being checked...')
-            await fmsg.edit(embed=checkbed)
-            if url.streams.first().filesize >= maxUpload:
-                embed = discord.Embed(
-                        title='Something went wrong!',
-                        description=f"Your video is larger than `{maxUploadMB}mb`.\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
-                await fmsg.edit(embed=embed)
-                return
-        elif filetype == 'mp3':
-            checkbed = discord.Embed(title=f'Your file is being checked...')
-            await fmsg.edit(embed=checkbed)
-            if url.streams.filter(only_audio=True).first().filesize >= maxUpload:
-                embed = discord.Embed(
-                        title='Something went wrong!',
-                        description=f"Your audio is larger than `{maxUploadMB}mb`.\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
-                await fmsg.edit(embed=embed)
-                return
+
+        checkbed = discord.Embed(title=f'Your file is being checked...')
+        await fmsg.edit(embed=checkbed)
+        if url.streams.filter(thingy).first().filesize >= maxUpload:
+            embed = discord.Embed(
+                    title='Something went wrong!',
+                    description=f"Your {what} is larger than `{maxUploadMB}mb`.\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
+            await fmsg.edit(embed=embed)
+            return
+
 
         fname = str(
             f'download_{str(ctx.author)}_{binascii.b2a_hex(os.urandom(5))}')
-        if filetype == 'mp4':
-            video = url.streams.filter(
-                progressive=True, file_extension='mp4').first()
+
+        try: 
+            video = url.streams.filter(thingy).first()
             embed2 = discord.Embed(
-                title='Video found, downloading...')
-            
+                title=f'{what} found, downloading...')
+
             await fmsg.edit(embed=embed2)
-            video.download(mp4path, filename=fname + '.mp4')
+            video.download(f"{extension}path", filename=f"{fname}.{extension}")
             time.sleep(10)
-            fsize = os.path.getsize(f"{mp4path}\{fname}.mp4")
+            fsize = os.path.getsize(f"{what}path\{fname}.{extension}")
             if fsize >= maxUpload:
                 embed = discord.Embed(
                     title='Something went wrong!',
-                    description=f"Your video is larger than `{maxUploadMB}mb`.\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
+                    description=f"Your {what} is larger than `{maxUploadMB}mb`.\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
                 await fmsg.edit(embed=embed)
-                os.remove(f'{mp4path}\{fname}.mp4')
+                os.remove(f'{extension}path\{fname}.{extension}')
                 await fmsg.delete()
                 return
             after = (time.monotonic() - before)
-            await ctx.reply(f'Downloaded in {round(after, 2)}s', file=discord.File(f'{mp4path}\{fname}.mp4'))
-            os.remove(f'{mp4path}\{fname}.mp4')
+            await ctx.reply(f'Downloaded in {round(after, 2)}s', file=discord.File(f'{extension}path\{fname}.{extension}'))
+            os.remove(f'{extension}path\{fname}.{extension}')
             await fmsg.delete()
 
-        elif filetype == 'mp3':
-            video = url.streams.filter(only_audio=True).first()
-            embed2 = discord.Embed(
-                title='Audio found, downloading...')
-            await fmsg.edit(embed=embed2)
-
-            video.download(mp3path, filename=fname + '.mp3')
-            fsize = os.path.getsize(f"{mp3path}\{fname}.mp3")
-            if fsize >= maxUpload:
-                embed = discord.Embed(
-                    title='Where\'s my audio?',
-                    description=f"Your audio is larger than `{maxUploadMB}mb` (somehow).\nReason behind is the [upload limit](https://github.com/discord/discord-api-docs/issues/2037).")
-                await ctx.reply(embed=embed)
-                os.remove(f'{mp3path}\{fname}.mp3')
-                await fmsg.delete()
-                return
-            after = (time.monotonic() - before)
-            await ctx.reply(f'Downloaded in {round(after, 2)}s', file=discord.File(f'{mp3path}\{fname}.mp3'))
-            os.remove(f'{mp3path}\{fname}.mp3')
-            await fmsg.delete()
-        else:
-            await fmsg.edit(content='Something went wrong, but i can\'t put my finger on it')
+        except Exception as e:
+            await fmsg.edit(content=f'Something went wrong, but i can\'t put my finger on it. - {e}')
 
 
 async def setup(ce):
