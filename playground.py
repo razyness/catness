@@ -12,21 +12,20 @@ intents.members = True
 intents.presences = True
 intents.message_content = True
 
-ce = commands.Bot(command_prefix=prefix, intents=intents)
+
+class Client(commands.Bot):
+	def __init__(self):
+		super().__init__(intents=discord.Intents.all(), command_prefix=prefix)
+		self.command_prefix = prefix
+
+ce = Client()
 
 
 async def load():
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            try:
-                await ce.load_extension(f'cogs.{filename[:-3]}')
-                print(f'🟨 {filename} was loaded')
-            
-            except Exception as e:
-                print(f'🟥 {filename} was not loaded - {e}')
 
-    await ce.load_extension('jishaku')
-    print('🟪 all extensions loaded!!')
+	await ce.load_extension('jishaku')
+	await ce.load_extension('cogs.events')
+	print('🟪 initial extensions loaded')
 
 
 asyncio.run(load())
