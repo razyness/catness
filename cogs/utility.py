@@ -3,6 +3,7 @@ import time
 import asyncio
 from datetime import datetime
 from discord import app_commands
+from discord import ui
 from discord.ext import commands
 
 
@@ -22,6 +23,32 @@ class Menu(discord.ui.View):
 	def __init__(self):
 		super().__init__()
 		self.value = None
+
+class Modal(ui.Modal, title="Submit a report"):
+	brief = ui.TextInput(label="Brief description",
+					   placeholder="The issue is with the command <x>...",
+					   style=discord.TextStyle.short,
+					   required=True,
+					   max_length=20)
+
+	long = ui.TextInput(label='Long description',
+							  placeholder="<optional> The command <x> should behave like this but the outcome is that..."
+							  "\nYou may use codeblocks/markdown if needed",
+							  style=discord.TextStyle.paragraph,
+							  max_length=1000)
+							  
+	async def on_submit(self, interaction: discord.Interaction):
+		razyness = self.ce.create_dm(592310159133376512)
+		embed = discord.Embed(title=self.title, timestamp=datetime.now())
+		embed.set_author(name=interaction.user,
+						 icon_url=interaction.user.avatar)
+		embed.add_field(name=self.brief.label, value=self.brief, inline=False)
+		if not self.long:
+			self.long = '```Unanswered```'
+		embed.add_field(name=self.long.label, value=self.long)
+		await interaction.response.send_message(f'Thanks for reporting! I will look on the issue soon.', ephemeral=True)
+		await razyness.send(embed=embed)
+
 
 
 class Utility(commands.Cog):
@@ -129,6 +156,11 @@ class Utility(commands.Cog):
 			await interaction.response.send_message(embed=embed)
 			return
 	
+
+	@app_commands.command(name='report', description='Submit a staff application')
+	@app_commands.checks.cooldown(1, 300, key=lambda i: (i.user.id))
+	async def report(self, interaction):
+		await interaction.response.send_modal(Modal())
 
 async def setup(ce):
 	await ce.add_cog(Utility(ce))

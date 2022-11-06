@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from datetime import timedelta
 import datetime
 import time
@@ -25,11 +26,12 @@ class Mod(commands.Cog):
         if not member:
             await ctx.channel.purge(limit=limit)
             return await ctx.send(f"Deleted `{limit}` messages", delete_after=5)
+
         async for m in ctx.channel.history():
 
             if len(msg) == limit:
                 break
-            if m.author == member:
+            if m.author == member and m.created_at < 1209600:
                 msg.append(m)
 
         await ctx.channel.delete_messages(msg)

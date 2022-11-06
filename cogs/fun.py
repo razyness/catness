@@ -180,5 +180,6 @@ class Fun(commands.Cog):
             await fmsg.edit(content=f'Something went wrong, but i can\'t put my finger on it. - {e}')
 
 
+
 async def setup(ce):
     await ce.add_cog(Fun(ce))
