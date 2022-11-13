@@ -1,7 +1,8 @@
 import discord
 import os
-from asyncio import sleep
-from discord.ext import commands
+import random
+import asyncio
+from discord.ext import commands, tasks
 
 
 class Events(commands.Cog):
@@ -11,11 +12,23 @@ class Events(commands.Cog):
 	async def setup_hook(self):
 		await self.tree.sync(guild=discord.Object(id=904460336118267954))
 
+	@tasks.loop(seconds=20.0)
+	async def presences(self):
+		
+		catchphrases = ["Important information", "Loading", "Something beautiful is coming", "Thinking outside the box",
+		"Vague rumbling", "Getting our load on", "Pushing it to the limit",
+		"Connecting to LittleBigPlanet Online", "Profile is corrupt!", "Putting everything in order",
+		"Do not forget...", "Ironing out the creases"]
+
+		await self.ce.change_presence(status=discord.Status.online, activity=discord.Activity(
+			type=discord.ActivityType.watching, name=random.choice(catchphrases)))
+
 	@commands.Cog.listener()
 	async def on_ready(self):
 
+
 		await self.ce.change_presence(status=discord.Status.idle, activity=discord.Activity(
-			type=discord.ActivityType.watching, name="loading up..."))
+			type=discord.ActivityType.watching, name='loading up...'))
 
 		for filename in os.listdir('./cogs'):
 			if filename.endswith('.py') and not filename.startswith('events'):
@@ -34,17 +47,17 @@ class Events(commands.Cog):
 		except Exception as e:
 			print(e)
 		
-		await self.ce.change_presence(activity=discord.Activity(
-			type=discord.ActivityType.watching, name="me i'm razyness"))
+		if not self.presences.is_running():
+			self.presences.start()
+
 		print(f"🟩 Logged in as {self.ce.user} with a {round(self.ce.latency * 1000)}ms delay")
 		
-
-
+									
 	@commands.Cog.listener()
 	async def on_message(self, message):
 		if 'oh' in message.content and message.author.bot is False:
 			await message.channel.send('oh')
-
+	
 
 async def setup(ce):
 	await ce.add_cog(Events(ce))
