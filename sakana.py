@@ -4,6 +4,7 @@ import logging.handlers
 import discord
 
 TOKEN = "the token in question"
+LASTFM_API_KEY = "the api key goes here"
 
 prefix = '.'
 
