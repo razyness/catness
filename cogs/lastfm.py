@@ -15,9 +15,6 @@ class fmProfile(ui.View):
 
 	@ui.button(label='Now Playing', style=discord.ButtonStyle.gray)
 	async def playing(self, interaction: discord.Integration, button: ui.Button):
-		if interaction.user.id != self.author:
-			await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
-			return
 
 		embed = discord.Embed()
 
@@ -67,134 +64,113 @@ class fmProfile(ui.View):
 			embed.add_field(name=f'Something went wrong!',
 							value=f'I failed to collect: {str(e)} | from input: {self.user}')
 
-		embed.color = 0xe4141e 
+		embed.color = 0xe4141e
 		await interaction.response.edit_message(embed=embed)
 
 	@ui.button(label='Main Menu', style=discord.ButtonStyle.blurple)
 	async def main(self, interaction: discord.Interaction, button: ui.Button):
 
-		if interaction.user.id != self.author:
-			await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
-			return
-
 		embed = discord.Embed()
 
 		userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={self.user}&api_key={LASTFM_API_KEY}&format=json'
 
-		try:
-			r = requests.get(userInfo)
-			user_data = r.json()
+		r = requests.get(userInfo)
+		user_data = r.json()
+		if user_data["user"]["subscriber"] == "1":
+			embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
+			footer_thing = ' · 🔹 is a premium subscriber'
+		else:
+			embed.title = f'{user_data["user"]["realname"]}'
+			footer_thing = ''
+		embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
+		embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
+						 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
+		embed.set_footer(
+			text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
+		for i in user_data["user"]:
+			if i not in ["name", "realname", "playcount", "url", "age", "bootstrap", "image", "subscriber", "type"]:
+				if i == "gender" and user_data["user"][i] == "n":
+					continue
+				if i == "registered":
+					value = str(user_data["user"][i]).replace(
+						str(user_data["user"][i]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
+				else:
+					value = user_data["user"][i]
+				i = i.replace('_', ' ').title()
+				desc = embed.add_field(name=i, value=value)
+				try:
+					desc.value.replace(str(
+						user_data["user"]["registered"]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
+					if user_data["user"]["gender"] == "n":
+						desc.value.replace(
+							str(user_data["user"]["gender"]), f'None')
+				except:
+					pass
 
-			if user_data["user"]["subscriber"] == "1":
-				embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
-				footer_thing = ' · 🔹 is a premium subscriber'
-			else:
-				embed.title = f'{user_data["user"]["realname"]}'
-				footer_thing = ''
-			embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
-			embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
-							 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
-			embed.set_footer(
-				text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
-
-			for i in user_data["user"]:
-				if i not in ["name", "realname", "playcount", "url", "age", "bootstrap", "image", "subscriber", "type"]:
-					if i == "gender" and user_data["user"][i] == "n":
-						continue
-
-					if i == "registered":
-						value = str(user_data["user"][i]).replace(
-							str(user_data["user"][i]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
-
-					else:
-						value = user_data["user"][i]
-
-					i = i.replace('_', ' ').title()
-					desc = embed.add_field(name=i, value=value)
-					try:
-						desc.value.replace(str(
-							user_data["user"]["registered"]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
-						if user_data["user"]["gender"] == "n":
-							desc.value.replace(
-								str(user_data["user"]["gender"]), f'None')
-					except:
-						pass
-
-		except Exception as e:
-			embed.description = f'**Something went wrong!**\nI failed to collect: {str(e)} | from input: {self.user}'
-
-		embed.color = 0xe4141e 
+		embed.color = 0xe4141e
 		await interaction.response.edit_message(embed=embed)
 
 	@ui.button(label='Friends', style=discord.ButtonStyle.gray)
 	async def friends(self, interaction, button):
-
-		if interaction.user.id != self.author:
-			await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
-			return
 
 		embed = discord.Embed()
 
 		userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={self.user}&api_key={LASTFM_API_KEY}&format=json'
 		friendList = f'http://ws.audioscrobbler.com/2.0/?method=user.getfriends&user={self.user}&api_key={LASTFM_API_KEY}&format=json'
 
-		try:
-			r = requests.get(userInfo)
-			user_data = r.json()
-			r1 = requests.get(friendList)
-			friendList = r1.json()
+		r = requests.get(userInfo)
+		user_data = r.json()
+		r1 = requests.get(friendList)
+		friendList = r1.json()
 
-			if user_data["user"]["subscriber"] == "1":
-				embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
-				footer_thing = ' · 🔹 is a premium subscriber'
-			else:
-				embed.title = f'{user_data["user"]["realname"]}'
-				footer_thing = ''
-			embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
-			embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
-							 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
-			embed.set_footer(
-				text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
+		if user_data["user"]["subscriber"] == "1":
+			embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
+			footer_thing = ' · 🔹 is a premium subscriber'
+		else:
+			embed.title = f'{user_data["user"]["realname"]}'
+			footer_thing = ''
+		embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
+		embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
+						 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
+		embed.set_footer(
+			text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
+		j = 1
+		for i in friendList["friends"]["user"]:
 
-			j = 1
+			if j < 25:
+				if len(i["name"]) > 256:
+					name = f'{i["name"][0:175]}...'
+				else:
+					name = i["name"]
+				if len(i["realname"]) > 1024:
+					value = f'{i["realname"][0:520]}...'
+				else:
+					value = i["realname"]
 
-			for i in friendList["friends"]["user"]:
-				
-				if j < 25:
-					if len(i["name"]) > 256:
-						name = f'{i["name"][0:175]}...'
+				if i["subscriber"] == "1":
+					embed.add_field(name=f'🔹· {name}', value=f'{value}')
+				else:
+					embed.add_field(
+						name=f'{i["name"]}', value=f'{i["realname"]}')
+				j += 1
 
-					else:
-						name = i["name"]
-					if len(i["realname"]) > 1024:
-						value = f'{i["realname"][0:520]}...'
-					else:
-						value = i["realname"]
-					
-
-					if i["subscriber"] == "1":
-						embed.add_field(name=f'🔹· {name}', value=f'{value}')
-					else:
-						embed.add_field(
-							name=f'{i["name"]}', value=f'{i["realname"]}')
-					j += 1
-
-		except Exception as e:
-			embed.description = f'**Something went wrong!**\nI failed to collect: {str(e)} | from input: {self.user}'
-
-		embed.color = 0xe4141e 
+		embed.color = 0xe4141e
 		await interaction.response.edit_message(embed=embed)
 
 	@ui.button(label='Exit', style=discord.ButtonStyle.red)
 	async def quit(self, interaction: discord.Interaction, button: ui.Button):
-		if interaction.user.id != self.author:
-			await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
-			return
 
 		await interaction.response.edit_message(view=None)
+
 		self.value = False
 		self.stop()
 
+	async def interaction_check(self, interaction) -> bool:
+		if self.user:
+			if interaction.user.id != self.author:
+				await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
+				return False
+		return True
 
 class LastFM(commands.Cog):
 
@@ -213,49 +189,53 @@ class LastFM(commands.Cog):
 
 		userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={user}&api_key={LASTFM_API_KEY}&format=json'
 
+		r = requests.get(userInfo)
+		user_data = r.json()
+
 		try:
-			r = requests.get(userInfo)
-			user_data = r.json()
-
-			if user_data["user"]["subscriber"] == "1":
-				embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
-				footer_thing = ' · 🔹 is a premium subscriber'
-			else:
-				embed.title = f'{user_data["user"]["realname"]}'
-				footer_thing = ''
-			embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
-			embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
-							 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
-			embed.set_footer(
-				text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
-
-			for i in user_data["user"]:
-				if i not in ["name", "realname", "playcount", "url", "age", "bootstrap", "image", "subscriber", "type"]:
-					if i == "gender" and user_data["user"][i] == "n":
-						continue
-
-					if i == "registered":
-						value = str(user_data["user"][i]).replace(
-							str(user_data["user"][i]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
-
-					else:
-						value = user_data["user"][i]
-
-					i = i.replace('_', ' ').title()
-					desc = embed.add_field(name=i, value=value)
-					try:
-						desc.value.replace(str(
-							user_data["user"]["registered"]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
-						if user_data["user"]["gender"] == "n":
-							desc.value.replace(
-								str(user_data["user"]["gender"]), f'None')
-					except:
-						pass
+			user_data["user"]
 
 		except Exception as e:
-			embed.description = f'**Something went wrong!**\nI failed to collect: {str(e)}'
+			embed.color = 0xe4141e
+			d = f'**Something went wrong!**\nI failed to collect: {str(e)}'
+			if str(e) == "'user'":
+				d = f'{d} | The user does not exist'
+			embed.description = d
+			await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+			return
+		
+		if user_data["user"]["subscriber"] == "1":
+			embed.title = f'🔹 ·  {user_data["user"]["realname"]}'
+			footer_thing = ' · 🔹 is a premium subscriber'
+		else:
+			embed.title = f'{user_data["user"]["realname"]}'
+			footer_thing = ''
+		embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
+		embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
+						 icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
+		embed.set_footer(
+			text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
+		for i in user_data["user"]:
+			if i not in ["name", "realname", "playcount", "url", "age", "bootstrap", "image", "subscriber", "type"]:
+				if i == "gender" and user_data["user"][i] == "n":
+					continue
+				if i == "registered":
+					value = str(user_data["user"][i]).replace(
+						str(user_data["user"][i]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
+				else:
+					value = user_data["user"][i]
+				i = i.replace('_', ' ').title()
+				desc = embed.add_field(name=i, value=value)
+				try:
+					desc.value.replace(str(
+						user_data["user"]["registered"]), f'<t:{user_data["user"]["registered"]["unixtime"]}:R>')
+					if user_data["user"]["gender"] == "n":
+						desc.value.replace(
+							str(user_data["user"]["gender"]), f'None')
+				except:
+					pass
 
-		embed.color = 0xe4141e 
+		embed.color = 0xe4141e
 		await interaction.response.send_message(embed=embed, view=view, ephemeral=ephemeral)
 
 
