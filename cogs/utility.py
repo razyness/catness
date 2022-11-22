@@ -24,39 +24,13 @@ class Menu(discord.ui.View):
 		super().__init__()
 		self.value = None
 
-class Modal(ui.Modal, title="Submit a report"):
-	brief = ui.TextInput(label="Brief description",
-					   placeholder="The issue is with the command <x>...",
-					   style=discord.TextStyle.short,
-					   required=True,
-					   max_length=20)
-
-	long = ui.TextInput(label='Long description',
-							  placeholder="<optional> The command <x> should behave like this but the outcome is that..."
-							  "\nYou may use codeblocks/markdown if needed",
-							  style=discord.TextStyle.paragraph,
-							  max_length=1000)
-							  
-	async def on_submit(self, interaction: discord.Interaction):
-		razyness = self.ce.create_dm(592310159133376512)
-		embed = discord.Embed(title=self.title, timestamp=datetime.now())
-		embed.set_author(name=interaction.user,
-						 icon_url=interaction.user.avatar)
-		embed.add_field(name=self.brief.label, value=self.brief, inline=False)
-		if not self.long:
-			self.long = '```Unanswered```'
-		embed.add_field(name=self.long.label, value=self.long)
-		await interaction.response.send_message(f'Thanks for reporting! I will look on the issue soon.', ephemeral=True)
-		await razyness.send(embed=embed)
-
-
 
 class Utility(commands.Cog):
 	def __init__(self, ce):
 		self.ce = ce
 
 	@app_commands.command(name='status', description='View info about the running instance of the bot. I '
-															  'don\'t know what i\'m saying')
+						  'don\'t know what i\'m saying')
 	async def status(self, interaction):
 
 		timeUp = time.time() - start_time
@@ -71,20 +45,25 @@ class Utility(commands.Cog):
 			channel += len(guild.channels)
 
 		cmdcount = 0
-		for command in self.ce.commands:
+		for _ in self.ce.commands:
 			cmdcount += 1
 
-		embed = discord.Embed(title=self.ce.user.name + '#' + self.ce.user.discriminator)
+		embed = discord.Embed(title=self.ce.user.name +
+							  '#' + self.ce.user.discriminator)
 		embed.set_thumbnail(url=self.ce.user.avatar.url)
-		embed.add_field(name='Owner', value='`Razyness#4486`', inline=True)
+		embed.add_field(name='Owner', value='`Razy#7269`', inline=True)
 		embed.add_field(name='Uptime',
-						value='`{0:.0f} hours, {1:.0f} minutes und {2:.0f} seconds`'.format(hours, minutes, seconds),
+						value='`{0:.0f} hours, {1:.0f} minutes und {2:.0f} seconds`'.format(
+							hours, minutes, seconds),
 						inline=True)
 		embed.add_field(name='Total users', value=f'`{users}`', inline=True)
-		embed.add_field(name='Total channels', value=f'`{channel}`', inline=True)
+		embed.add_field(name='Total channels',
+						value=f'`{channel}`', inline=True)
 		embed.add_field(name='Bot version', value='`0.6.0`', inline=True)
-		embed.add_field(name='Discord.py Version', value=f'`{discord.__version__}`', inline=True)
-		embed.add_field(name='Commands count', value=f'`{cmdcount}`', inline=True)
+		embed.add_field(name='Discord.py Version',
+						value=f'`{discord.__version__}`', inline=True)
+		embed.add_field(name='Commands count',
+						value=f'`{cmdcount}`', inline=True)
 		await interaction.response.send_message(embed=embed)
 
 	@app_commands.command(name='ping', description='View bot\'s latency')
@@ -139,7 +118,6 @@ class Utility(commands.Cog):
 			creation_date = None
 			attachment = None
 
-
 	@app_commands.command(name='snipe', description='Get last deleted message')
 	async def snipe(self, interaction: discord.Interaction):
 		if snipe_message_id is None:
@@ -155,12 +133,7 @@ class Utility(commands.Cog):
 
 			await interaction.response.send_message(embed=embed)
 			return
-	
 
-	@app_commands.command(name='report', description='Submit a staff application')
-	@app_commands.checks.cooldown(1, 300, key=lambda i: (i.user.id))
-	async def report(self, interaction):
-		await interaction.response.send_modal(Modal())
 
 async def setup(ce):
 	await ce.add_cog(Utility(ce))
