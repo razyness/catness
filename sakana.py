@@ -6,6 +6,7 @@ import discord
 TOKEN = "the token in question"
 LASTFM_API_KEY = "the api key goes here"
 STEAM_API_KEY = "read above"
+OPENAI_API_KEY = "same"
 
 prefix = '.'
 
