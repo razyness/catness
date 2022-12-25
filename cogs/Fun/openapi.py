@@ -5,7 +5,7 @@ import requests
 import io
 
 from discord import ui
-from sakana import OPENAI_API_KEY
+from sakana import OPENAI
 from discord import app_commands
 from discord.ext import commands
 from typing import Literal
@@ -61,7 +61,7 @@ class OpenAI(commands.Cog):
         super().__init__()
         self.ce = ce
 
-    openai.api_key = OPENAI_API_KEY
+    openai.api_key = OPENAI
 
     group = app_commands.Group(
         name="openai", description="Utilize the OpenAI's api")
@@ -96,6 +96,8 @@ class OpenAI(commands.Cog):
 
         elif temperature <= 0.0:
             temperature:int = 0
+
+        temperature = round(temperature, 1)
 
         response = openai.Completion.create(
             model="text-davinci-003",
