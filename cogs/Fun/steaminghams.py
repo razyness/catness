@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import ui
 
 import discord
-from sakana import STEAM_API_KEY
+from sakana import STEAM
 import requests
 
 #		if user == discord.User:
@@ -20,7 +20,7 @@ class steamProfile(ui.View):
 		self.user = user
 
 def getID(user):
-	r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={STEAM_API_KEY}&vanityurl={user}")
+	r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={STEAM}&vanityurl={user}")
 	userID = r.json()["response"]["steamid"]
 	return userID
 
@@ -28,7 +28,7 @@ def mainPage(user):
 
 	userID = getID(user)
 
-	r1 = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM_API_KEY}&steamids={userID}")
+	r1 = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM}&steamids={userID}")
 	userInfo = r1.json()["response"]["players"][0]
 
 	embed=discord.Embed()
