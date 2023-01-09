@@ -159,10 +159,9 @@ class fmProfile(ui.View):
         self.stop()
 
     async def interaction_check(self, interaction) -> bool:
-        if self.user:
-            if interaction.user.id != self.author:
-                await interaction.response.send_message('This is not your menu, run </lastfm:1040971894079373332> to open your own.', ephemeral=True)
-                return False
+        if interaction.user.id != self.author:
+            await interaction.response.send_message('This is not your menu, run </lastfm:1054381044826112001> to open your own.', ephemeral=True)
+            return False
         return True
 
 
