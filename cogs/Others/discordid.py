@@ -49,7 +49,7 @@ class DiscordID(commands.Cog):
 		user = await self.ce.fetch_user(userid)
 		url = f"https://discord.com/api/v9/users/{userid}"
 		headers = {"Authorization": f"Bot {app}"}
-		
+
 		async with aiohttp.ClientSession() as session:
 			response = await session.get(url, headers=headers)
 			if response.status != 200:
@@ -85,7 +85,7 @@ class DiscordID(commands.Cog):
 					badges_list.append("<:nitro:1078094211351584928>")
 				if user.bot:
 					badges_list.append("<:bot:1078091845051088979>")
-				
+
 				if user.id in config["contributors"]:
 					badges_list.append("<:Contributor:1078661797185335398>")
 
@@ -110,6 +110,7 @@ class DiscordID(commands.Cog):
 				await interaction.response.send_message(embed=embed, view=view)
 			except Exception as e:
 				await interaction.response.send_message(e)
+
 
 async def setup(ce):
 	await ce.add_cog(DiscordID(ce))

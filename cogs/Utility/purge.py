@@ -36,5 +36,6 @@ class Mod(commands.Cog):
         await ctx.channel.delete_messages(msg)
         await ctx.send(f"Deleted `{limit}` messages by `{str(member)}`", delete_after=5)
 
+
 async def setup(ce):
     await ce.add_cog(Mod(ce))

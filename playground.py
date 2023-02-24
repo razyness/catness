@@ -6,6 +6,7 @@ import toml
 intents = discord.Intents.all()
 config = toml.load("config.toml")
 
+
 class Client(commands.Bot):
     def __init__(self):
         super().__init__(intents=intents, command_prefix=config["prefix"])
