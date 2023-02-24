@@ -32,7 +32,7 @@ class Spotify(commands.Cog):
             view = Menu()
             view.add_item(discord.ui.Button(label='Play on Spotify', style=discord.ButtonStyle.link,
                                             url=f'https://open.spotify.com/track/{song.track_id}',
-                                            emoji='<:spotify_white:1004734925884370944>'))
+                                            emoji='<:spotify_white:1062784981203689472>'))
             embed = discord.Embed(title=f'**{song.title}**',
                                   description=f'by `{song.artist.replace(";", ",")}`\non `{song.album}`')
             embed.set_thumbnail(url=song.album_cover_url)

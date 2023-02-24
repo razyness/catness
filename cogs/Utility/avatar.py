@@ -15,13 +15,13 @@ class Avatar(commands.Cog):
 		self.ce = ce
 
 	@app_commands.command(name='avatar', description='Get yours/someone\'s avatar')
-	@app_commands.describe(member='The avatar member')
+	@app_commands.describe(member='user hello person avatar')
 	async def avatar(self, interaction, member: discord.Member = None):
 		member = member or interaction.user
 
 		view = DownloadButton()
 		view.add_item(discord.ui.Button(label='Download', style=discord.ButtonStyle.link, url=member.avatar.url,
-										emoji='<:download:1004734791553396816>'))
+										emoji='<:download:1062784992243105813>'))
 
 		embed = discord.Embed()
 		embed.set_author(name=f'{str(member)}', icon_url=member.avatar.url)

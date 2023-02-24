@@ -15,6 +15,10 @@ class Ping(commands.Cog):
         ping = (time.monotonic() - before) * 1000
         await interaction.edit_original_response(content=f"Pong! `{int(ping)} ms`")
 
+    @app_commands.command(name="backtopeppino")
+    async def peppino(self, interaction):
+        await interaction.response.send_message("https://cdn.discordapp.com/attachments/1031621777824174131/1078282294806183996/0sAW181.png")
+
 
 async def setup(ce: commands.Bot):
     await ce.add_cog(Ping(ce))

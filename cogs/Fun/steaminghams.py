@@ -3,8 +3,12 @@ from discord.ext import commands
 from discord import ui
 
 import discord
-from sakana import STEAM
 import requests
+import toml
+
+config = toml.load("config.toml")
+TENOR = config["STEAM"]
+
 
 #		if user == discord.User:
 #			user_db = toml.load("./cogs/steam.json")
@@ -14,46 +18,47 @@ import requests
 
 # Button views
 class steamProfile(ui.View):
-	def __init__(self, user):
-		super().__init__()
-		self.value = None
-		self.user = user
+    def __init__(self, user):
+        super().__init__()
+        self.value = None
+        self.user = user
+
 
 def getID(user):
-	r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={STEAM}&vanityurl={user}")
-	userID = r.json()["response"]["steamid"]
-	return userID
+    r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={STEAM}&vanityurl={user}")
+    userID = r.json()["response"]["steamid"]
+    return userID
+
 
 def mainPage(user):
+    userID = getID(user)
 
-	userID = getID(user)
+    r1 = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM}&steamids={userID}")
+    userInfo = r1.json()["response"]["players"][0]
 
-	r1 = requests.get(f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM}&steamids={userID}")
-	userInfo = r1.json()["response"]["players"][0]
+    embed = discord.Embed()
+    embed.title = userInfo["personaname"]
+    embed.url = userInfo["profileurl"]
+    embed.color = 0x66c0f4
+    embed.set_thumbnail(url=userInfo["avatarfull"])
+    return embed
 
-	embed=discord.Embed()
-	embed.title=userInfo["personaname"]
-	embed.url=userInfo["profileurl"]
-	embed.color = 0x66c0f4
-	embed.set_thumbnail(url=userInfo["avatarfull"])
-	return embed
 
-#main interaction veiw
+# main interaction veiw
 class Steam(commands.Cog):
 
-	def __init__(self, ce):
-		super().__init__()
-		self.ce = ce
+    def __init__(self, ce):
+        super().__init__()
+        self.ce = ce
 
-	# WIP
-	@app_commands.command(name="steam", description="View steam profiles :)")
-	async def steam(self, interaction, user:str):
-		try:
-			await interaction.response.send_message(embed=mainPage(user))
-		except Exception as e:
-			await interaction.response.send_message(e)
+    # WIP
+    @app_commands.command(name="steam", description="View steam profiles :)")
+    async def steam(self, interaction, user: str):
+        try:
+            await interaction.response.send_message(embed=mainPage(user))
+        except Exception as e:
+            await interaction.response.send_message(e)
 
-		
 
 async def setup(ce):
-	await ce.add_cog(Steam(ce))
+    await ce.add_cog(Steam(ce))

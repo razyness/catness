@@ -1,9 +1,12 @@
 from discord import app_commands
 from discord.ext import commands
 from discord import ui
-from sakana import LASTFM
 import discord
 import requests
+import toml
+
+config = toml.load("config.toml")
+LASTFM = config["LASTFM"]
 
 
 def playingStatus(user):
@@ -135,6 +138,14 @@ class fmProfile(ui.View):
         self.user = user
         self.author = author
 
+    async def disable_all(self):
+        for i in self.children:
+            i.disabled = True
+        await self.msg.edit(view=self)
+
+    async def on_timeout(self):
+        await self.disable_all()
+
     @ui.button(label='Now Playing', style=discord.ButtonStyle.gray)
     async def playing(self, interaction: discord.Integration, button: ui.Button):
 
@@ -153,10 +164,10 @@ class fmProfile(ui.View):
     @ui.button(label='Exit', style=discord.ButtonStyle.red)
     async def quit(self, interaction: discord.Interaction, button: ui.Button):
 
-        await interaction.response.edit_message(view=None)
-
+        await self.disable_all()
         self.value = False
         self.stop()
+        await interaction.response.defer()
 
     async def interaction_check(self, interaction) -> bool:
         if interaction.user.id != self.author:
@@ -179,7 +190,7 @@ class LastFM(commands.Cog):
         author = interaction.user.id
         view = fmProfile(user, author)
         await interaction.response.send_message(embed=overview(user), view=view, ephemeral=ephemeral)
-
+        view.msg = await interaction.original_response()
 
 async def setup(ce):
     await ce.add_cog(LastFM(ce))

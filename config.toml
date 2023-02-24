@@ -1,0 +1,14 @@
+TOKEN = ""
+LASTFM = ""
+STEAM = ""
+OPENAI = ""
+TENOR = ""
+chat = "" # int
+
+prefix = "."
+
+contributors = [
+]
+
+special = [
+]
