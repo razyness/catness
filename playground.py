@@ -23,4 +23,4 @@ async def load():
 
 
 asyncio.run(load())
-ce.run(config["TOKEN"], log_handler=None)
+ce.run(config["TOKEN"])
