@@ -8,5 +8,5 @@ parts
 src/*.egg-info
 lib
 lib64
-/sakana.py
+config.toml
 /Cogs/.old/
