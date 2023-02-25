@@ -1,9 +1,10 @@
+import struct
+
 import aiohttp
+import discord
+import toml
 from discord import app_commands
 from discord.ext import commands
-import discord
-import struct
-import toml
 
 class DownloadButton(discord.ui.View):
 
@@ -46,6 +47,13 @@ class DiscordID(commands.Cog):
 	@app_commands.command(name="profile", description="View anyone's profile from their id")
 	async def discord_id(self, interaction, userid: str = None):
 		userid = userid or interaction.user.id
+		if userid.startswith("<@"):
+			userid = int(userid[2:-1])
+		
+		if not type(userid) == int:
+			await interaction.response.send_message("The id is not valid")
+			return
+
 		user = await self.ce.fetch_user(userid)
 		url = f"https://discord.com/api/v9/users/{userid}"
 		headers = {"Authorization": f"Bot {app}"}

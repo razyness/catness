@@ -1,8 +1,16 @@
-import discord
+from __future__ import annotations
+
 import time
+
+from typing import TYPE_CHECKING
+
+import discord
 
 from discord.ext import commands
 from discord import app_commands
+
+if TYPE_CHECKING:
+    from playground import Bot
 
 start_time = time.time()
 
@@ -30,9 +38,11 @@ class Status(commands.Cog):
         for _ in self.ce.commands:
             cmdcount += 1
 
+        razy = self.ce.get_user(self.ce.owner_id or 592310159133376512) or await self.ce.fetch_user(self.ce.owner_id or 592310159133376512)
+
         embed = discord.Embed(title=str(self.ce.user))
         embed.set_thumbnail(url=self.ce.user.avatar.url)
-        embed.add_field(name='Owner', value=f'`{self.ce.owner_id}`', inline=True)
+        embed.add_field(name='Owner', value=f'`{razy}`', inline=True)
         embed.add_field(name='Uptime',
                         value='`{0:.0f} hours, {1:.0f} minutes and {2:.0f} seconds`'.format(
                             hours, minutes, seconds),
