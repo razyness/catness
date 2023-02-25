@@ -1,3 +1,3 @@
-![image](https://github.com/razyness/catness/blob/main/woody.jpg)
+![image](https://github.com/razyness/catness/blob/main/beaturo.webp)
 
-woody :)
+scrapped Urotsuki designs

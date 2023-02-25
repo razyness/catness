@@ -35,7 +35,7 @@ class Events(commands.Cog):
 			for file in files:
 				if file.endswith('.py') and file not in ["utility.py", "mod.py", "fun.py", "events.py"]:
 					try:
-						await self.ce.load_extension(f"Cogs.{subdir}.{file[:-3]}")
+						await self.ce.load_extension(f"cogs.{subdir}.{file[:-3]}")
 						print(f'🟨 {file[:-3]} in cog {subdir} was loaded')
 
 					except Exception as e:

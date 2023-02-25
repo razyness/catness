@@ -18,7 +18,7 @@ ce = Client()
 
 async def load():
     await ce.load_extension('jishaku')
-    await ce.load_extension('Cogs.events')
+    await ce.load_extension('cogs.events')
     print('🟪 initial extensions loaded')
 
 
