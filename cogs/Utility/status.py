@@ -35,7 +35,7 @@ class Status(commands.Cog):
             channel += len(guild.channels)
 
         cmdcount = 0
-        for _ in self.ce.commands:
+        for _ in self.ce.tree.walk_commands():
             cmdcount += 1
 
         razy = self.ce.get_user(self.ce.owner_id or 592310159133376512) or await self.ce.fetch_user(self.ce.owner_id or 592310159133376512)
