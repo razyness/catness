@@ -13,30 +13,30 @@ config = toml.load("config.toml")
 OPENAI = config["OPENAI"]
 
 
-async def pedit(prompt, instructions, temp=0.5):
-    if temp >= 1.0:
-        temp = 1
-    elif temp == 0.0 or int(temp) <= 0:
-        temp = 0
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {OPENAI}"
-    }
-    json = {
-        "model": "text-davinci-edit-001",
-        "prompt": prompt,
-        "instructions": instructions,
-        "temperature": temp
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            "https://api.openai.com/v1/edit",
-            headers=headers,
-            json=json
-        ) as response:
-            result = await response.json()
-            print(result)
-            return result["choices"][0]["text"]
+#async def pedit(prompt, instructions, temp=0.5):
+#    if temp >= 1.0:
+#        temp = 1
+#    elif temp == 0.0 or int(temp) <= 0:
+#        temp = 0
+#    headers = {
+#        "Content-Type": "application/json",
+#        "Authorization": f"Bearer {OPENAI}"
+#    }
+#    json = {
+#        "model": "text-davinci-edit-001",
+#        "prompt": prompt,
+#        "instructions": instructions,
+#        "temperature": temp
+#    }
+#    async with aiohttp.ClientSession() as session:
+#        async with session.post(
+#            "https://api.openai.com/v1/edit",
+#            headers=headers,
+#            json=json
+#        ) as response:
+#            result = await response.json()
+#            print(result)
+#            return result["choices"][0]["text"]
 
 #async def pedit(prompt, instructions, temp=0.5):
 #	try:
@@ -46,7 +46,7 @@ async def pedit(prompt, instructions, temp=0.5):
 #		elif temp == 0.0 or int(temp) <= 0:
 #			temp: int = 0
 #
-#		response = await openai.Edit.create(
+#		response = openai.Edit.create(
 #			model="text-davinci-edit-001",
 #			input=prompt,
 #			instruction=instructions,
@@ -112,25 +112,25 @@ async def completion(prompt, temp):
 
 
 
-class EditModal(ui.Modal, title="Message completion edit"):
-	def __init__(self, prompt, result):
-		super().__init__()
-		self.prompt = prompt
-		self.result = result
-
-	instructions = ui.TextInput(label='Instructions', placeholder="The prompt for the edit. Like a completion",
-								style=discord.TextStyle.paragraph, max_length=100, required=True)
-
-	async def on_submit(self, interaction):
-		await interaction.response.defer(thinking=True)
-		embed = discord.Embed()
-		embed.set_author(name="Text Edit")
-		api_json = await pedit(self.result, str(self.instructions))
-		print(api_json)
-		embed.description = f"**{self.prompt}**\n*{self.instructions}*{api_json}"
-		view = ComplRegen(
-			self.prompt, 0.5, interaction.user.id, api_json)
-		await interaction.followup.send(embed=embed, view=view)
+#class EditModal(ui.Modal, title="Message completion edit"):
+#	def __init__(self, prompt, result):
+#		super().__init__()
+#		self.prompt = prompt
+#		self.result = result
+#
+#	instructions = ui.TextInput(label='Instructions', placeholder="The prompt for the edit. Like a completion",
+#								style=discord.TextStyle.paragraph, max_length=100, required=True)
+#
+#	async def on_submit(self, interaction):
+#		await interaction.response.defer(thinking=True)
+#		embed = discord.Embed()
+#		embed.set_author(name="Text Edit")
+#		api_json = await pedit(self.result, str(self.instructions))
+#		print(api_json)
+#		embed.description = f"**{self.prompt}**\n*{self.instructions}*{api_json}"
+#		view = ComplRegen(
+#			self.prompt, 0.5, interaction.user.id, api_json)
+#		await interaction.followup.send(embed=embed, view=view)
 
 
 class ComplRegen(ui.View):
@@ -158,12 +158,12 @@ class ComplRegen(ui.View):
 		except Exception as e:
 			print(e)
 
-	@ui.button(label="Edit", style=discord.ButtonStyle.gray, emoji="<:edit:1062784953399648437>")
-	async def compledit(self, interaction, button):
-		try:
-			await interaction.response.send_modal(EditModal(self.prompt, self.result))
-		except Exception as e:
-			print(e)
+	#@ui.button(label="Edit", style=discord.ButtonStyle.gray, emoji="<:edit:1062784953399648437>")
+	#async def compledit(self, interaction, button):
+	#	try:
+	#		await interaction.response.send_modal(EditModal(self.prompt, self.result))
+	#	except Exception as e:
+	#		print(e)
 
 	async def interaction_check(self, interaction):
 		if interaction.user.id != self.author:
@@ -181,20 +181,18 @@ class Remove(discord.ui.View):
 	@ui.button(label="Remove", style=discord.ButtonStyle.red, emoji="<:remove:1062791085404999781>")
 	async def remove(self, interaction, button):
 		try:
-			msg = await interaction.original_response()
-			await msg.delete()
+			await self.orimsg.delete()
 		except Exception as e:
 			print(e)
 
 
 class ImgRegen(discord.ui.View):
-	def __init__(self, prompt, size, author, img):
+	def __init__(self, prompt, size, author):
 		super().__init__()
 		self.value = None
 		self.prompt = prompt
 		self.size = size
 		self.author = author
-		self.img = img
 
 	@ui.button(label="Regenerate", style=discord.ButtonStyle.blurple, emoji="<:regen:1062784969749045318>")
 	async def imgregen(self, interaction, button):
@@ -207,20 +205,23 @@ class ImgRegen(discord.ui.View):
 			embed = discord.Embed(
 				description=f"Prompt: `{self.prompt}`, Size: `{self.size}`")
 			embed.set_author(name="Text to Image")
-			view = ImgRegen(self.prompt, self.size, interaction.user.id, img=image_data)
-			await interaction.followup.send(embed=embed, file=file, view=view)
+			view = ImgRegen(self.prompt, self.size, interaction.user.id)
+			mesage = await interaction.followup.send(embed=embed, file=file, view=view)
+			view.img = mesage.attachments[0].url
 		except Exception as e:
 			print(e)
 
 	@ui.button(label="Save", style=discord.ButtonStyle.gray, emoji="<:bookmark:1062790109491114004>")
 	async def bookmark(self, interaction, button):
 		try:
-			image_stream = io.BytesIO(self.img)
-			file = discord.File(image_stream, filename=f'{self.prompt}.png')
+#			image_stream = io.BytesIO(self.img)
+#			file = discord.File(image_stream, filename=f'{self.prompt}.png')
 			embed = discord.Embed(description=f"Prompt: `{self.prompt}`, Size: `{self.size}`")
 			embed.set_author(name="Text to Image")
+			embed.set_image(url=self.img)
 			view = Remove()
-			await interaction.user.send(embed=embed, file=file, view=view)
+			orimsg = await interaction.user.send(embed=embed, view=view)
+			view.orimsg = orimsg
 			await interaction.response.defer()
 		except Exception as e:
 			print(e)
@@ -258,9 +259,10 @@ class OpenAI(commands.Cog):
 		embed = discord.Embed(
 			description=f"Prompt: `{prompt}`, Size: `{size}`")
 		embed.set_author(name="Text to Image")
-		view = ImgRegen(prompt, size, interaction.user.id, img=file)
+		view = ImgRegen(prompt, size, interaction.user.id)
 		try:
-			await interaction.followup.send(embed=embed, file=file, view=view)
+			obj = await interaction.followup.send(embed=embed, file=file, view=view)
+			view.img = obj.attachments[0].url
 		except Exception as e:
 			await interaction.followup.send(e)
 
@@ -283,20 +285,20 @@ class OpenAI(commands.Cog):
 		except Exception as e:
 			print(e)
 
-	@group.command(name="edit", description="Creates a new edit for the provided input, instruction, and parameters")
-	@app_commands.describe(prompt="The text the AI will work with",
-						   instructions="What the AI should do with the prompt",
-						   temperature="Sampling temperature. Higher values means the model will take more risks. "
-									   "default is 0.5")
-	async def edit(self, interaction, prompt: str, instructions: str, temperature: float = 0.5):
-		await interaction.response.defer(thinking=True)
-
-		api_json = await pedit(prompt, instructions, temperature)
-
-		embed = discord.Embed()
-		embed.set_author(name="Text Edit")
-		embed.description = f"**{prompt}**\n*{instructions}*\n\n{api_json}"
-		await interaction.followup.send(embed=embed)
+	#@group.command(name="edit", description="Creates a new edit for the provided input, instruction, and parameters")
+	#@app_commands.describe(prompt="The text the AI will work with",
+	#					   instructions="What the AI should do with the prompt",
+	#					   temperature="Sampling temperature. Higher values means the model will take more risks. "
+	#								   "default is 0.5")
+	#async def edit(self, interaction, prompt: str, instructions: str, temperature: float = 0.5):
+	#	await interaction.response.defer(thinking=True)
+#
+	#	api_json = await pedit(prompt, instructions, temperature)
+#
+	#	embed = discord.Embed()
+	#	embed.set_author(name="Text Edit")
+	#	embed.description = f"**{prompt}**\n*{instructions}*\n\n{api_json}"
+	#	await interaction.followup.send(embed=embed)
 
 
 async def setup(ce):
