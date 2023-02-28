@@ -12,3 +12,18 @@ contributors = [
 
 special = [
 ]
+
+catchphrases = [
+    "Important information", "Loading", "Something beautiful is coming", "Thinking outside the box",
+	"Vague rumbling", "Getting our load on", "Pushing it to the limit",
+	"Connecting to LittleBigPlanet Online", "Profile is corrupt!", "Putting everything in order",
+	"Do not forget...", "Ironing out the creases", "It's time to get serious",
+	"Hold tight, we're almost there", "Building your world, one piece at a time",
+	"Stay patient, good things come to those who wait", "Creating something magical just for you",
+	"Don't give up, we're making progress",	"Preparing for an epic journey", "Taking creativity to the next level",
+	"Joining forces to make something amazing", "We're almost ready, are you?",
+	"Every great adventure starts with a single step", "This is where the magic happens",
+	"We're cooking up something special", "The possibilities are endless", "Revving up our engines",
+	"It's time to shine", "Don't forget to pack your imagination", "Brace yourself for the adventure of a lifetime",
+	"Getting ready to take off", "This is just the beginning"
+]
