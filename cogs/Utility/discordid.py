@@ -46,13 +46,16 @@ class DiscordID(commands.Cog):
 
 	@app_commands.command(name="profile", description="View anyone's profile from their id")
 	async def discord_id(self, interaction, userid: str = None):
-		userid = userid or interaction.user.id
-		if userid.startswith("<@"):
+		if userid is None:
+			userid = interaction.user.id
+		elif userid.startswith("<@"):
 			userid = int(userid[2:-1])
-		
-		if not type(userid) == int:
-			await interaction.response.send_message("The id is not valid")
-			return
+		else:
+			try:
+				userid = int(userid)
+			except:
+				await interaction.response.send_message("The id is not valid", ephemeral=True)
+				return
 
 		user = await self.ce.fetch_user(userid)
 		url = f"https://discord.com/api/v9/users/{userid}"
