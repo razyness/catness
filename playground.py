@@ -12,9 +12,7 @@ class Client(commands.Bot):
         super().__init__(intents=intents, command_prefix=config["prefix"])
         self.command_prefix = config["prefix"]
 
-
 ce = Client()
-
 
 async def load():
     await ce.load_extension('jishaku')
