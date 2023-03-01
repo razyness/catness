@@ -10,14 +10,6 @@ import toml
 from discord import app_commands
 from discord.ext import commands
 
-#async def load_social_data():
-#    async with aiofiles.open("profiles.json", mode="r") as file:
-#        data = await file.read()
-#        if data:
-#            return json.loads(data)
-#        else:
-#            return {}
-
 conn = sqlite3.connect("profiles.db")
 
 async def load_social_data():
