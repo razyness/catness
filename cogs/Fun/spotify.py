@@ -38,7 +38,7 @@ class Spotify(commands.Cog):
             embed.set_thumbnail(url=song.album_cover_url)
             embed.set_footer(text=f'track id: {song.track_id}')
             embed.set_author(
-                name=f'Now playing - {member.display_name}', icon_url=member.avatar.url)
+                name=f'{member.display_name}  •  Now Playing', icon_url=member.avatar.url)
             await interaction.response.send_message(embed=embed, view=view)
 
 
