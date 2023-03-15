@@ -1,5 +1,4 @@
 import sqlite3
-from typing import List
 
 from discord import app_commands
 from discord.ext import commands
@@ -12,13 +11,14 @@ class Link(commands.Cog):
         self.ce = ce
 
         # Connect to the SQLite database
-        self.conn = sqlite3.connect('profiles.db')
+        self.conn = sqlite3.connect('data/profiles.db')
         self.cur = self.conn.cursor()
 
         # Create the table if it doesn't exist
         self.cur.execute('''CREATE TABLE IF NOT EXISTS profiles
                             (user_id TEXT, lastfm TEXT, steam TEXT)''')
         self.conn.commit()
+        print("🟦 profiles.db connected")
 
     # Define the command to link a social media profile
     @app_commands.command(name="link", description="link your profiles to your discord account")

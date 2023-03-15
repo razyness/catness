@@ -10,3 +10,6 @@ lib
 lib64
 /config.toml
 /Cogs/.old/
+/data/profiles.db
+/data/questions.db
+/data/rep.db

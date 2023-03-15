@@ -39,7 +39,7 @@ class Dropdown(View):
         self.query: str = query
 
     @discord.ui.select(placeholder='Choose your fighter!', options=[
-        discord.SelectOption(label='Razyness', value="1", description="ness")
+        discord.SelectOption(label=i) for i in option_gen()
     ])
     async def select_callback(self, select, interaction):
 

@@ -3,7 +3,8 @@ import aiohttp
 from discord.ext import commands
 from discord import app_commands
 
-config = toml.load("config.toml")
+from data.__init__ import config
+
 TENOR = config["TENOR"]
 
 class Reaction(commands.Cog):

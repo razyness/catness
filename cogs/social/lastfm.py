@@ -3,27 +3,12 @@ from discord.ext import commands
 from discord import ui
 
 import discord
-import aiohttp
-import toml
-import aiofiles
-import json
-import sqlite3
 
-config = toml.load("config.toml")
+from data.__init__ import config, Data
+from utils.http import HTTP
+
 LASTFM = config["LASTFM"]
-
-conn = sqlite3.connect("profiles.db")
-
-async def load_social_data():
-	cursor = conn.cursor()
-	cursor.execute("SELECT user_id, lastfm, steam FROM profiles")
-	rows = cursor.fetchall()
-	social_data = {}
-	for row in rows:
-		user_id, lastfm, steam = row
-		social_data[user_id] = {"lastfm": lastfm, "steam": steam}
-	return social_data
-
+http = HTTP()
 
 async def playingStatus(user):
 
@@ -31,11 +16,8 @@ async def playingStatus(user):
     userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={user}&api_key={LASTFM}&format=json'
     nowPlaying = f'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={user}&api_key={LASTFM}&format=json'
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(userInfo) as response:
-                user_data = await response.json()
-            async with session.get(nowPlaying) as response:
-                now_playing = await response.json()
+        user_data = await http.get(url=userInfo)
+        now_playing = await http.get(url=nowPlaying)
         if user_data["user"]["subscriber"] == "1":
             embed.set_author(name=f'🔹 •  {user_data["user"]["name"]}',
                              icon_url=user_data["user"]["image"][2]["#text"],
@@ -81,9 +63,7 @@ async def playingStatus(user):
 async def overview(user):
     embed = discord.Embed()
     userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={user}&api_key={LASTFM}&format=json'
-    async with aiohttp.ClientSession() as session:
-        async with session.get(userInfo) as response:
-            user_data = await response.json()
+    user_data = await http.get(userInfo)
 
     if user_data["user"]["subscriber"] == "1":
         embed.title = f'🔹 •  {user_data["user"]["realname"]}'
@@ -124,11 +104,8 @@ async def friendsTab(user):
     embed = discord.Embed()
     userInfo = f'https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={user}&api_key={LASTFM}&format=json'
     friendList = f'http://ws.audioscrobbler.com/2.0/?method=user.getfriends&user={user}&api_key={LASTFM}&format=json'
-    async with aiohttp.ClientSession() as session:
-        async with session.get(userInfo) as response:
-            user_data = await response.json()
-        async with session.get(friendList) as response:
-            friendList = await response.json()
+    user_data = await http.get(userInfo)
+    friendList = await http.get(friendList)
 
     if user_data["user"]["subscriber"] == "1":
         embed.title = f'🔹 •  {user_data["user"]["realname"]}'
@@ -227,16 +204,16 @@ class LastFM(commands.Cog):
                 if user_id == interaction.user.id:
                     g = "You"
             try:
-                data = await load_social_data()
-                if str(user_id) in data and "lastfm" in data[str(user_id)]:
-                    if data[str(user_id)]["lastfm"] is not None:
-                        user = data[str(user_id)]["lastfm"]
+                social_data = await Data.get_social_data()
+                if str(user_id) in social_data and "lastfm" in social_data[str(user_id)]:
+                    if social_data[str(user_id)]["lastfm"] is not None:
+                        user = social_data[str(user_id)]["lastfm"]
                     else:
                         raise Exception
                 else:
                     raise Exception
             except:
-                await interaction.response.send_message(f"{g} haven't linked your `LastFM` account! Run /link to do so", ephemeral=True)
+                await interaction.response.send_message(f"{g} haven't linked your `LastFM` account! Run </link:1080264642569441380> to do so", ephemeral=True)
                 return
 
         author = interaction.user.id

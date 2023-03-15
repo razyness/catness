@@ -5,7 +5,8 @@ import aiohttp
 import random
 import toml
 
-config = toml.load("config.toml")
+from data.__init__ import config
+
 TENOR = config["TENOR"]
 
 

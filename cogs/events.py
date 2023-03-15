@@ -6,20 +6,19 @@ import pathlib
 from typing import TYPE_CHECKING
 
 import discord
-import toml
 
 from discord.ext import commands, tasks
 
 if TYPE_CHECKING:
 	from playground import Bot
 
-config = toml.load("config.toml")
+from data.__init__ import config
 
 class Events(commands.Cog):
 	def __init__(self, bot: Bot):
 		self.bot = bot
 		self.tree = bot.tree
-		self.blocked = ['cogs..old.fun', 'cogs..old.mod', 'cogs..old.utility', "cogs.events"]
+		self.blocked = ['cogs..old.fun', 'cogs..old.mod', 'cogs..old.utility', "cogs.events", "cogs.fun.youtube_search", "cogs.others.antispam"]
 		self.cogs_path = pathlib.Path("cogs")
 		self.extensions = [self.format_cog(str(item)) for item in self.cogs_path.glob('**/*.py') if self.format_cog(str(item)) not in self.blocked]
 

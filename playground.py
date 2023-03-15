@@ -1,10 +1,9 @@
 import discord
 import asyncio
 from discord.ext import commands
-import toml
 
 intents = discord.Intents.all()
-config = toml.load("config.toml")
+from data.__init__ import config
 
 
 class Client(commands.Bot):
