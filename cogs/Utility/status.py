@@ -50,7 +50,7 @@ class Status(commands.Cog):
         embed.add_field(name='Total users', value=f'`{users}`', inline=True)
         embed.add_field(name='Total channels',
                         value=f'`{channel}`', inline=True)
-        embed.add_field(name='Bot version', value='`0.6.0`', inline=True)
+        embed.add_field(name='Bot version', value='`0.9.3`', inline=True)
         embed.add_field(name='Discord.py Version',
                         value=f'`{discord.__version__}`', inline=True)
         embed.add_field(name='Commands count',

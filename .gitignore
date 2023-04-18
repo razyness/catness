@@ -8,8 +8,6 @@ parts
 src/*.egg-info
 lib
 lib64
-/config.toml
-/Cogs/.old/
-/data/profiles.db
-/data/questions.db
-/data/rep.db
+/data/.old
+/data/data.db
+/data/config.toml

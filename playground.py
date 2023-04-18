@@ -3,7 +3,7 @@ import asyncio
 from discord.ext import commands
 
 intents = discord.Intents.all()
-from data.__init__ import config
+from data import config
 
 
 class Client(commands.Bot):
