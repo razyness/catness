@@ -230,7 +230,7 @@ class DiscordID(commands.Cog):
 						day, month, year = date.split("/")
 						month = calendar.month_name[int(month)]
 						formatted_date = f"`{day} {month}`"
-					view = ProfileView(user=interaction.user)
+					view = ProfileView(user=await self.ce.fetch_user(user))
 					embed.add_field(name="Birthday", value=formatted_date)
 
 			ruser = await Data.load_db(table="rep", value=user)
