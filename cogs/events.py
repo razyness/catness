@@ -61,16 +61,16 @@ class Events(commands.Cog):
             print(f"🔁 synced {len(synced)} slash commands")
         except Exception as e:
             print(e)
-
+        
+        print(
+            f"🟩 Logged in as {self.bot.user} with a {round(self.bot.latency * 1000)}ms delay")
+        
         if not self.presences.is_running():
             self.presences.start()
 
         if not self.cakeloop.is_running():
             await self.cakeloop.start()
-            print("cake loop has begun")
 
-        print(
-            f"🟩 Logged in as {self.bot.user} with a {round(self.bot.latency * 1000)}ms delay")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -93,25 +93,20 @@ class Events(commands.Cog):
 
     @tasks.loop(hours=12)
     async def cakeloop(self):
-        print("started")
         date = datetime.datetime.today().strftime('%d/%m/%Y')
-        print(f"date = {date}")
         day, month, year = date.split("/")
-        print(f"{day}, {month}, {year}")
         async with aiosqlite.connect(DATABASE_FILE) as conn:
             async with conn.execute("SELECT user_id, cake, follow_list FROM profiles") as cursor:
                 rows = await cursor.fetchall()
             for row in rows:
-                print(row)
                 user_id = row[0]
                 cake_str = row[1]
                 if cake_str is None:
                     continue
                 cake_date = await self.format_date(cake_str)
-                print(f"cake_date = {cake_date}")
                 if cake_date["day"] == day and cake_date["month"] == month:
                     cake_user = await self.bot.fetch_user(user_id)
-                    if row[2] is None:
+                    if row[2] is None or eval(row[2]) == []:
                         continue
                     for i in eval(row[2]):
                         notif_user = await self.bot.fetch_user(i)

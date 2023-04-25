@@ -37,7 +37,7 @@ class RemoveView(discord.ui.View):
 						follow_list_str = row[0]
 						follow_list = []
 						if follow_list_str:
-							follow_list = json.loads(follow_list_str)
+							follow_list = eval(follow_list_str)
 						if author in follow_list:
 							follow_list.remove(author)
 							follow_list_str = json.dumps(follow_list)
@@ -75,28 +75,24 @@ class ProfileView(discord.ui.View):
 		await self.disable_all()
 
 	async def notify_action(self, user):
-		try:
-			async with aiosqlite.connect(DATABASE_FILE) as conn:
-				async with conn.execute("SELECT follow_list FROM profiles WHERE user_id=?", (self.user.id,)) as cursor:
-					row = await cursor.fetchone()
-					follow_list = []
-					if row is not None:
-						follow_list_str = row[0]
-						if follow_list_str:
-							follow_list = follow_list_str.strip("[]").split(',')
-							follow_list = [int(user_id) for user_id in follow_list]
-					if user.id not in follow_list:
-						follow_list.append(user.id)
-						follow_list_str = str(follow_list)
-						if row is not None:
-							await conn.execute("UPDATE profiles SET follow_list=? WHERE user_id=?", (follow_list_str, self.user.id))
-						else:
-							await conn.execute("INSERT INTO profiles (user_id, follow_list) VALUES (?, ?)", (self.user.id, follow_list_str))
-						await conn.commit()
+		async with aiosqlite.connect(DATABASE_FILE) as conn:
+			async with conn.execute("SELECT user_id, follow_list FROM profiles WHERE user_id=?", (self.user.id,)) as cursor:
+				row = await cursor.fetchone()
+				follow_list = []
+				if row is not None:
+					follow_list_str = row[1]
+					if follow_list_str:
+						follow_list = eval(follow_list_str)
+				if user.id not in follow_list:
+					follow_list.append(user.id)
+					follow_list_str = str(follow_list)
+					await conn.execute("UPDATE profiles SET follow_list=? WHERE user_id=?", (follow_list_str, self.user.id))
+					await conn.commit()
+					return f"You are now following {self.user.mention}'s birthday!"
+				else:
+					await conn.commit()
+					return f"You are already following {self.user.mention}'s birthday!"
 
-			return f"You are now following {self.user.mention}'s birthday!"
-		except:
-			return f"You are already following {self.user.mention}'s birthday!"
 
 	@discord.ui.button(label="Notify me!", emoji="🎂", style=discord.ButtonStyle.blurple)
 	async def notify(self, inter, button):
