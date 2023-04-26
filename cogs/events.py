@@ -91,7 +91,7 @@ class Events(commands.Cog):
             "consd": consd
         }
 
-    @tasks.loop(hours=12)
+    @tasks.loop(hours=24)
     async def cakeloop(self):
         date = datetime.datetime.today().strftime('%d/%m/%Y')
         day, month, year = date.split("/")
@@ -121,7 +121,7 @@ class Events(commands.Cog):
                         ]
                         embed.description = random.choice(
                             c).replace("{user}", cake_user.mention)
-                        embed.set_footer(text="You can unsubscribe in your settings (not yet)")
+                        embed.set_footer(text="You can unsubscribe from their profile")
                         if cake_date["consd"]:
                             embed.description = f"{embed.description}\nThey are turning `{int(year) - int(cake_date['year'])}`"
                             await notif_user.send(embed=embed)
