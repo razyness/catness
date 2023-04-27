@@ -229,7 +229,7 @@ class DiscordID(commands.Cog):
 					view = ProfileView(user=await self.ce.fetch_user(user))
 					embed.add_field(name="Birthday", value=formatted_date)
 
-			ruser = await Data.load_db(table="rep", value=user)
+			ruser = await Data.load_db(table="rep", user_id=user)
 
 			if ruser is None:
 				rep = 0
@@ -245,6 +245,10 @@ class DiscordID(commands.Cog):
 				view.add_item(discord.ui.Button(label='Banner', style=discord.ButtonStyle.link, url=f"https://cdn.discordapp.com/banners/{user}/{data['banner']}.{ext}?size=4096",
 												emoji='<:download:1062784992243105813>'))
 
+			levels_info = await Data.load_db(table="profiles", user_id=user, columns=["level", "exp"])
+			level, exp = levels_info["level"], levels_info["exp"]
+			missing = round(5 * (level ** 2) + (50 * level) + 100)
+			embed.add_field(name="Ranking", value=f"Level `{level}` | `{exp}/{missing}`xp")
 			await interaction.response.send_message(embed=embed, view=view)
 			view.msg = await interaction.original_response()
 
