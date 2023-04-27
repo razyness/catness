@@ -26,17 +26,17 @@ class Rep(commands.Cog):
 
 		async with aiosqlite.connect('data/data.db') as db:
 			db.row_factory = aiosqlite.Row
-			muser = await Data.load_db(table="rep", value=user.id)
+			muser = await Data.load_db(table="rep", user_id=user.id)
 			if muser is None:
 				await db.execute("INSERT INTO rep (user_id, rep, time) VALUES (?, 0, 0)", (user.id,))
 				await db.commit()
-				muser = await Data.load_db(table="rep", value=user.id)
+				muser = await Data.load_db(table="rep", user_id=user.id)
 		
-			ruser = await Data.load_db(table="rep", value=inter.user.id)
+			ruser = await Data.load_db(table="rep", user_id=inter.user.id)
 			if ruser is None:
 				await db.execute("INSERT INTO rep (user_id, rep, time) VALUES (?, 0, 0)", (inter.user.id,))
 				await db.commit()
-				ruser = await Data.load_db(table="rep", value=inter.user.id)
+				ruser = await Data.load_db(table="rep", user_id=inter.user.id)
 
 			expiration_time = datetime.datetime.fromtimestamp(ruser['time']) + datetime.timedelta(hours=12)
 			

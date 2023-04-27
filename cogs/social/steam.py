@@ -96,7 +96,7 @@ class Steam(commands.Cog):
 				if user_id == interaction.user.id:
 					g = "You haven't"
 			try:
-				social_data = await Data.load_db(table="profiles", value=user_id)
+				social_data = await Data.load_db(table="profiles", user_id=user_id)
 				if social_data['steam'] is None:
 					raise Exception
 				user = social_data['steam']
