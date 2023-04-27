@@ -39,25 +39,30 @@ icons = {
 class Data():
     """Tools to manage the bot's database
     """
-    async def load_db(table: str, value: str) -> Optional[dict]:
-        """Get a dict of the contents of a database's row
-
+    async def load_db(table: str, user_id: str, columns: list = None) -> Optional[dict]:
+        """Get a dict of the contents of selected columns in a database's row
         Args:
             table (str): The name of the db table
-            value (str): The column to search from
-
+            user_id (str): The column to search from
+            columns (list): A list of column names to fetch
         Returns:
-            Optional[dict]: A dictionary of the contents of that row
+            Optional[dict]: A dictionary of the contents of the selected columns of that row
         """
         async with aiosqlite.connect(DATABASE_FILE) as conn:
-            async with conn.execute(f"SELECT * FROM {table} WHERE user_id = ?", (value,)) as cursor:
+            if columns is None or columns == []:
+                query_columns = "*"
+            else:
+                query_columns = f"{', '.join(columns)}"
+            async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE user_id = ?", (user_id,)) as cursor:
                 row = await cursor.fetchone()
                 if row is None:
                     return None
-                columns = [description[0]
-                           for description in cursor.description]
+                if columns is None or columns == []:
+                    columns = [description[0] for description in cursor.description]
                 data = dict(zip(columns, row))
         return data
+
+
 
     async def create_tables():
         """Creates the tables if missing
@@ -66,7 +71,7 @@ class Data():
             async with aiosqlite.connect(DATABASE_FILE) as conn:
                 cursor = await conn.cursor()
 
-                await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT)")
+                await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1)")
                 await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0)")
                 await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER, time INTEGER)")
 
