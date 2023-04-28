@@ -1,4 +1,3 @@
-import sqlite3
 import aiosqlite
 import discord
 
@@ -8,34 +7,36 @@ from discord import app_commands
 
 from data import Data, DATABASE_FILE
 
-class SelectMenu(ui.Select):
-	def __init__(self, user):
-		self.menu = SettingsMenu(user)
-		options = [
-			discord.SelectOption(label="Main page", value="main", emoji="🏠"),
-			discord.SelectOption(label="General", value="general", emoji="⚙️"),
-			discord.SelectOption(label="Social", value="social", emoji="🎂"),
-			discord.SelectOption(label="Advanced", value="advanced", emoji="🧰"),
-		]
-		self.default = "main"
+
+class GenMenu(ui.View):
+	def __init__(self, user, settings):
+		super().__init__()
+		self.value = None
 		self.user = user
+		self.settings = settings
 
-		super().__init__(placeholder="Choose a category:",
-						 min_values=1, max_values=1, options=options)
+		for i in self.children:
+			i.style = self.colorize(
+				self.settings[i.label.lower().replace("visibility", "private")])
+	
+	def colorize(self, value):
+		if str(value) == "1":
+			print("green")
+			return discord.ButtonStyle.green
+		print("red")
+		return discord.ButtonStyle.red
 
-	async def callback(self, interaction: discord.Interaction):
-		embed = None
-		if self.values[0] == "Main page":
-			embed = self.menu.main_menu()
-		elif self.values[0] == "General":
-			embed = self.menu.general_menu()
-		await interaction.edit_original_response(embed=embed)
-
-
-class SelectView(discord.ui.View):
-	def __init__(self, user, *, timeout=180):
-		super().__init__(timeout=timeout)
-		self.add_item(SelectMenu(user))
+	@ui.button(label="Visibility", style=discord.ButtonStyle.gray)
+	async def vis_button(self, inter, button):
+		async with aiosqlite.connect(DATABASE_FILE) as db:
+			value = 0
+			if self.settings['private'] == 0:
+				value = 1
+			await db.execute(f"UPDATE settings SET private=? WHERE user_id=?", (value, self.user.id))
+			await db.commit()
+		self.settings = await Data.load_db(table="settings", user_id=self.user.id)
+		button.style = self.colorize(value=self.settings['private'])
+		await inter.response.edit_message(view=self)
 
 
 class SettingsMenu(ui.View):
@@ -45,52 +46,74 @@ class SettingsMenu(ui.View):
 		self.user = user
 		self.settings = None
 
-	async def reload_db(self, user):
-		async with aiosqlite.connect(DATABASE_FILE) as db:
-			db.row_factory = aiosqlite.Row
-			cursor = await db.execute("SELECT * FROM settings WHERE user_id = ?", (user.id,))
-			self.settings = await cursor.fetchone()
-			if self.settings is None:
-				await db.execute(f"INSERT INTO settings (user_id) VALUES ('{user.id}')")
-				await db.commit()
-				self.settings = await cursor.fetchone()
-			return self.settings
+	async def interaction_check(self, interaction) -> bool:
+		self.settings = await Data.load_db(table="settings", user_id=self.user.id)
+		return True
 
-	async def align_values(self, string):
-		lines = string.split('\n')
-		for i, line in enumerate(lines):
-			parts = line.split(':')
-			if len(parts) == 2:
-				key = parts[0].strip()
-				value = parts[1].strip()
-				lines[i] = f"{key:<20}{value:>10}"
-		return '\n'.join(lines)
-
-	async def general_menu(self):
+	async def general_menu(self, settings: dict):
 		embed = discord.Embed()
-		embed.title = "⚙ General"
+		embed.title = "🔩 General"
 
-		settings = await self.reload_db(self.user)
-		string = ""
-		print(settings)
-		for key in settings:
-			if key != 'user_id':
-				value = settings[key]
-				string = f"{string}\n{key}: {value.replace((0, 1), ('`OFF`', '`ON`'))}"
-
-		embed.description = await self.align_values(string)
+		embed.add_field(name=f"Visibility: {str(self.settings['private']).replace('0', '`Shown`').replace('1', '`Hidden`')}",
+						value="Your tag won't be shown on leaderboards and other commands showing your user id / discriminator")
+		embed.add_field(name=f"Levels: {str(self.settings['levels']).replace('0', '`Disabled`').replace('1', '`Enabled`')}",
+						value="Disabling levels will prevent you from gaining xp and leveling up")
 		embed.set_footer(text="Select a value to toggle")
 		return embed
 
 	async def main_menu(self):
 		embed = discord.Embed(title=str(self.user))
 		embed.description = "Select an option to pick a category"
-		embed.add_field(name="⚙ General",
+		embed.add_field(name="🔩 General",
 						value="• Visibility\n• Levels", inline=True)
 		embed.add_field(name="🎂 Social",
-						value="• Birthday\n• Handles\n", inline=True)
-		embed.add_field(name="🧰 Advanced", value="• Experiments", inline=True)
+						value="• Birth year\n• Handles\n", inline=True)
+		embed.add_field(name="🧰 Advanced",
+						value="• Experiments\n• Reset data", inline=True)
+		embed.set_footer(text="Select a value to toggle")
 		return embed
+
+	async def social_menu(self):
+		embed = discord.Embed()
+		embed.title = "🎂 Social"
+		birthday = await Data.load_db(table="profiles", user_id=self.user.id, columns=["cake"])
+		year_bool = birthday['cake'].split(":")[1]
+
+		embed.add_field(name=f"Birth year: {str(year_bool).replace('True', '`Shown`').replace('False', '`Hidden`')}",
+						value="Hiding your birth year will not reveal your age in reminders"
+						"and will hide it from your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
+		embed.add_field(name=f"Handles: {str(self.settings['handles']).replace('0', '`Shown`').replace('1', '`Hidden`')}",
+						value="Hiding handles will only allow you to run related commands with no arguments")
+		embed.set_footer(text="Select a value to toggle")
+		return embed
+
+	async def advanced_menu(self):
+		embed = discord.Embed()
+		embed.title = "🎂 Social"
+
+		embed.add_field(name=f"Experiments: {str(self.settings['experiments']).replace('0', '`Disabled`').replace('1', '`Enabled`')}",
+						value="Experiments will give you access to broken, unfinished test features. Enable if you're fine with bugs!")
+		embed.add_field(name="Reset data", value=":warning: *Cannot be undone!*\nDelete all your data including ranks, handles and everything we know about you.\nThere will be a confirmation dialog, your last chance!")
+		embed.set_footer(text="Select a value to toggle")
+		return embed
+
+	@ui.button(label="General", emoji="🔩", style=discord.ButtonStyle.blurple)
+	async def general_button(self, inter, button):
+		embed = await self.general_menu(self.settings)
+		await inter.response.defer()
+		await self.msg.edit(embed=embed, view=GenMenu(inter.user, self.settings))
+
+	@ui.button(label="Social", emoji="🎂", style=discord.ButtonStyle.blurple)
+	async def social_button(self, inter, button):
+		embed = await self.social_menu()
+		await inter.response.defer()
+		await self.msg.edit(embed=embed)
+
+	@ui.button(label="Advanced", emoji="🧰", style=discord.ButtonStyle.blurple)
+	async def advanced_button(self, inter, button):
+		embed = await self.advanced_menu()
+		await inter.response.defer()
+		await self.msg.edit(embed=embed)
 
 
 class Settings(commands.Cog):
@@ -99,10 +122,17 @@ class Settings(commands.Cog):
 
 	@app_commands.command(name="settings", description="Tweak the bot's settings to your likings")
 	async def settings(self, interaction):
+		settings = await Data.load_db(table="settings", user_id=interaction.user.id)
+		if not settings:
+			async with aiosqlite.connect(DATABASE_FILE) as db:
+				await db.execute(f"INSERT INTO settings (user_id) VALUES (?)", (interaction.user.id,))
+				await db.commit()
+			settings = await Data.load_db(table="settings", user_id=interaction.user.id)
+
 		menu = SettingsMenu(interaction.user)
 		embed = await menu.main_menu()
-		view = SelectView(interaction.user)
-		await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+		await interaction.response.send_message(embed=embed, view=menu, ephemeral=True)
+		menu.msg = await interaction.original_response()
 
 
 async def setup(ce: commands.Bot):

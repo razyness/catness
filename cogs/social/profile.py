@@ -220,12 +220,15 @@ class DiscordID(commands.Cog):
 				date_str = social_data['cake']
 				if date_str is not None:
 					date, consider_age = date_str.split(':')
-					if consider_age == "True":
-						formatted_date = f"<t:{int(datetime.strptime(date, '%d/%m/%Y').timestamp())}:D>"
-					else:
-						day, month, year = date.split("/")
-						month = calendar.month_name[int(month)]
-						formatted_date = f"`{day} {month}`"
+					try:
+						if consider_age == "True":
+							formatted_date = f"<t:{int(datetime.strptime(date, '%d/%m/%Y').timestamp())}:D>"
+						else:
+							day, month, year = date.split("/")
+							month = calendar.month_name[int(month)]
+							formatted_date = f"`{day} {month}`"
+					except:
+						formatted_date = f"`{date}`"
 					view = ProfileView(user=await self.ce.fetch_user(user))
 					embed.add_field(name="Birthday", value=formatted_date)
 
@@ -245,10 +248,19 @@ class DiscordID(commands.Cog):
 				view.add_item(discord.ui.Button(label='Banner', style=discord.ButtonStyle.link, url=f"https://cdn.discordapp.com/banners/{user}/{data['banner']}.{ext}?size=4096",
 												emoji='<:download:1062784992243105813>'))
 
-			levels_info = await Data.load_db(table="profiles", user_id=user, columns=["level", "exp"])
-			level, exp = levels_info["level"], levels_info["exp"]
-			missing = round(5 * (level ** 2) + (50 * level) + 100)
-			embed.add_field(name="Ranking", value=f"Level `{level}` | `{exp}/{missing}`xp")
+			settings = await Data.load_db(table="settings", user_id=user)
+
+			if not settings:
+				async with aiosqlite.connect(DATABASE_FILE) as db:
+					await db.execute(f"INSERT INTO settings (user_id) VALUES (?)", (user,))
+					await db.commit()
+				settings = await Data.load_db(table="settings", user_id=user)
+			
+			if settings["levels"] == 1:
+				levels_info = await Data.load_db(table="profiles", user_id=user, columns=["level", "exp"])
+				level, exp = levels_info["level"], levels_info["exp"]
+				missing = round(5 * (level ** 2) + (50 * level) + 100)
+				embed.add_field(name="Ranking", value=f"Level `{level}` | `{exp}/{missing}`xp")
 			await interaction.response.send_message(embed=embed, view=view)
 			view.msg = await interaction.original_response()
 

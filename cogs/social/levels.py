@@ -46,7 +46,6 @@ class Levels(commands.Cog):
 	async def give_xp(self, message):
 		ratelimit = self.get_ratelimit(message)
 		if message.author.bot or ratelimit is not None:
-			print(ratelimit)
 			return
 		user_id = message.author.id
 		prev_level = await self.get_level(user_id)
@@ -68,7 +67,7 @@ class Levels(commands.Cog):
 		filled_chars = round(percent_progress * 30)
 		progress_bar = "▮" * filled_chars + "▯" * (30 - filled_chars)
 		max_value_str = f"{max_value}"
-		xp_level_str = f" xp: {progress_value}/{max_value}{' '*(20-len(max_value_str)-len(str(progress_value)))}level: {level}"
+		xp_level_str = f" xp: {progress_value}/{max_value}{' '*(13-len(max_value_str)-len(str(progress_value)))}level: {level} -> {level + 1}"
 		output_str = f"{xp_level_str}\n{' '}{progress_bar}"
 		return output_str
 

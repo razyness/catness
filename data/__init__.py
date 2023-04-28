@@ -32,7 +32,8 @@ icons = {
     "verified_bot": "<:Verified_Bot:1078090782118002719>",
     "lastfm": "<:lastfm:1080282189100482693>",
     "steam": "<:steam:1080281878847832186>",
-    "contributor": "<:Contributor:1078661797185335398>"
+    "contributor": "<:Contributor:1078661797185335398>",
+    "back": "<:back:1101510067880202301>"
     }
 
 
@@ -72,7 +73,7 @@ class Data():
                 cursor = await conn.cursor()
 
                 await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1)")
-                await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0)")
+                await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0, handles INTEGER DEFAULT 1)")
                 await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER, time INTEGER)")
 
                 await conn.commit()
