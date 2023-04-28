@@ -11,6 +11,9 @@ from data import Data, DATABASE_FILE
 
 
 class Cake(commands.Cog):
+    MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+              'August', 'September', 'October', 'November', 'December']
+    
     def __init__(self, ce):
         super().__init__()
         self.ce = ce
@@ -24,13 +27,12 @@ class Cake(commands.Cog):
         except ValueError:
             return None
 
-    @app_commands.command(name="cake", description="Set a birthdate to display on your profile, along with other benefits!!")
-    @app_commands.choices(month=[Choice(name='January', value="01"), Choice(name='February', value="02"), Choice(name='March', value="03"),
-                                 Choice(name='April', value="04"), Choice(
-        name='May', value="05"), Choice(name='June', value="06"),
-        Choice(name='July', value="07"), Choice(
-        name='August', value="08"), Choice(name='September', value="09"),
-        Choice(name='October', value="10"), Choice(name='November', value="11"), Choice(name='December', value="12")])
+    @app_commands.command(
+        name="cake",
+        description="Set a birthdate to display on your profile, along with other benefits!!"
+    )
+    @app_commands.choices(month=[Choice(name=month, value=f'{(num+1):02}')
+                                 for num, month in enumerate(MONTHS)])
     @app_commands.describe(consider="Consider the year to inform others of your age?")
     async def cake(self, inter, day: int, month: Choice[str], year: int, consider: bool = True):
         cake_date = f"{day}/{month.value}/{year}"
