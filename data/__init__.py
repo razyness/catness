@@ -34,7 +34,7 @@ icons = {
     "steam": "<:steam:1080281878847832186>",
     "contributor": "<:Contributor:1078661797185335398>",
     "back": "<:back:1101510067880202301>"
-    }
+}
 
 
 class Data():
@@ -57,13 +57,16 @@ class Data():
             async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE user_id = ?", (user_id,)) as cursor:
                 row = await cursor.fetchone()
                 if row is None:
-                    return None
-                if columns is None or columns == []:
-                    columns = [description[0] for description in cursor.description]
-                data = dict(zip(columns, row))
+                    await conn.execute(f"INSERT INTO {table} (user_id) VALUES (?)", (user_id,))
+                    await conn.commit()
+                    async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE user_id = ?", (user_id,)) as cursor:
+                        row = await cursor.fetchone()
+
+            if columns is None or columns == []:
+                columns = [description[0]
+                           for description in cursor.description]
+            data = dict(zip(columns, row))
         return data
-
-
 
     async def create_tables():
         """Creates the tables if missing
