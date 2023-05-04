@@ -29,7 +29,7 @@ so do heroin and kill somebody with a hammer this weekend!
 """
 
 def delete_pycache(dir_path):
-    for root, dirs, files in os.walk(dir_path):
+    for root, dirs, _ in os.walk(dir_path):
         if "__pycache__" in dirs:
             pycache_dir = os.path.join(root, "__pycache__")
             print(f"Deleting {pycache_dir}")
