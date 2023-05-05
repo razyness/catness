@@ -3,12 +3,87 @@ import aiosqlite
 import random
 import discord
 import typing
+import asyncio
+import aiohttp
+import io
+import easy_pil
 
+from PIL import Image
 from discord import app_commands, ui
 from discord.interactions import Interaction
 from data import Data, DATABASE_FILE
 from discord.ext import commands
 from collections import deque
+
+async def fetch_image(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                raise ValueError(f"Failed to fetch image, status code: {resp.status}")
+            image_data = await resp.read()
+            image = Image.open(io.BytesIO(image_data))
+            return image
+
+async def create_card(user_data):
+	# Load the background image asynchronously
+	background = await fetch_image(user_data['banner'])
+
+	empty_canvas = easy_pil.Canvas(size=(1000, 620), color=(0, 0, 0, 0))
+
+	editor = easy_pil.Editor(image=background)
+	editor.resize(size=(int(1000/2),int(620/2)-40), crop=True)
+
+	gradient_editor = easy_pil.Editor(image=empty_canvas)
+	gradient = gradient_editor.rectangle(position=(0, 200/2), width=1000/2, height=500/2, color=(0, 0, 0, 130), radius=0)
+	gradient = gradient.blur(mode="gussian", amount=200/2)
+	editor.paste(gradient, (0, 0-10))
+
+	profile_shadow_editor = easy_pil.Editor(image=empty_canvas)
+	profile_shadow = profile_shadow_editor.rectangle(position=(98/2, 98/2), width=287/2, height=287/2, color=(0, 0, 0, 170), radius=40/2)
+	profile_shadow = profile_shadow.blur(mode="gussian", amount=20/2)
+	editor.paste(profile_shadow, (0, 0-10))
+
+	avatar_image = await fetch_image(user_data['avatar'])
+	avatar = easy_pil.Editor(avatar_image).resize((int(287/2), int(287/2))).rounded_corners(radius=40/2)
+	editor.paste(avatar, (int(98/2), int(98/2)-10))
+	
+	text_editor = easy_pil.Editor(image=empty_canvas)
+	font_large = easy_pil.Font.montserrat(size=int(45/2), variant="bold")
+	font_medium = easy_pil.Font.montserrat(size=int(32/2), variant="bold")
+	font_small = easy_pil.Font.poppins(size=int(30/2), variant="bold")
+
+	bar_editor = easy_pil.Editor(image=empty_canvas)
+	bar_shadow = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2, percentage=100, color=(0, 0, 0, 40), radius=15/2)
+	bar_shadow.blur(mode="gussian", amount=20/2)
+	editor.paste(bar_shadow, (0,0-10))
+	bar = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2, percentage=100, color=(255, 255, 255, 70), radius=15/2)
+	editor.paste(bar, (0,0-10))
+	bar_progress = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2, percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15/2)
+	editor.paste(bar_progress, (0,0-10))
+
+	rep_bg_editor = easy_pil.Editor(image=empty_canvas)
+	rep_shadow = rep_bg_editor.bar(position=(682/2, 333/2), max_width=205/2, height=57/2, percentage=100, color=(0, 0, 0, 40), radius=15/2)
+	editor.paste(rep_shadow, (0,0-10))
+	rep_bg = rep_bg_editor.bar(position=(682/2, 333/2), max_width=205/2, height=57/2, percentage=100, color=(255, 255, 255, 180), radius=15/2)
+	editor.paste(rep_bg, (0,0-10))
+
+	username = text_editor.text(position=(433/2, 133/2), text=user_data["name"], color=(0, 0, 0, 40), font=font_large)
+	exp_text = text_editor.text(position=(104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 30), font=font_small)
+	level_text = text_editor.text(position=(880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 30), align="right", font=font_small)
+	text_editor.blur(mode="gussian", amount=5/2)
+
+	for i in [username, exp_text, level_text]:
+		editor.paste(i, (0, 0-10))
+
+	username = text_editor.text(position=(433/2, 133/2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
+	exp_text = text_editor.text(position=(104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 80), font=font_small)
+	level_text = text_editor.text(position=(880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 80), align="right", font=font_small)
+	rep_text = text_editor.text(position=(782/2, 350/2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
+
+	for i in [username, exp_text, level_text, rep_text]:
+		editor.paste(i, (0, 0-10))
+
+	return editor.image_bytes
 
 class Paginateness(ui.View):
 	def __init__(self, embeds:List[discord.Embed]) -> None:
@@ -19,12 +94,20 @@ class Paginateness(ui.View):
 		self._initial = embeds[0]
 		self._length = len(embeds)
 		self._current_page = 1
-		self._queue[0].set_footer(text=f"Page {self._current_page} of {self._length}")
-
+		for i in self._queue:
+			i.set_footer(text=f"Page {self._current_page} of {self._length}")
 		self.children[0].disabled = True
 
 		if self._length == 1:
 			self.children[1].disabled = True
+
+	async def disable_all(self, msg="Timed out...", view=None):
+		for i in self.children:
+			i.disabled = True
+		await self.msg.edit(content=msg, embed=None, view=view)
+
+	async def on_timeout(self):
+		await self.disable_all()
 
 	async def update_buttons(self, inter):
 		for i in self._queue:
@@ -48,8 +131,8 @@ class Paginateness(ui.View):
 		self._current_page -= 1
 		embed = self._queue[0]
 
-		await self.msg.edit(embed=embed)
 		await self.update_buttons(inter)
+		await self.msg.edit(embed=embed)
 
 	@ui.button(label=">", style=discord.ButtonStyle.blurple)
 	async def next(self, inter, button):
@@ -57,8 +140,18 @@ class Paginateness(ui.View):
 		self._current_page += 1
 		embed = self._queue[0]
 		
-		await self.msg.edit(embed=embed)
 		await self.update_buttons(inter)
+		await self.msg.edit(embed=embed)
+
+	@ui.button(label='Exit', style=discord.ButtonStyle.red)
+	async def close(self, interaction: discord.Interaction, button: ui.Button):
+
+		await self.disable_all(msg="Bye-bye")
+		self.value = False
+		self.stop()
+		await interaction.response.defer()
+		await asyncio.sleep(2)
+		await self.msg.delete()
 
 	@property
 	def initial(self) -> discord.Embed:
@@ -130,18 +223,44 @@ class Levels(commands.Cog):
 		return output_str
 
 	@app_commands.command()
-	async def rank(self, inter):
-		embed = discord.Embed(title=str(inter.user))
-		embed.set_thumbnail(url=inter.user.avatar.url)
+	async def rank(self, inter, user:discord.User=None):
+		await inter.response.defer(thinking=True)
+		user = user or inter.user
+		user = await self.ce.fetch_user(user.id)
+		if user.bot:
+			await inter.followup.send("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
+			return
 
-		levels_info = await Data.load_db(table="profiles", user_id=inter.user.id, columns=["level", "exp"])
+		levels_info = await Data.load_db(table="profiles", user_id=user.id, columns=["level", "exp"])
 		level, exp = levels_info["level"], levels_info["exp"]
 		missing = round(5 * (level ** 2) + (50 * level) + 100)
-		bar = self.generate_progress_bar(
-			max_value=missing, progress_value=exp, level=level)
-		embed.description = f"```{bar}```"
+		settings = await Data.load_db(table="settings", user_id=user.id)
+		if settings['experiments'] == 1:
+			rep = await Data.load_db(table="rep", user_id=user.id)
 
-		await inter.response.send_message(embed=embed)
+			user_data = {  # Most likely coming from database or calculation
+			    "name": str(user) if settings['private'] == 0 else user.name,  # The user's name
+			    "xp": exp,
+			    "next_level_xp": missing,
+			    "level": level,
+			    "percentage": (exp / missing) * 100,
+			    "rep": rep['rep'],
+			    "avatar": user.avatar.url,
+			    "banner": f"{user.banner.url[:-9]}?size=1024" if user.banner else "https://cdn.discordapp.com/attachments/912099940325523586/1104016078880919592/card.png"
+			}
+
+			card = await create_card(user_data=user_data)
+
+			file = discord.File(fp=card, filename='card.png')
+			await inter.followup.send(file=file)
+		else:
+			embed = discord.Embed(title=str(user))
+			embed.set_thumbnail(url=user.avatar.url)
+			bar = self.generate_progress_bar(
+				max_value=missing, progress_value=exp, level=level)
+
+			embed.description = f"```{bar}```"
+			await inter.followup.send(embed=embed)
 
 	@app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
 	@app_commands.describe(compact="Show less users per page, to fit on mobile")
@@ -172,12 +291,12 @@ class Levels(commands.Cog):
 			if settings['levels'] != 0:
 				profile_list.append(profile_dict)
 
-			if len(profile_list) >= 50:
+			if len(profile_list) >= 30:
 				break
 
 		await conn.close()
 
-		profile_list = sorted(profile_list, key=lambda x: x['level'] + x['exp'] / (100 * len(str(x['exp']))), reverse=True)
+		profile_list.sort(key=lambda user: (user['level'], user['exp']), reverse=True)
 
 		embeds = []
 		pos = 1
