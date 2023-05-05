@@ -56,6 +56,5 @@ class Link(commands.Cog):
         await interaction.response.send_message(response, ephemeral=True)
 
 
-
 async def setup(ce):
     await ce.add_cog(Link(ce))

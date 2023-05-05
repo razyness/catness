@@ -2,6 +2,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord import ui
 
+import asyncio
 import discord
 
 from data import config, Data
@@ -130,26 +131,27 @@ async def friendsTab(user):
 			else:
 				value = i["realname"]
 			if i["subscriber"] == "1":
-				embed.add_field(name=f'🔹• {name}', value=f'{value}')
+				embed.add_field(name=f'🔹• {i["name"]}', value=f'{i["realname"] if i["realname"] != "" else "*No real name set*"}')
 			else:
 				embed.add_field(
-					name=f'{i["name"]}', value=f'{i["realname"]}')
+					name=f'{i["name"]}', value=f'{i["realname"] if i["realname"] != "" else "*No real name set*"}')
 			j += 1
 	embed.color = 0xe4141e
 	return embed
 
 
 class fmProfile(ui.View):
-	def __init__(self, user, author):
+	def __init__(self, user, author, timeout=180):
 		super().__init__()
 		self.value = None
 		self.user = user
 		self.author = author
+		self.timeout=180
 
-	async def disable_all(self):
+	async def disable_all(self, msg="Timed out...", view=None):
 		for i in self.children:
 			i.disabled = True
-		await self.msg.edit(view=self)
+		await self.msg.edit(content=msg, embed=None, view=view)
 
 	async def on_timeout(self):
 		await self.disable_all()
@@ -170,12 +172,14 @@ class fmProfile(ui.View):
 		await interaction.response.edit_message(embed=embed)
 
 	@ui.button(label='Exit', style=discord.ButtonStyle.red)
-	async def quit(self, interaction: discord.Interaction, button: ui.Button):
+	async def close(self, interaction: discord.Interaction, button: ui.Button):
 
-		await self.disable_all()
+		await self.disable_all(msg="Bye-bye")
 		self.value = False
 		self.stop()
 		await interaction.response.defer()
+		await asyncio.sleep(2)
+		await self.msg.delete()
 
 	async def interaction_check(self, interaction) -> bool:
 		if interaction.user.id != self.author:

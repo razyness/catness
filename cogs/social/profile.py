@@ -198,6 +198,11 @@ class DiscordID(commands.Cog):
 			result = ' '.join(badges_list)
 			embed.description = result
 			view = DownloadButton()
+			if real_user.bot:
+				await interaction.response.send_message(embed=embed, view=view)
+				view.msg = await interaction.original_response()
+				return
+
 			profiles = []
 
 			async with aiosqlite.connect('data/data.db') as db:
@@ -224,7 +229,7 @@ class DiscordID(commands.Cog):
 						if consider_age == "True":
 							formatted_date = f"<t:{int(datetime.strptime(date, '%d/%m/%Y').timestamp())}:D>"
 						else:
-							day, month, year = date.split("/")
+							day, month, _ = date.split("/")
 							month = calendar.month_name[int(month)]
 							formatted_date = f"`{day} {month}`"
 					except:
@@ -250,7 +255,7 @@ class DiscordID(commands.Cog):
 
 			settings = await Data.load_db(table="settings", user_id=user)
 
-			if not settings:
+			if not real_user.bot and not settings:
 				async with aiosqlite.connect(DATABASE_FILE) as db:
 					await db.execute(f"INSERT INTO settings (user_id) VALUES (?)", (user,))
 					await db.commit()
