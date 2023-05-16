@@ -1,9 +1,11 @@
+from typing import Optional
 import aiosqlite
 import discord
 
 from discord import ui
 from discord.ext import commands
 from discord import app_commands
+from discord.utils import MISSING
 
 from data import Data, DATABASE_FILE, icons
 
@@ -63,6 +65,41 @@ def colorize(value):
         return discord.ButtonStyle.green
     return discord.ButtonStyle.gray
 
+
+class ConfirmModal(ui.Modal):
+    def __init__(self, *, title: str = "Are you sure?", timeout: float | None = 120) -> None:
+        super().__init__(title=title, timeout=timeout)
+
+    confirmation = discord.ui.TextInput(
+        style=discord.TextStyle.short,
+        label="This cannot be undone",
+        required=False,
+        max_length=500,
+        placeholder="Type anything here and press submit to confirm."
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if not self.confirmation.value:
+            await interaction.response.send_message(f"Alright, come back if you change your mind!", ephemeral=True)
+            return
+        await interaction.response.send_message(f"Wait while i delete everything i know about you...", ephemeral=True)
+        await Data.commit_db(command=f"DELETE FROM rep WHERE user_id = ?", args=(interaction.user.id,))
+        await Data.commit_db(command=f"DELETE FROM settings WHERE user_id = ?", args=(interaction.user.id,))
+        followed_users = {'following': '[]'} or await Data.load_db("profiles", interaction.user.id, columns=["following"])
+
+        for i in eval(followed_users['following']):
+            print(i)
+            userdata = await Data.load_db(table="profiles", user_id=i, columns=['follow_list'])
+            print(userdata)
+            follow_list = eval(userdata['follow_list'])
+            follow_list = follow_list.remove(interaction.user.id)
+            if follow_list is None:
+                follow_list = []
+            await Data.commit_db("UPDATE profiles SET follow_list=? WHERE user_id=?", (str(follow_list), i))
+        await Data.commit_db(command=f"DELETE FROM profiles WHERE user_id=?", args=(interaction.user.id,))
+        await interaction.followup.send("Everything is gone, bye-bye!", ephemeral=True)
+
+
 class AdvancedMenu(ui.View):
     def __init__(self, user, settings):
         super().__init__()
@@ -71,16 +108,16 @@ class AdvancedMenu(ui.View):
         self.settings = settings
 
         for i in self.children:
-            if not i.label:
+            if not i.label or i.label == "Reset Data":
                 continue
             i.style = colorize(
                 self.settings[i.label.lower()])
-    
+
     @ui.button(label=None, emoji=icons["back"], style=discord.ButtonStyle.blurple)
     async def back(self, inter, button):
         view = SettingsMenu(inter.user)
         embed = await main_menu(inter.user)
-        
+
         await inter.response.edit_message(embed=embed, view=view)
         view.msg = await inter.original_response()
 
@@ -95,9 +132,15 @@ class AdvancedMenu(ui.View):
         self.settings = await Data.load_db(table="settings", user_id=self.user.id)
         button.style = colorize(value=self.settings['experiments'])
         embed = await advanced_menu(self.settings)
-        
+
         await inter.response.edit_message(embed=embed, view=self)
-    
+
+    @ui.button(label="Reset Data", style=discord.ButtonStyle.red)
+    async def reset_data(self, inter, button):
+        modal = ConfirmModal()
+        await inter.response.send_modal(modal)
+
+
 class SocialMenu(ui.View):
     def __init__(self, user, settings, birthday):
         super().__init__()
@@ -122,7 +165,7 @@ class SocialMenu(ui.View):
     async def back(self, inter, button):
         view = SettingsMenu(inter.user)
         embed = await main_menu(inter.user)
-        
+
         await inter.response.edit_message(embed=embed, view=view)
         view.msg = await inter.original_response()
 
@@ -142,7 +185,7 @@ class SocialMenu(ui.View):
         button.style = colorize(value=year_bool)
         self.birthday = birthday['cake']
         embed = await social_menu(self.settings, inter.user)
-        
+
         await inter.response.edit_message(embed=embed, view=self)
 
     @ui.button(label="Handles", style=discord.ButtonStyle.gray)
@@ -156,7 +199,7 @@ class SocialMenu(ui.View):
         self.settings = await Data.load_db(table="settings", user_id=self.user.id)
         button.style = colorize(value=self.settings['handles'])
         embed = await social_menu(self.settings, inter.user)
-        
+
         await inter.response.edit_message(embed=embed, view=self)
 
 
@@ -176,7 +219,7 @@ class GeneralMenu(ui.View):
     async def back(self, inter, button):
         view = SettingsMenu(inter.user)
         embed = await main_menu(inter.user)
-        
+
         await inter.response.edit_message(embed=embed, view=view)
         view.msg = await inter.original_response()
 
@@ -191,7 +234,7 @@ class GeneralMenu(ui.View):
         self.settings = await Data.load_db(table="settings", user_id=self.user.id)
         button.style = colorize(value=self.settings['private'])
         embed = await general_menu(self.settings)
-        
+
         await inter.response.edit_message(embed=embed, view=self)
 
     @ui.button(label="Levels", style=discord.ButtonStyle.gray)
@@ -205,7 +248,7 @@ class GeneralMenu(ui.View):
         self.settings = await Data.load_db(table="settings", user_id=self.user.id)
         button.style = colorize(value=self.settings['levels'])
         embed = await general_menu(self.settings)
-        
+
         await inter.response.edit_message(embed=embed, view=self)
 
 
@@ -223,14 +266,14 @@ class SettingsMenu(ui.View):
     @ui.button(label="General", emoji="🔩", style=discord.ButtonStyle.blurple)
     async def general_button(self, inter, button):
         embed = await general_menu(self.settings)
-        
+
         await inter.response.defer()
         await self.msg.edit(embed=embed, view=GeneralMenu(inter.user, self.settings))
 
     @ui.button(label="Social", emoji="🎂", style=discord.ButtonStyle.blurple)
     async def social_button(self, inter, button):
         embed = await social_menu(self.settings, self.user)
-        
+
         birthday = await Data.load_db(table="profiles", user_id=self.user.id)
         await inter.response.defer()
         await self.msg.edit(embed=embed, view=SocialMenu(inter.user, self.settings, birthday['cake']))
@@ -238,7 +281,7 @@ class SettingsMenu(ui.View):
     @ui.button(label="Advanced", emoji="🧰", style=discord.ButtonStyle.blurple)
     async def advanced_button(self, inter, button):
         embed = await advanced_menu(self.settings)
-        
+
         await inter.response.defer()
         await self.msg.edit(embed=embed, view=AdvancedMenu(inter.user, self.settings))
 

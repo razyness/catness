@@ -67,6 +67,27 @@ class Data():
 			data = dict(zip(columns, row))
 		return data
 
+	async def commit_db(command: str, args: tuple) -> bool:
+		"""General, basic function to commit to a table
+
+		Args:
+			command (str): The sqlite command to execute
+
+			args (tuple): The arguments to pass in
+				[e.g. "UPDATE profiles SET follow_list=? WHERE user_id=?",
+				(follow_list_str, user) <- the arguments]
+
+		Returns:
+			bool: True if the operation was successful, False if it was not
+		"""
+		async with aiosqlite.connect(DATABASE_FILE) as conn:
+			await conn.execute(command, args)
+			try:
+				await conn.commit()
+				return True
+			except:
+				return False
+
 	async def create_tables():
 		"""Creates the tables if missing
 		"""
@@ -74,7 +95,7 @@ class Data():
 			async with aiosqlite.connect(DATABASE_FILE) as conn:
 				cursor = await conn.cursor()
 
-				await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, following TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1)")
+				await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, following TEXT)")
 				await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0, handles INTEGER DEFAULT 1)")
 				await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER, time INTEGER)")
 
