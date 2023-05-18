@@ -97,6 +97,6 @@ class Data():
 
 				await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, following TEXT)")
 				await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0, handles INTEGER DEFAULT 1)")
-				await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER, time INTEGER)")
+				await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER DEFAULT 0, time INTEGER)")
 
 				await conn.commit()
