@@ -17,7 +17,7 @@ class Avatar(commands.Cog):
 
 	@app_commands.command(name='avatar', description='Get yours/someone\'s avatar')
 	@app_commands.describe(member='user hello person avatar')
-	async def avatar(self, interaction, member: discord.Member = None):
+	async def avatar(self, interaction, member: discord.User = None):
 		member = member or interaction.user
 
 		view = DownloadButton()

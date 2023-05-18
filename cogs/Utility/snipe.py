@@ -48,6 +48,7 @@ class Snipe(commands.Cog):
             attachment = None
 
     @app_commands.command(name='snipe', description='Get last deleted message')
+    @app_commands.guild_only()
     async def snipe(self, interaction: discord.Interaction):
         if snipe_message_id is None:
             await interaction.response.send_message('There is nothing to snipe!', ephemeral=True)

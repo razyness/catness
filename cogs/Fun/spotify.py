@@ -15,6 +15,7 @@ class Spotify(commands.Cog):
         self.ce = ce
 
     @app_commands.command(name='spotify', description='View the user\'s spotify activity')
+    @app_commands.guild_only()
     @app_commands.describe(member='The activity user')
     async def spotify(self, interaction, member: discord.Member = None):
 
