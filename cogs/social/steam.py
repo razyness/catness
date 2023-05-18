@@ -107,7 +107,7 @@ class Steam(commands.Cog):
 			embed = await mainPage(user)
 			await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 		except Exception as e:
-			await interaction.response.send_message(f"I couldn't find the user. Did you use the vanity url of the user? {e}", ephemeral=True)
+			await interaction.response.send_message(f"I couldn't find the user. Did you use the vanity url of the user?", ephemeral=True)
 
 
 async def setup(ce):

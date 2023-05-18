@@ -25,9 +25,9 @@ class errorHandler(commands.Cog):
         elif isinstance(error, app_commands.MissingPermissions):
             return await interaction.response.send_message(f"You're missing permissions to use that", ephemeral=True)
         elif isinstance(error, app_commands.AppCommandError):
-            return await interaction.response.send_message(f"You're missing permissions to use that - {error}", ephemeral=True)
+            return await interaction.response.send_message(f"oopsie detected - `{error}", ephemeral=True)
         else:
-            return await interaction.response.send_message(f"I had an oopsie!! `{error}`", ephemeral=True)
+            raise Exception
 
 async def setup(ce):
     await ce.add_cog(errorHandler(ce))
