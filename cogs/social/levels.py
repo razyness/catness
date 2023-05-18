@@ -214,6 +214,10 @@ class Levels(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def give_xp(self, message):
+        has_levels_on = await Data.load_db(table="settings", user_id=message.author.id, columns=['levels'])
+        if has_levels_on['levels'] == 0:
+            return
+
         ratelimit = self.get_ratelimit(message)
         if message.author.bot or ratelimit is not None:
             return
@@ -244,12 +248,18 @@ class Levels(commands.Cog):
     @app_commands.command(description="Display your total XP and the amount of XP needed to reach the next level.")
     @app_commands.describe(user="i think you can figure it out")
     async def rank(self, inter, user: discord.User = None):
-        await inter.response.defer(thinking=True)
         user = user or inter.user
+
+        has_levels_on = await Data.load_db(table="settings", user_id=user.id, columns=['levels'])
+        if has_levels_on['levels'] == 0:
+            return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
+
         user = await self.ce.fetch_user(user.id)
         if user.bot:
-            await inter.followup.send("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
+            await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
             return
+
+        await inter.response.defer(thinking=True)
 
         levels_info = await Data.load_db(table="profiles", user_id=user.id, columns=["level", "exp"])
         level, exp = levels_info["level"], levels_info["exp"]
@@ -266,7 +276,7 @@ class Levels(commands.Cog):
                 "level": level,
                 "percentage": (exp / missing) * 100,
                 "rep": rep['rep'],
-                "avatar": user.avatar.url,
+                "avatar": user.display_avatar.url,
                 "banner": f"{user.banner.url[:-9]}?size=1024" if user.banner else "https://cdn.discordapp.com/attachments/912099940325523586/1104016078880919592/card.png"
             }
 
@@ -276,7 +286,7 @@ class Levels(commands.Cog):
             await inter.followup.send(file=file)
         else:
             embed = discord.Embed(title=str(user))
-            embed.set_thumbnail(url=user.avatar.url)
+            embed.set_thumbnail(url=user.display_avatar.url)
             bar = self.generate_progress_bar(
                 max_value=missing, progress_value=exp, level=level)
 
