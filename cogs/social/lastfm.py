@@ -139,7 +139,6 @@ async def friendsTab(user):
 	embed.color = 0xe4141e
 	return embed
 
-
 class fmProfile(ui.View):
 	def __init__(self, user, author, timeout=180):
 		super().__init__()
@@ -147,6 +146,10 @@ class fmProfile(ui.View):
 		self.user = user
 		self.author = author
 		self.timeout=180
+		self.selection = "Main Menu"
+
+		for child in self.children:
+			child.disabled = True if child.label == self.selection else False
 
 	async def disable_all(self, msg="Timed out...", view=None):
 		for i in self.children:
@@ -158,18 +161,27 @@ class fmProfile(ui.View):
 
 	@ui.button(label='Now Playing', style=discord.ButtonStyle.gray)
 	async def playing(self, interaction: discord.Integration, button: ui.Button):
+		self.selection = button.label
+		for child in self.children:
+			child.disabled = True if child.label == self.selection else False
 		embed = await playingStatus(self.user)
-		await interaction.response.edit_message(embed=embed)
+		await interaction.response.edit_message(embed=embed, view=self)
 
 	@ui.button(label='Main Menu', style=discord.ButtonStyle.blurple)
 	async def main(self, interaction: discord.Interaction, button: ui.Button):
+		self.selection = button.label
+		for child in self.children:
+			child.disabled = True if child.label == self.selection else False
 		embed = await overview(self.user)
-		await interaction.response.edit_message(embed=embed)
+		await interaction.response.edit_message(embed=embed, view=self)
 
 	@ui.button(label='Friends', style=discord.ButtonStyle.gray)
 	async def friends(self, interaction, button):
+		self.selection = button.label
+		for child in self.children:
+			child.disabled = True if child.label == self.selection else False
 		embed = await friendsTab(self.user)
-		await interaction.response.edit_message(embed=embed)
+		await interaction.response.edit_message(embed=embed, view=self)
 
 	@ui.button(label='Exit', style=discord.ButtonStyle.red)
 	async def close(self, interaction: discord.Interaction, button: ui.Button):
