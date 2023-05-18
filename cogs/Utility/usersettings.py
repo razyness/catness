@@ -31,7 +31,7 @@ async def main_menu(user):
     embed.add_field(name="🧰 Advanced",
                     value="• Experiments\n• Reset data", inline=True)
     embed.set_footer(text="Select a value to toggle")
-    embed.set_thumbnail(url=user.avatar.url)
+    embed.set_thumbnail(url=user.display_avatar.url)
     return embed
 
 
@@ -301,7 +301,7 @@ class Settings(commands.Cog):
 
         menu = SettingsMenu(interaction.user)
         embed = await main_menu(interaction.user)
-        embed.set_thumbnail(url=interaction.user.avatar.url)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed, view=menu, ephemeral=True)
         menu.msg = await interaction.original_response()
 

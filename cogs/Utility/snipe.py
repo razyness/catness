@@ -56,7 +56,7 @@ class Snipe(commands.Cog):
         else:
             embed = discord.Embed(title=None, description=f'{snipe_message}')
             embed.set_author(
-                name=f"{sn_author_name} · at {creation_date[11:-16]}", icon_url=sn_author_name.avatar.url)
+                name=f"{sn_author_name} · at {creation_date[11:-16]}", icon_url=sn_author_name.display_avatar.url)
 
             if attachment is not None:
                 embed.set_image(url=attachment.url)

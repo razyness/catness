@@ -111,7 +111,7 @@ class Events(commands.Cog):
                     for i in eval(row[2]):
                         notif_user = await self.bot.fetch_user(i)
                         embed = discord.Embed(title=str(cake_user))
-                        embed.set_thumbnail(url=cake_user.avatar.url)
+                        embed.set_thumbnail(url=cake_user.display_avatar.url)
                         c = [
                             "🎉 Happy Birthday, {user}! Let's party!",
                             "🎂 It's {user}'s birthday, Wish them a wonderful day!",
