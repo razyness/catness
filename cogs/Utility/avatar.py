@@ -19,15 +19,23 @@ class DownloadButton(discord.ui.View):
 				continue
 
 			if self.user.avatar is None and child.label == "Display":
-				self.remove_item(child)
+				child.disabled = True
+				child.style = discord.ButtonStyle.gray
 				self.selection = "Default"
 
-			if self.user.guild_avatar is None and child.label == "Server":
-				self.remove_item(child)
+			if child.label == "Server":
 				self.selection = "Display"
+				child.disabled = True
+				child.style = discord.ButtonStyle.gray
+
+			if isinstance(user, discord.Member):
+				if self.user.guild_avatar is not None and child.label == "Server":
+					child.disabled = False
+					child.style = discord.ButtonStyle.blurple
+					self.selection = "Server"
 
 		for child in self.children:
-			if child.label == "Exit":
+			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 
@@ -43,7 +51,7 @@ class DownloadButton(discord.ui.View):
 	async def default_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit":
+			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
@@ -55,7 +63,7 @@ class DownloadButton(discord.ui.View):
 	async def display_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit":
+			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
@@ -67,7 +75,7 @@ class DownloadButton(discord.ui.View):
 	async def guild_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit":
+			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
