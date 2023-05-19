@@ -1,69 +1,61 @@
 import discord
 import asyncio
-from discord import app_commands
+
 from discord.ext import commands
+from discord import app_commands
 
-snipe_message_content = ''
-snipe_message_author = None
-snipe_message_id = None
-sn_author_name = None
-delete_time = None
-creation_date = None
-attachment = None
-
+class SnipeData:
+    def __init__(self, content, author, message_id, creation_date, attachment, channel_id):
+        self.content = content
+        self.author = author
+        self.message_id = message_id
+        self.creation_date = creation_date
+        self.attachment = attachment
+        self.channel_id = channel_id
 
 class Snipe(commands.Cog):
-    def __init__(self, ce):
-        self.ce = ce
+    def __init__(self, bot):
+        self.bot = bot
+        self.snipe_data = {}  # Dictionary to store snipe data per channel
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-
         if message.author.bot:
             return
 
-        global snipe_message
-        global snipe_message_author
-        global sn_author_name
-        global snipe_message_id
-        global creation_date
-        global attachment
-
-        snipe_message = str(message.content)
-        snipe_message_author = message.author.id
-        snipe_message_id = message.id
-        if message.attachments:
-            attachment = message.attachments[0]
-        sn_author_name = message.author
-        creation_date = str(message.created_at)
+        channel = message.channel
+        snipe_data = SnipeData(
+            content=str(message.content),
+            author=message.author,
+            message_id=message.id,
+            creation_date=str(message.created_at),
+            attachment=message.attachments[0] if message.attachments else None,
+            channel_id=channel.id
+        )
+        self.snipe_data[channel.id] = snipe_data
 
         await asyncio.sleep(60)
 
-        if message.id == snipe_message_id:
-            snipe_message_author = None
-            snipe_message = None
-            snipe_message_id = None
-            sn_author_name = None
-            creation_date = None
-            attachment = None
+        if channel.id in self.snipe_data and message.id == self.snipe_data[channel.id].message_id:
+            del self.snipe_data[channel.id]
 
     @app_commands.command(name='snipe', description='Get last deleted message')
     @app_commands.guild_only()
-    async def snipe(self, interaction: discord.Interaction):
-        if snipe_message_id is None:
-            await interaction.response.send_message('There is nothing to snipe!', ephemeral=True)
-
-        else:
-            embed = discord.Embed(title=None, description=f'{snipe_message}')
-            embed.set_author(
-                name=f"{sn_author_name} · at {creation_date[11:-16]}", icon_url=sn_author_name.display_avatar.url)
-
-            if attachment is not None:
-                embed.set_image(url=attachment.url)
-
-            await interaction.response.send_message(embed=embed)
+    async def snipe(self, inter):
+        channel = inter.channel
+        if channel.id not in self.snipe_data:
+            await inter.response.send_message('There is nothing to snipe!', ephemeral=True)
             return
 
+        snipe_data = self.snipe_data[channel.id]
+        embed = discord.Embed(title=None, description=snipe_data.content)
+        embed.set_author(name=f"{snipe_data.author} · at {snipe_data.creation_date[11:-16]}",
+                         icon_url=snipe_data.author.display_avatar.url)
 
-async def setup(ce):
-    await ce.add_cog(Snipe(ce))
+        if snipe_data.attachment is not None:
+            embed.set_image(url=snipe_data.attachment.url)
+
+        await inter.response.send_message(embed=embed)
+
+async def setup(bot):
+    await bot.add_cog(Snipe(bot))
