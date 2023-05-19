@@ -1,17 +1,24 @@
+from data import config
 import discord
 import asyncio
 from discord.ext import commands
 
-intents = discord.Intents.all()
-from data import config
-
 
 class Client(commands.Bot):
-    def __init__(self):
-        super().__init__(intents=intents, command_prefix=config["prefix"])
+    def __init__(self, intents, command_prefix, allowed_mentions):
+        super().__init__(
+            intents=intents,
+            command_prefix=command_prefix,
+            allowed_mentions=allowed_mentions
+        )
         self.command_prefix = config["prefix"]
 
-ce = Client()
+
+intents = discord.Intents.all()
+prefix = config["prefix"]
+mentions = discord.AllowedMentions(roles=False, users=True, everyone=False)
+ce = Client(intents=intents, command_prefix=prefix, allowed_mentions=mentions)
+
 
 async def load():
     await ce.load_extension('jishaku')
