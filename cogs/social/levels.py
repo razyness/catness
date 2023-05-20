@@ -182,7 +182,7 @@ class Levels(commands.Cog):
         self.ce = ce
         self.load_db = Data.load_db
         self._cd = commands.CooldownMapping.from_cooldown(
-            1, 6.0, commands.BucketType.member)
+            1, 20.0, commands.BucketType.member)
 
     def experience_curve(self, level) -> int:
         return round(5 * (level ** 2) + (50 * level) + 100)
@@ -295,7 +295,8 @@ class Levels(commands.Cog):
 
     @app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
     @app_commands.describe(compact="Show less users per page, to fit on mobile")
-    async def top(self, inter, compact: bool = False):
+    async def top(self, inter: discord.Interaction, compact: bool = False):
+        await inter.response.defer(thinking=True)
         compact = 6 if compact else 12
         conn = await aiosqlite.connect(DATABASE_FILE)
         cursor = await conn.cursor()
@@ -353,7 +354,7 @@ class Levels(commands.Cog):
             embeds.append(embed)
 
         view = Paginateness(embeds)
-        await inter.response.send_message(embed=view.initial, view=view)
+        await inter.followup.send(embed=view.initial, view=view)
         view.msg = await inter.original_response()
 
 
