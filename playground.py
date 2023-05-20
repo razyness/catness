@@ -4,7 +4,7 @@ import asyncio
 from discord.ext import commands
 
 
-class Client(commands.Bot):
+class Client(commands.AutoShardedBot):
     def __init__(self, intents, command_prefix, allowed_mentions):
         super().__init__(
             intents=intents,
