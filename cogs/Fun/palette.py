@@ -56,11 +56,11 @@ class Palette(commands.Cog):
 
     @app_commands.command(name="palette", description="Generate a color palette from someone's avatar")
     @app_commands.describe(user = "Yes", size="Number of colors to generate. Converted to even +1")
-    async def palette(self, inter, user:discord.User=None, size:int=6):
+    async def palette(self, inter, user:discord.User=None, size:int=8):
         user = user or inter.user
         if size > 30:
             size = 30
-        if size <= 0:
+        if size <= 1:
             size = 6
         await inter.response.defer(thinking=True)
         palette_image_bytes = await generate_color_palette(user.avatar.url.replace('1024', '512'), size)
