@@ -21,7 +21,20 @@ class errorHandler(commands.Cog):
 
     async def on_tree_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
-            return await interaction.response.send_message(f"Command is currently on cooldown! Try again in `{error.retry_after:.2f}` seconds!", ephemeral=True)
+            retry_after = error.retry_after
+            if retry_after >= 3600:
+                hours = int(retry_after // 3600)
+                minutes = int((retry_after % 3600) // 60)
+                seconds = int((retry_after % 3600) % 60)
+                cooldown_message = f"Cooldown! Try again in `{hours}h {minutes}m {seconds}s`"
+            elif retry_after >= 60:
+                minutes = int(retry_after // 60)
+                seconds = int(retry_after % 60)
+                cooldown_message = f"Tick tock! Try again in `{minutes}m {seconds}s`"
+            else:
+                cooldown_message = f"Command on cooldown! Try again in `{retry_after:.2f}s`"
+
+            return await interaction.response.send_message(cooldown_message, ephemeral=True)
         elif isinstance(error, app_commands.MissingPermissions):
             return await interaction.response.send_message(f"You're missing permissions to use that", ephemeral=True)
         elif isinstance(error, app_commands.AppCommandError):
