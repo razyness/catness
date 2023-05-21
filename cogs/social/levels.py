@@ -244,9 +244,10 @@ class Levels(commands.Cog):
         if has_levels_on['levels'] == 0:
             return
 
-        server_levels_on = await load_server(table="servers", server_id=message.guild.id)
-        if server_levels_on['levels'] == 0:
-            return
+        if message.guild:
+            server_levels_on = await load_server(table="servers", server_id=message.guild.id)
+            if server_levels_on['levels'] == 0:
+                return
 
         ratelimit = self.get_ratelimit(message)
         if message.author.bot or ratelimit is not None:
@@ -288,10 +289,11 @@ class Levels(commands.Cog):
         if user.bot:
             await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
             return
-
-        server_levels_on = await load_server(table="servers", server_id=inter.guild.id)
-        if server_levels_on['levels'] == 0:
-            return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
+        
+        if inter.guild:
+            server_levels_on = await load_server(table="servers", server_id=inter.guild.id)
+            if server_levels_on['levels'] == 0:
+                return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
 
         await inter.response.defer(thinking=True)
 
