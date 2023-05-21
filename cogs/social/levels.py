@@ -15,6 +15,32 @@ from data import Data, DATABASE_FILE
 from discord.ext import commands
 from collections import deque
 
+async def load_server(table: str, server_id: str, columns: list = None) -> Optional[dict]:
+	"""Get a dict of the contents of selected columns in a database's row
+	Args:
+		table (str): The name of the db table
+		server_id (str): The column to search from
+		columns (list): A list of column names to fetch
+	Returns:
+		Optional[dict]: A dictionary of the contents of the selected columns of that row
+	"""
+	async with aiosqlite.connect(DATABASE_FILE) as conn:
+		if columns is None or columns == []:
+			query_columns = "*"
+		else:
+			query_columns = f"{', '.join(columns)}"
+		async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
+			row = await cursor.fetchone()
+			if row is None:
+				await conn.execute(f"INSERT INTO {table} (server_id) VALUES (?)", (server_id,))
+				await conn.commit()
+				async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
+					row = await cursor.fetchone()
+		if columns is None or columns == []:
+			columns = [description[0]
+					   for description in cursor.description]
+		data = dict(zip(columns, row))
+	return data
 
 async def fetch_image(url):
     async with aiohttp.ClientSession() as session:
@@ -218,6 +244,10 @@ class Levels(commands.Cog):
         if has_levels_on['levels'] == 0:
             return
 
+        server_levels_on = await load_server(table="servers", server_id=message.guild.id)
+        if server_levels_on['levels'] == 0:
+            return
+
         ratelimit = self.get_ratelimit(message)
         if message.author.bot or ratelimit is not None:
             return
@@ -250,14 +280,18 @@ class Levels(commands.Cog):
     async def rank(self, inter, user: discord.User = None):
         user = user or inter.user
 
-        has_levels_on = await Data.load_db(table="settings", user_id=user.id, columns=['levels'])
-        if has_levels_on['levels'] == 0:
+        user_levels_on = await Data.load_db(table="settings", user_id=user.id, columns=['levels'])
+        if user_levels_on['levels'] == 0:
             return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
 
         user = await self.ce.fetch_user(user.id)
         if user.bot:
             await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
             return
+
+        server_levels_on = await load_server(table="servers", server_id=inter.guild.id)
+        if server_levels_on['levels'] == 0:
+            return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
 
         await inter.response.defer(thinking=True)
 
