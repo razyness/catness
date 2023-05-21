@@ -58,10 +58,6 @@ class Status(commands.Cog):
             url="https://discordapp.com/oauth2/authorize?client_id=1029864621047304203&scope=bot+applications.commands&permissions=1099511627775",
             emoji='<:grinning_face_smiling:1109581692819210311>')
         )
-        view.add_item(discord.ui.Button(
-            label='https://google.com', style=discord.ButtonStyle.link,
-            url="https://google.com")
-        )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
