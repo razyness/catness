@@ -1,5 +1,6 @@
 import discord
 import datetime
+import aiohttp
 
 from discord.ext import commands
 from discord import app_commands
@@ -36,7 +37,6 @@ class ConfirmModal(discord.ui.Modal):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        razy = self.ce.get_user(592310159133376512) or await self.ce.fetch_user(592310159133376512)
         embed = discord.Embed(title="Bug report", description=self.long.value)
         embed.add_field(name="tldr", value=self.short.value)
         embed.add_field(name="big oh no",
@@ -45,8 +45,14 @@ class ConfirmModal(discord.ui.Modal):
         embed.set_footer(
             text=f"submitted by {str(interaction.user)} | {interaction.user.id}")
         embed.timestamp = datetime.datetime.utcnow()
+
         await interaction.response.send_message(f"Thank you!! While you wait, you can join support server real and maybe you can help me figure it out\nhttps://discord.gg/invitelink", ephemeral=True)
-        await razy.send(embed=embed)
+
+        webhook_url = ""
+
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(url=webhook_url, session=session)
+            await webhook.send(embed=embed)
 
 
 class Report(commands.Cog):
