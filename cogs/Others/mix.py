@@ -23,10 +23,11 @@ async def get_random_song(lastfm_user):
 
 
 class MixView(ui.View):
-    def __init__(self, mix_owner, timeout: float | None = 180):
+    def __init__(self, ce, mix_owner, guests, timeout: float | None = 180):
         super().__init__(timeout=timeout)
+        self.ce = ce
         self.mix_owner = mix_owner
-        self.guests = []
+        self.guests = guests
         self.failed = []
 
     async def mix_embed(self):
@@ -56,6 +57,16 @@ class MixView(ui.View):
 class Mix(commands.Cog):
     def __init__(self, ce: commands.Bot):
         self.ce = ce
+
+    @app_commands.command(name="mix", description="Experiment")
+    async def mix(self, inter, users: str):
+        experiment = await Data.load_db(table="settings", user_id=inter.user.id)
+        if experiment['experiments'] != 1:
+            return await inter.response.send_message(f"This feature is experimental, enable experiments in your settings to try it out!!", ephemeral=True)
+
+        view = MixView(ce=self.ce, mix_owner=inter.user, guests=users)
+        embed = await view.mix_embed()
+        await inter.response.send_message(embed=embed)
 
 
 async def setup(ce: commands.Bot):
