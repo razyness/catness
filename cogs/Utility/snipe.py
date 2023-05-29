@@ -16,7 +16,7 @@ class SnipeData:
 class Snipe(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.snipe_data = {}  # Dictionary to store snipe data per channel
+        self.snipe_data = {}
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
