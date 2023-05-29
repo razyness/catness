@@ -45,7 +45,7 @@ class RemoveView(discord.ui.View):
             await Data.commit_db("UPDATE profiles SET following=? WHERE user_id=?", (str(self_following), user.id))
             await Data.commit_db("UPDATE profiles SET follow_list=? WHERE user_id=?", (str(user_follow_list), author.id))
 
-    @discord.ui.button(label="Cancel", emoji=icons["remove"], style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Cancel", emoji=icons.remove, style=discord.ButtonStyle.red)
     async def remove_cake(self, inter, button):
         await self.remove_birthday(self.user, self.author)
         await inter.response.send_message(f"You will not be notified on {self.user.mention}'s birthday", ephemeral=True)
