@@ -10,37 +10,72 @@ import easy_pil
 
 from PIL import Image
 from discord import app_commands, ui
-from discord.interactions import Interaction
-from data import Data, DATABASE_FILE
+from data import Data, DATABASE_FILE, icons
 from discord.ext import commands
-from collections import deque
+
+
+async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
+    compact_size = 6 if compact else 12
+
+    async with aiosqlite.connect(DATABASE_FILE) as conn:
+        cursor = await conn.cursor()
+
+        query = "SELECT profiles.user_id, profiles.level, profiles.exp FROM profiles INNER JOIN settings ON profiles.user_id = settings.user_id WHERE settings.levels != 0 AND profiles.exp != 0 ORDER BY profiles.level DESC, profiles.exp DESC, profiles.user_id ASC LIMIT ? OFFSET ?"
+        offset = (page_number - 1) * compact_size
+        parameters = (compact_size, offset)
+        await cursor.execute(query, parameters)
+
+        rows = await cursor.fetchall()
+
+        total_pages_query = "SELECT COUNT(*) FROM (SELECT profiles.user_id FROM profiles INNER JOIN settings ON profiles.user_id = settings.user_id WHERE settings.levels != 0 AND profiles.exp != 0 ORDER BY profiles.level DESC, profiles.exp DESC, profiles.user_id ASC)"
+        await cursor.execute(total_pages_query)
+        total_rows = await cursor.fetchone()
+
+        total_pages = (total_rows[0] // compact_size) + 1
+        if page_number < 1 or page_number > total_pages:
+            return None, total_pages
+
+        embed = discord.Embed(title="Leaderboard of the levels real")
+        pos = offset + 1
+
+        for row in rows:
+            user_id, level, exp = row
+            user = str(bot.get_user(user_id) or await bot.fetch_user(user_id))
+            flair = "🥇" if pos == 1 else "🥈" if pos == 2 else "🥉" if pos == 3 else str(
+                pos)
+            embed.add_field(name=f"{flair}. {user}",
+                            value=f"Level `{level}`/`{exp}`xp")
+            pos += 1
+    return embed, total_pages
+
 
 async def load_server(table: str, server_id: str, columns: list = None) -> Optional[dict]:
-	"""Get a dict of the contents of selected columns in a database's row
-	Args:
-		table (str): The name of the db table
-		server_id (str): The column to search from
-		columns (list): A list of column names to fetch
-	Returns:
-		Optional[dict]: A dictionary of the contents of the selected columns of that row
-	"""
-	async with aiosqlite.connect(DATABASE_FILE) as conn:
-		if columns is None or columns == []:
-			query_columns = "*"
-		else:
-			query_columns = f"{', '.join(columns)}"
-		async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
-			row = await cursor.fetchone()
-			if row is None:
-				await conn.execute(f"INSERT INTO {table} (server_id) VALUES (?)", (server_id,))
-				await conn.commit()
-				async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
-					row = await cursor.fetchone()
-		if columns is None or columns == []:
-			columns = [description[0]
-					   for description in cursor.description]
-		data = dict(zip(columns, row))
-	return data
+    """Get a dict of the contents of selected columns in a database's row
+    Args:
+            table (str): The name of the db table
+            server_id (str): The column to search from
+            columns (list): A list of column names to fetch
+    Returns:
+            Optional[dict]: A dictionary of the contents of the selected columns of that row
+    """
+    async with aiosqlite.connect(DATABASE_FILE) as conn:
+        if columns is None or columns == []:
+            query_columns = "*"
+        else:
+            query_columns = f"{', '.join(columns)}"
+        async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
+            row = await cursor.fetchone()
+            if row is None:
+                await conn.execute(f"INSERT INTO {table} (server_id) VALUES (?)", (server_id,))
+                await conn.commit()
+                async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
+                    row = await cursor.fetchone()
+        if columns is None or columns == []:
+            columns = [description[0]
+                       for description in cursor.description]
+        data = dict(zip(columns, row))
+    return data
+
 
 async def fetch_image(url):
     async with aiohttp.ClientSession() as session:
@@ -131,19 +166,16 @@ async def create_card(user_data):
 
 
 class Paginateness(ui.View):
-    def __init__(self, embeds: List[discord.Embed]) -> None:
+    def __init__(self, bot, pages: int, compact: bool) -> None:
         super().__init__(timeout=180)
 
-        self._embeds = embeds
-        self._queue = deque(embeds)
-        self._initial = embeds[0]
-        self._length = len(embeds)
+        self._compact = compact
+        self._pages = pages
         self._current_page = 1
-        for i in self._queue:
-            i.set_footer(text=f"Page {self._current_page} of {self._length}")
+        self._bot = bot
         self.children[0].disabled = True
 
-        if self._length == 1:
+        if self._pages == 1:
             self.children[1].disabled = True
 
     async def disable_all(self, msg="Timed out...", view=None):
@@ -155,10 +187,7 @@ class Paginateness(ui.View):
         await self.disable_all()
 
     async def update_buttons(self, inter):
-        for i in self._queue:
-            i.set_footer(text=f"Page {self._current_page} of {self._length}")
-
-        if self._current_page == self._length:
+        if self._current_page == self._pages:
             self.children[1].disabled = True
         else:
             self.children[1].disabled = False
@@ -170,23 +199,24 @@ class Paginateness(ui.View):
 
         await inter.response.edit_message(view=self)
 
-    @ui.button(label="<", style=discord.ButtonStyle.blurple)
+    @ui.button(emoji=icons.page_left, style=discord.ButtonStyle.blurple)
     async def prev(self, inter, button):
-        self._queue.rotate(-1)
+
         self._current_page -= 1
-        embed = self._queue[0]
-
+        embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
+        embed[0].set_footer(text=f"Page {self._current_page} of {self._pages}")
         await self.update_buttons(inter)
-        await self.msg.edit(embed=embed)
+        await self.msg.edit(embed=embed[0])
+        self._pages = embed[1]
 
-    @ui.button(label=">", style=discord.ButtonStyle.blurple)
+    @ui.button(emoji=icons.page_right, style=discord.ButtonStyle.blurple)
     async def next(self, inter, button):
-        self._queue.rotate(1)
         self._current_page += 1
-        embed = self._queue[0]
-
+        embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
+        embed[0].set_footer(text=f"Page {self._current_page} of {self._pages}")
         await self.update_buttons(inter)
-        await self.msg.edit(embed=embed)
+        await self.msg.edit(embed=embed[0])
+        self._pages = embed[1]
 
     @ui.button(label='Exit', style=discord.ButtonStyle.red)
     async def close(self, interaction: discord.Interaction, button: ui.Button):
@@ -197,10 +227,6 @@ class Paginateness(ui.View):
         await interaction.response.defer()
         await asyncio.sleep(2)
         await self.msg.delete()
-
-    @property
-    def initial(self) -> discord.Embed:
-        return self._initial
 
 
 class Levels(commands.Cog):
@@ -289,7 +315,7 @@ class Levels(commands.Cog):
         if user.bot:
             await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
             return
-        
+
         if inter.guild:
             server_levels_on = await load_server(table="servers", server_id=inter.guild.id)
             if server_levels_on['levels'] == 0:
@@ -304,8 +330,7 @@ class Levels(commands.Cog):
         if settings['experiments'] == 1:
             rep = await Data.load_db(table="rep", user_id=user.id)
 
-            user_data = {  # Most likely coming from database or calculation
-                # The user's name
+            user_data = {
                 "name": str(user) if settings['private'] == 0 else user.name,
                 "xp": exp,
                 "next_level_xp": missing,
@@ -333,64 +358,9 @@ class Levels(commands.Cog):
     @app_commands.describe(compact="Show less users per page, to fit on mobile")
     async def top(self, inter: discord.Interaction, compact: bool = False):
         await inter.response.defer(thinking=True)
-        compact = 6 if compact else 12
-        conn = await aiosqlite.connect(DATABASE_FILE)
-        cursor = await conn.cursor()
-
-        await cursor.execute("SELECT user_id, level, exp FROM profiles")
-        rows = await cursor.fetchall()
-
-        profile_list = []
-
-        for row in rows:
-            user_id, level, exp = row
-
-            settings = await Data.load_db(table="settings", user_id=user_id)
-            user = str(self.ce.get_user(user_id) or await self.ce.fetch_user(user_id))
-            if settings['private'] == 1:
-                user = f"{user[:-4]}????"
-
-            profile_dict = {
-                'user': user,
-                'level': level,
-                'exp': exp
-            }
-
-            if settings['levels'] != 0:
-                profile_list.append(profile_dict)
-
-            if len(profile_list) >= 30:
-                break
-
-        await conn.close()
-
-        profile_list.sort(key=lambda user: (
-            user['level'], user['exp']), reverse=True)
-
-        embeds = []
-        pos = 1
-        for i in range(0, len(profile_list), compact):
-            embed = discord.Embed(title="Leaderboard of the levels real")
-
-            for profile in profile_list[i:i+compact]:
-                user = profile['user']
-                level = profile['level']
-                exp = profile['exp']
-                flair = f"{pos}"
-                if pos == 1:
-                    flair = f"🥇"
-                elif pos == 2:
-                    flair = f"🥈"
-                elif pos == 3:
-                    flair = f"🥉"
-                embed.add_field(name=f"{flair}. {user}",
-                                value=f"Level `{level}`/`{exp}`xp")
-                pos += 1
-
-            embeds.append(embed)
-
-        view = Paginateness(embeds)
-        await inter.followup.send(embed=view.initial, view=view)
+        embed, pages = await get_lb_page(self.ce, 1, compact)
+        view = Paginateness(self.ce, pages, compact)
+        await inter.followup.send(embed=embed, view=view)
         view.msg = await inter.original_response()
 
 
