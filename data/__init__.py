@@ -7,8 +7,14 @@ from typing import Optional
 DATABASE_FILE = 'data/data.db'
 config = toml.load("data/config.toml")
 
+class DictToAttr(dict):
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        raise AttributeError(f"Attribute '{name}' not found")
 
-icons = {
+
+icons = DictToAttr({
 	"edit": "<:edit:1062784953399648437>",
 	"regen": "<:regen:1062784969749045318>",
 	"download": "<:download:1062784992243105813>",
@@ -32,8 +38,10 @@ icons = {
 	"lastfm": "<:lastfm:1080282189100482693>",
 	"steam": "<:steam:1080281878847832186>",
 	"contributor": "<:Contributor:1078661797185335398>",
-	"back": "<:back:1101510067880202301>"
-}
+	"back": "<:back:1101510067880202301>",
+	"page_left": "<:page_left:1112880577390055544>",
+	"page_right": "<:page_right:1112880675067015188>"
+})
 
 
 class Data():
