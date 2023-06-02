@@ -3,6 +3,7 @@ LASTFM = ""
 STEAM = ""
 OPENAI = ""
 TENOR = ""
+MAKESWEET = ""
 
 prefix = "."
 
