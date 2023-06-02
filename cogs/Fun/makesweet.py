@@ -19,7 +19,6 @@ async def to_bytes(image_url):
                 return await response.content.read()
 
 async def make_gif(template, text=None, image=None, text_first=False):
-    image_bytes = await to_bytes(image.url)
     url = f"https://api.makesweet.com/make/{template}"
 
     headers = {
@@ -32,6 +31,7 @@ async def make_gif(template, text=None, image=None, text_first=False):
         url = url + f'?text={text}'
 
     if image:
+        image_bytes = await to_bytes(image.url)
         data.add_field(name='images', value=image_bytes, filename=image.filename)
 
     if text and text_first:
