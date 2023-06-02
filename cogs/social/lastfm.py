@@ -5,7 +5,7 @@ from discord import ui
 import asyncio
 import discord
 
-from data import config, Data
+from data import config, Data, icons
 from utils.http import HTTP
 
 LASTFM = config["LASTFM"]
@@ -47,7 +47,7 @@ async def playingStatus(user):
 					break
 				elif i == "date":
 					status = ""
-					date = f'at <t:{now_playing["recenttracks"]["track"][0]["date"]["uts"]}:R>'
+					date = f'on <t:{now_playing["recenttracks"]["track"][0]["date"]["uts"]}:f>'
 					break
 			embed.set_thumbnail(
 				url=now_playing["recenttracks"]["track"][0]["image"][2]["#text"])
@@ -183,7 +183,7 @@ class fmProfile(ui.View):
 		embed = await friendsTab(self.user)
 		await interaction.response.edit_message(embed=embed, view=self)
 
-	@ui.button(label='Exit', style=discord.ButtonStyle.red)
+	@ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
 	async def close(self, interaction: discord.Interaction, button: ui.Button):
 
 		await self.disable_all(msg="Bye-bye")

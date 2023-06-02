@@ -46,6 +46,8 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
             embed.add_field(name=f"{flair}. {user}",
                             value=f"Level `{level}`/`{exp}`xp")
             pos += 1
+        
+        embed.set_footer(text=f"Page {page_number} of {total_pages}")
     return embed, total_pages
 
 
@@ -204,7 +206,6 @@ class Paginateness(ui.View):
 
         self._current_page -= 1
         embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
-        embed[0].set_footer(text=f"Page {self._current_page} of {self._pages}")
         await self.update_buttons(inter)
         await self.msg.edit(embed=embed[0])
         self._pages = embed[1]
@@ -213,12 +214,11 @@ class Paginateness(ui.View):
     async def next(self, inter, button):
         self._current_page += 1
         embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
-        embed[0].set_footer(text=f"Page {self._current_page} of {self._pages}")
         await self.update_buttons(inter)
         await self.msg.edit(embed=embed[0])
         self._pages = embed[1]
 
-    @ui.button(label='Exit', style=discord.ButtonStyle.red)
+    @ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
     async def close(self, interaction: discord.Interaction, button: ui.Button):
 
         await self.disable_all(msg="Bye-bye")
@@ -359,6 +359,7 @@ class Levels(commands.Cog):
     async def top(self, inter: discord.Interaction, compact: bool = False):
         await inter.response.defer(thinking=True)
         embed, pages = await get_lb_page(self.ce, 1, compact)
+        embed.set_footer(text=f"Page 1 of {pages}")
         view = Paginateness(self.ce, pages, compact)
         await inter.followup.send(embed=embed, view=view)
         view.msg = await inter.original_response()
