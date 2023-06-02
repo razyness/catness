@@ -27,28 +27,17 @@ class ConfirmModal(discord.ui.Modal):
         placeholder="When i press x button after y button it fails and like\nFeel free to use codeblocks if needed"
     )
 
-    major = discord.ui.TextInput(
-        style=discord.TextStyle.short,
-        label="Is this a major bug",
-        required=True,
-        max_length=3,
-        placeholder="y/n",
-        default="No"
-    )
-
     async def on_submit(self, interaction: discord.Interaction):
-        embed = discord.Embed(title="Bug report", description=self.long.value)
-        embed.add_field(name="tldr", value=self.short.value)
-        embed.add_field(name="big oh no",
-                        value=self.major.value)
-        embed.set_thumbnail(url=interaction.user.avatar.url)
+        embed = discord.Embed(title=self.short.value, description=self.long.value)
+        embed.set_author(name="bug report")
         embed.set_footer(
-            text=f"submitted by {str(interaction.user)} | {interaction.user.id}")
+            text=f"submitted by {str(interaction.user)} | {interaction.user.id}",
+            icon_url=interaction.user.avatar.url)
         embed.timestamp = datetime.datetime.utcnow()
 
         await interaction.response.send_message(f"Thank you!! While you wait, you can join support server real and maybe you can help me figure it out\nhttps://discord.gg/invitelink", ephemeral=True)
 
-        webhook_url = ""
+        webhook_url = "https://canary.discord.com/api/webhooks/1109946330752745502/6PkPFZ-cgD0SXeaf_3zGf-_RLuVs-bWdn4nzCAYD8u0qTLbO3lFUS1RR_J8rLDz1MfU6"
 
         async with aiohttp.ClientSession() as session:
             webhook = discord.Webhook.from_url(url=webhook_url, session=session)
