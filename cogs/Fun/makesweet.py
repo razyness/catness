@@ -25,20 +25,26 @@ async def to_bytes(media_url):
                 image = Image.open(file_object)
 
                 if image.format == 'GIF':
+                    image.seek(0)
                     image = image.convert('RGBA')
                     image = image.convert('RGB')
-
                     image = image.crop((0, 0, image.width, image.height))
 
                 if image.mode == 'RGBA':
                     image = image.convert('RGB')
 
+                aspect_ratio = image.width / image.height
+                new_width = 512
+                new_height = int(new_width / aspect_ratio)
+                image = image.resize((new_width, new_height))
+
                 output_file = io.BytesIO()
-                image.save(output_file, format='JPEG')
+                image.save(output_file, format='PNG')
 
                 return output_file.getvalue()
             except:
                 return file_object.getvalue()
+
 
 async def make_gif(template, text=None, image=None, text_first=False):
     url = f"https://api.makesweet.com/make/{template}"
