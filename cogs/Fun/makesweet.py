@@ -1,22 +1,44 @@
 import discord
 import aiohttp
 import io, os
+import moviepy.editor as mp
 
 from utils.http import HTTP
 from typing import Optional
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
+from PIL import Image
 
 from data import config
 
 api_key = config['MAKESWEET']
 
-async def to_bytes(image_url):
+async def to_bytes(media_url):
     async with aiohttp.ClientSession() as session:
-        async with session.get(image_url) as response:
-            if response.status == 200:
-                return await response.content.read()
+        async with session.get(media_url) as response:
+            response.raise_for_status()
+
+            file_object = io.BytesIO(await response.read())
+
+            try:
+                image = Image.open(file_object)
+
+                if image.format == 'GIF':
+                    image = image.convert('RGBA')
+                    image = image.convert('RGB')
+
+                    image = image.crop((0, 0, image.width, image.height))
+
+                if image.mode == 'RGBA':
+                    image = image.convert('RGB')
+
+                output_file = io.BytesIO()
+                image.save(output_file, format='JPEG')
+
+                return output_file.getvalue()
+            except:
+                return file_object.getvalue()
 
 async def make_gif(template, text=None, image=None, text_first=False):
     url = f"https://api.makesweet.com/make/{template}"
@@ -65,6 +87,9 @@ class Makesweet(commands.Cog):
         Choice(name="Circuit Board", value="circuit-board")
     ])
     async def makesweet(self, inter, template:str, image:discord.Attachment=None, text:str=None, swap:bool=False):
+        if os.path.basename(image.url).split('.')[-1] not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
+            return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
+
         await inter.response.defer(thinking=True)
         gif = await make_gif(template, text, image, swap)
         if gif is None:
