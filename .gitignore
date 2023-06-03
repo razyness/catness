@@ -11,3 +11,4 @@ lib64
 /data/.old
 /data/data.db
 /data/config.toml
+start.bat
