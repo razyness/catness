@@ -13,7 +13,9 @@ from PIL import Image
 if TYPE_CHECKING:
     from playground import Bot
 
-start_time = time.time()
+from cogs.events import start_time
+
+from data import icons
 
 
 class Status(commands.Cog):
@@ -58,6 +60,11 @@ class Status(commands.Cog):
             url="https://discordapp.com/oauth2/authorize?client_id=1029864621047304203&scope=bot+applications.commands&permissions=1099511627775",
             emoji='<:grinning_face_smiling:1109581692819210311>')
         )
+        view.add_item(discord.ui.Button(
+            label="Source",
+            url="https://github.com/razyness/catness",
+            emoji=icons.github
+        ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
