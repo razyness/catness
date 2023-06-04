@@ -93,7 +93,9 @@ class Makesweet(commands.Cog):
         Choice(name="Circuit Board", value="circuit-board")
     ])
     async def makesweet(self, inter, template:str, image:discord.Attachment=None, text:str=None, swap:bool=False):
-        if os.path.basename(image.url).split('.')[-1] not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
+        if not text and not image:
+            return await inter.response.send_message(f"empty {template} gif", ephemeral=True)
+        if image is not None and os.path.basename(image.url).split('.')[-1] not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
             return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
 
         await inter.response.defer(thinking=True)
