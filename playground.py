@@ -1,8 +1,9 @@
-from data import config
 import discord
 import asyncio
+
 from discord.ext import commands
 
+from data import config
 
 class Client(commands.AutoShardedBot):
     def __init__(self, intents, command_prefix, allowed_mentions):
