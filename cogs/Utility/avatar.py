@@ -4,6 +4,7 @@ import asyncio
 from discord.ext import commands
 from discord import app_commands
 
+from data import icons
 
 class DownloadButton(discord.ui.View):
 
@@ -15,7 +16,7 @@ class DownloadButton(discord.ui.View):
 		self.selection = "Server"
 
 		for child in self.children:
-			if child.label == "Exit":
+			if child.emoji == icons.close:
 				continue
 
 			if self.user.avatar is None and child.label == "Display":
@@ -35,7 +36,7 @@ class DownloadButton(discord.ui.View):
 					self.selection = "Server"
 
 		for child in self.children:
-			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
+			if child.emoji == icons.close or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 
@@ -51,7 +52,7 @@ class DownloadButton(discord.ui.View):
 	async def default_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
+			if child.emoji == icons.close or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
@@ -63,7 +64,7 @@ class DownloadButton(discord.ui.View):
 	async def display_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
+			if child.emoji == icons.close or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
@@ -75,7 +76,7 @@ class DownloadButton(discord.ui.View):
 	async def guild_avatar(self, inter, button):
 		self.selection = button.label
 		for child in self.children:
-			if child.label == "Exit" or child.style == discord.ButtonStyle.gray:
+			if child.emoji == icons.close or child.style == discord.ButtonStyle.gray:
 				continue
 			child.disabled = True if child.label == self.selection else False
 		embed = self.msg.embeds[0]
@@ -83,7 +84,7 @@ class DownloadButton(discord.ui.View):
 		await inter.response.defer()
 		await self.msg.edit(embed=embed, view=self)
 
-	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
+	@discord.ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
 	async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
 
 		await self.disable_all(msg="Bye-bye")

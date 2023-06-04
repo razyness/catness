@@ -9,7 +9,7 @@ from discord import app_commands
 from discord.ext import commands
 from typing import Literal
 
-from data import config
+from data import config, icons
 
 OPENAI = config["OPENAI"]
 
@@ -143,7 +143,7 @@ class ComplRegen(ui.View):
 		self.author = author
 		self.result = result
 
-	@ui.button(label="Regenerate", style=discord.ButtonStyle.blurple, emoji="<:regen:1062784969749045318>")
+	@ui.button(label="Regenerate", style=discord.ButtonStyle.blurple, emoji=icons.regen)
 	async def complregen(self, interaction: discord.Integration, button: ui.Button):
 		try:
 
@@ -179,7 +179,7 @@ class Remove(discord.ui.View):
 	def __init__(self):
 		super().__init__()
 
-	@ui.button(label="Remove", style=discord.ButtonStyle.red, emoji="<:remove:1062791085404999781>")
+	@ui.button(label="Remove", style=discord.ButtonStyle.red, emoji=icons.remove)
 	async def remove(self, interaction, button):
 		try:
 			await self.orimsg.delete()
@@ -195,7 +195,7 @@ class ImgRegen(discord.ui.View):
 		self.size = size
 		self.author = author
 
-	@ui.button(label="Regenerate", style=discord.ButtonStyle.blurple, emoji="<:regen:1062784969749045318>")
+	@ui.button(label="Regenerate", style=discord.ButtonStyle.blurple, emoji=icons.regen)
 	async def imgregen(self, interaction, button):
 		try:
 			await interaction.response.defer(thinking=True)

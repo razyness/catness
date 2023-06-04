@@ -171,13 +171,13 @@ class DiscordID(commands.Cog):
             for flag in real_user.public_flags.all():
                 badges_list.append(icons[flag.name])
             if data["avatar"].startswith("a_") or data["banner"] is not None:
-                badges_list.append("<:nitro:1078094211351584928>")
+                badges_list.append(icons.nitro)
             if real_user.bot:
-                badges_list.append("<:bot:1078091845051088979>")
+                badges_list.append(icons.bot)
             if real_user.id in config["contributors"]:
-                badges_list.append("<:Contributor:1078661797185335398>")
+                badges_list.append(icons.contributor)
             if real_user.id in config["special"]:
-                badges_list.append("<:Special:1078664371661713449>")
+                badges_list.append(icons.special)
 
             # if user == 912091795318517821:
             #    badges_list = []
@@ -239,10 +239,10 @@ class DiscordID(commands.Cog):
                             value=f"`{rep}` points", inline=True)
 
             view.add_item(discord.ui.Button(label='Avatar', style=discord.ButtonStyle.link, url=f"https://cdn.discordapp.com/avatars/{user}/{data['avatar']}.{ext}?size=4096",
-                                            emoji='<:download:1062784992243105813>'))
+                                            emoji=icons.download))
             if data["banner"] is not None:
                 view.add_item(discord.ui.Button(label='Banner', style=discord.ButtonStyle.link, url=f"https://cdn.discordapp.com/banners/{user}/{data['banner']}.{ext}?size=4096",
-                                                emoji='<:download:1062784992243105813>'))
+                                                emoji=icons.download))
 
             settings = await Data.load_db(table="settings", user_id=user)
 
