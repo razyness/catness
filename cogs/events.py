@@ -4,6 +4,7 @@ import random
 import pathlib
 import aiosqlite
 import datetime
+import time
 
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,7 @@ from discord.ext import commands, tasks
 if TYPE_CHECKING:
     from playground import Bot
 
+start_time = time.time()
 
 class Events(commands.Cog):
     def __init__(self, bot: Bot):
