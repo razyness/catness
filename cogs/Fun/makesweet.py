@@ -1,7 +1,6 @@
 import discord
 import aiohttp
 import io, os
-import moviepy.editor as mp
 
 from utils.http import HTTP
 from typing import Optional

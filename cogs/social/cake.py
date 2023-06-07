@@ -1,8 +1,7 @@
 import aiosqlite
-import json
 
 from discord import app_commands
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.app_commands import Choice
 
 from datetime import datetime

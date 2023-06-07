@@ -2,7 +2,6 @@ from discord import app_commands
 from discord.ext import commands
 from discord import ui
 
-import aiosqlite
 import discord
 
 from utils.http import HTTP

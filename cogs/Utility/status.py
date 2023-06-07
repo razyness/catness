@@ -1,17 +1,9 @@
 from __future__ import annotations
 
-import time
-
-from typing import TYPE_CHECKING
-
 import discord
 
 from discord.ext import commands
 from discord import app_commands
-from PIL import Image
-
-if TYPE_CHECKING:
-    from playground import Bot
 
 from cogs.events import start_time
 

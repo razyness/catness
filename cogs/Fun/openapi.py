@@ -2,7 +2,6 @@ import discord
 import openai
 import aiohttp
 import io
-import toml
 
 from discord import ui
 from discord import app_commands

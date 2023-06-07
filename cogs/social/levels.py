@@ -1,4 +1,3 @@
-from typing import Optional, List
 import aiosqlite
 import random
 import discord
@@ -8,11 +7,14 @@ import aiohttp
 import io
 import easy_pil
 
+from typing import Optional, List
+
 from PIL import Image
+
 from discord import app_commands, ui
-from data import Data, DATABASE_FILE, icons
 from discord.ext import commands
 
+from data import Data, DATABASE_FILE, icons
 
 async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
     compact_size = 6 if compact else 12

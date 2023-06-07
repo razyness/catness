@@ -3,7 +3,6 @@ from discord.ext import commands
 
 import aiohttp
 import random
-import toml
 
 from data import config
 

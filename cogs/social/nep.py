@@ -1,4 +1,3 @@
-import sqlite3
 import discord
 import aiosqlite
 import time
@@ -7,7 +6,6 @@ import datetime
 from data import Data
 from discord import app_commands
 from discord.ext import commands
-from discord.app_commands import Choice
 
 
 class Rep(commands.Cog):

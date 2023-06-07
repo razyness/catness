@@ -4,14 +4,12 @@ import aiohttp
 import discord
 import aiosqlite
 import calendar
-import json
 
 from datetime import datetime
 from discord import app_commands
 from discord.ext import commands
 
 from data import config, Data, icons, DATABASE_FILE
-from utils.http import HTTP
 
 
 class DownloadButton(discord.ui.View):
