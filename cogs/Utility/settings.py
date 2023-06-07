@@ -68,10 +68,11 @@ async def social_menu(settings, user):
 	embed = discord.Embed()
 	embed.title = "🎂 Social"
 	birthday = await Data.load_db(table="profiles", user_id=user.id, columns=["cake"])
-	year_bool = birthday['cake'].split(":")[1]
+	year_bool = False if not birthday or not birthday['cake'] else birthday['cake'].split(":")[1]
+	warn = ":warning: Your birthday is not set\n" if not birthday or birthday['cake'] is None else None
 	embed.add_field(name=f"Birth year: {str('`Shown`' if year_bool == 'True' else '`Hidden`')}",
-					value="Hiding your birth year will not reveal your age in reminders"
-					"and will hide it from your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
+					value=f"{warn}Hiding your birth year will not reveal your age in reminders"
+					"and your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
 	embed.add_field(name=f"Handles: {str('`Shown`' if settings['handles'] else '`Hidden`')}",
 					value="Hiding handles will only allow you to run related commands with no arguments")
 	embed.set_footer(text="Select a value to toggle")
@@ -229,8 +230,11 @@ class SocialMenu(ui.View):
 				continue
 
 			if i.label.lower() == "birth year":
-				i.style = colorize("0" if self.birthday.split(":")[
-								   1] == "False" else "1")
+				if self.birthday is None:
+					i.style = discord.ButtonStyle.gray
+					i.disabled = True
+					continue
+				i.style = colorize("0" if self.birthday.split(":")[1] == "False" else "1")
 				continue
 
 			i.style = colorize(
