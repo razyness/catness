@@ -27,8 +27,8 @@ class RemoveView(discord.ui.View):
         self.author = author
 
     async def remove_birthday(self, user, author):
-        userdata = await Data.load_db(table="profiles", user_id=author.id, columns=['follow_list', 'following'])
-        selfuserdata = await Data.load_db(table="profiles", user_id=user.id, columns=['follow_list', 'following'])
+        userdata = await Data.load_db(table="profiles", id=author.id, columns=['follow_list', 'following'])
+        selfuserdata = await Data.load_db(table="profiles", id=user.id, columns=['follow_list', 'following'])
 
         user_follow_list = [] if not selfuserdata['following'] else eval(
             selfuserdata['following'])
@@ -40,8 +40,8 @@ class RemoveView(discord.ui.View):
             self_following.remove(user.id)
             user_follow_list.remove(author.id)
 
-            await Data.commit_db("UPDATE profiles SET following=? WHERE user_id=?", (str(self_following), user.id))
-            await Data.commit_db("UPDATE profiles SET follow_list=? WHERE user_id=?", (str(user_follow_list), author.id))
+            await Data.commit_db("UPDATE profiles SET following=? WHERE id=?", (str(self_following), user.id))
+            await Data.commit_db("UPDATE profiles SET follow_list=? WHERE id=?", (str(user_follow_list), author.id))
 
     @discord.ui.button(label="Cancel", emoji=icons.remove, style=discord.ButtonStyle.red)
     async def remove_cake(self, inter, button):
@@ -65,8 +65,8 @@ class ProfileView(discord.ui.View):
         await self.disable_all()
 
     async def notify_action(self, user):
-        selfuserdata = await Data.load_db(table="profiles", user_id=self.user.id, columns=['follow_list', 'following'])
-        userdata = await Data.load_db(table="profiles", user_id=user.id, columns=['follow_list', 'following'])
+        selfuserdata = await Data.load_db(table="profiles", id=self.user.id, columns=['follow_list', 'following'])
+        userdata = await Data.load_db(table="profiles", id=user.id, columns=['follow_list', 'following'])
 
         self_following = [] if not selfuserdata['following'] else eval(
             selfuserdata['following'])
@@ -76,8 +76,8 @@ class ProfileView(discord.ui.View):
         if user.id not in self_following and self.user.id not in user_follow_list:
             user_follow_list.append(self.user.id)
             self_following.append(user.id)
-            await Data.commit_db("UPDATE profiles SET following=? WHERE user_id=?", (str(self_following), self.user.id))
-            await Data.commit_db("UPDATE profiles SET follow_list=? WHERE user_id=?", (str(user_follow_list), user.id))
+            await Data.commit_db("UPDATE profiles SET following=? WHERE id=?", (str(self_following), self.user.id))
+            await Data.commit_db("UPDATE profiles SET follow_list=? WHERE id=?", (str(user_follow_list), user.id))
 
             return f"You are now following {self.user.mention}'s birthday!"
         else:
@@ -196,7 +196,7 @@ class DiscordID(commands.Cog):
 
             async with aiosqlite.connect('data/data.db') as db:
                 db.row_factory = aiosqlite.Row
-                cursor = await db.execute("SELECT * FROM profiles WHERE user_id = ?", (user,))
+                cursor = await db.execute("SELECT * FROM profiles WHERE id = ?", (user,))
                 social_data = await cursor.fetchone()
 
             if social_data:
@@ -226,7 +226,7 @@ class DiscordID(commands.Cog):
                     view = ProfileView(user=await self.ce.fetch_user(user))
                     embed.add_field(name="Birthday", value=formatted_date)
 
-            ruser = await Data.load_db(table="rep", user_id=user)
+            ruser = await Data.load_db(table="rep", id=user)
 
             if ruser is None:
                 rep = 0
@@ -242,16 +242,16 @@ class DiscordID(commands.Cog):
                 view.add_item(discord.ui.Button(label='Banner', style=discord.ButtonStyle.link, url=f"https://cdn.discordapp.com/banners/{user}/{data['banner']}.{ext}?size=4096",
                                                 emoji=icons.download))
 
-            settings = await Data.load_db(table="settings", user_id=user)
+            settings = await Data.load_db(table="settings", id=user)
 
             if not real_user.bot and not settings:
                 async with aiosqlite.connect(DATABASE_FILE) as db:
-                    await db.execute(f"INSERT INTO settings (user_id) VALUES (?)", (user,))
+                    await db.execute(f"INSERT INTO settings (id) VALUES (?)", (user,))
                     await db.commit()
-                settings = await Data.load_db(table="settings", user_id=user)
+                settings = await Data.load_db(table="settings", id=user)
 
             if settings["levels"] == 1:
-                levels_info = await Data.load_db(table="profiles", user_id=user, columns=["level", "exp"])
+                levels_info = await Data.load_db(table="profiles", id=user, columns=["level", "exp"])
                 level, exp = levels_info["level"], levels_info["exp"]
                 missing = round(5 * (level ** 2) + (50 * level) + 100)
                 embed.add_field(

@@ -98,7 +98,7 @@ class Events(commands.Cog):
         date = datetime.datetime.today().strftime('%d/%m/%Y')
         day, month, year = date.split("/")
         async with aiosqlite.connect(DATABASE_FILE) as conn:
-            async with conn.execute("SELECT user_id, cake, follow_list FROM profiles") as cursor:
+            async with conn.execute("SELECT id, cake, follow_list FROM profiles") as cursor:
                 rows = await cursor.fetchall()
             for row in rows:
                 user_id = row[0]

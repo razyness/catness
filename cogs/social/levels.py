@@ -16,24 +16,37 @@ from discord.ext import commands
 
 from data import Data, DATABASE_FILE, icons
 
+
 async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
     compact_size = 6 if compact else 12
+    offset = (page_number - 1) * compact_size
+
+    query = """
+    SELECT id, level, exp
+    FROM (
+        SELECT profiles.id, profiles.level, profiles.exp,
+        ROW_NUMBER() OVER (ORDER BY profiles.level DESC, profiles.exp DESC, profiles.id ASC) AS row_num
+        FROM profiles
+        JOIN settings ON profiles.id = settings.id
+        WHERE settings.levels != 0 AND profiles.exp != 0
+    )
+    WHERE row_num BETWEEN ? AND ?
+    """
+    count_query = """
+    SELECT COUNT(*) AS total_rows
+    FROM profiles
+    JOIN settings ON profiles.id = settings.id
+    WHERE settings.levels != 0 AND profiles.exp != 0
+    """
 
     async with aiosqlite.connect(DATABASE_FILE) as conn:
-        cursor = await conn.cursor()
-
-        query = "SELECT profiles.user_id, profiles.level, profiles.exp FROM profiles INNER JOIN settings ON profiles.user_id = settings.user_id WHERE settings.levels != 0 AND profiles.exp != 0 ORDER BY profiles.level DESC, profiles.exp DESC, profiles.user_id ASC LIMIT ? OFFSET ?"
-        offset = (page_number - 1) * compact_size
-        parameters = (compact_size, offset)
-        await cursor.execute(query, parameters)
-
+        cursor = await conn.execute(query, (offset + 1, offset + compact_size))
         rows = await cursor.fetchall()
 
-        total_pages_query = "SELECT COUNT(*) FROM (SELECT profiles.user_id FROM profiles INNER JOIN settings ON profiles.user_id = settings.user_id WHERE settings.levels != 0 AND profiles.exp != 0 ORDER BY profiles.level DESC, profiles.exp DESC, profiles.user_id ASC)"
-        await cursor.execute(total_pages_query)
-        total_rows = await cursor.fetchone()
+        count_cursor = await conn.execute(count_query)
+        total_rows = (await count_cursor.fetchone())[0]
+        total_pages = (total_rows // compact_size) + 1
 
-        total_pages = (total_rows[0] // compact_size) + 1
         if page_number < 1 or page_number > total_pages:
             return None, total_pages
 
@@ -48,38 +61,10 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
             embed.add_field(name=f"{flair}. {user}",
                             value=f"Level `{level}`/`{exp}`xp")
             pos += 1
-        
+
         embed.set_footer(text=f"Page {page_number} of {total_pages}")
+
     return embed, total_pages
-
-
-async def load_server(table: str, server_id: str, columns: list = None) -> Optional[dict]:
-    """Get a dict of the contents of selected columns in a database's row
-    Args:
-            table (str): The name of the db table
-            server_id (str): The column to search from
-            columns (list): A list of column names to fetch
-    Returns:
-            Optional[dict]: A dictionary of the contents of the selected columns of that row
-    """
-    async with aiosqlite.connect(DATABASE_FILE) as conn:
-        if columns is None or columns == []:
-            query_columns = "*"
-        else:
-            query_columns = f"{', '.join(columns)}"
-        async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
-            row = await cursor.fetchone()
-            if row is None:
-                await conn.execute(f"INSERT INTO {table} (server_id) VALUES (?)", (server_id,))
-                await conn.commit()
-                async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE server_id = ?", (server_id,)) as cursor:
-                    row = await cursor.fetchone()
-        if columns is None or columns == []:
-            columns = [description[0]
-                       for description in cursor.description]
-        data = dict(zip(columns, row))
-    return data
-
 
 async def fetch_image(url):
     async with aiohttp.ClientSession() as session:
@@ -243,7 +228,7 @@ class Levels(commands.Cog):
 
     async def update_user(self, user_id, exp):
         async with aiosqlite.connect(DATABASE_FILE) as db:
-            row = await self.load_db(table='profiles', user_id=user_id, columns=["level", "exp"])
+            row = await self.load_db(table='profiles', id=user_id, columns=["level", "exp"])
             level, current_exp = row["level"], row["exp"]
             new_exp = current_exp + exp
 
@@ -251,15 +236,15 @@ class Levels(commands.Cog):
                 new_exp -= self.experience_curve(level)
                 level += 1
 
-            await db.execute("UPDATE profiles SET exp=?, level=? WHERE user_id=?", (new_exp, level, user_id,))
+            await db.execute("UPDATE profiles SET exp=?, level=? WHERE id=?", (new_exp, level, user_id,))
             await db.commit()
 
     async def get_level(self, user_id):
-        row = await self.load_db(table='profiles', user_id=user_id, columns=["level"])
+        row = await self.load_db(table='profiles', id=user_id, columns=["level"])
         return row["level"]
 
     async def get_exp(self, user_id):
-        row = await self.load_db(table='profiles', user_id=user_id, columns=["exp"])
+        row = await self.load_db(table='profiles', id=user_id, columns=["exp"])
         return row["exp"]
 
     def get_ratelimit(self, message: discord.Message) -> typing.Optional[int]:
@@ -268,12 +253,12 @@ class Levels(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def give_xp(self, message):
-        has_levels_on = await Data.load_db(table="settings", user_id=message.author.id, columns=['levels'])
+        has_levels_on = await Data.load_db(table="settings", id=message.author.id, columns=['levels'])
         if has_levels_on['levels'] == 0:
             return
 
         if message.guild:
-            server_levels_on = await load_server(table="servers", server_id=message.guild.id)
+            server_levels_on = await Data.load_db(table="servers", id=message.guild.id)
             if server_levels_on['levels'] == 0:
                 return
 
@@ -290,7 +275,7 @@ class Levels(commands.Cog):
         if new_exp >= exp_needed:
             new_level = prev_level + 1
             async with aiosqlite.connect(DATABASE_FILE) as db:
-                await db.execute("UPDATE profiles SET level=? WHERE user_id=?", (new_level, user_id,))
+                await db.execute("UPDATE profiles SET level=? WHERE id=?", (new_level, user_id,))
                 await db.commit()
             if new_level > prev_level:
                 await message.channel.send(f"{message.author.mention} is now level `{new_level}`! Your new goal is `{self.experience_curve(new_level)}`")
@@ -309,7 +294,7 @@ class Levels(commands.Cog):
     async def rank(self, inter, user: discord.User = None):
         user = user or inter.user
 
-        user_levels_on = await Data.load_db(table="settings", user_id=user.id, columns=['levels'])
+        user_levels_on = await Data.load_db(table="settings", id=user.id, columns=['levels'])
         if user_levels_on['levels'] == 0:
             return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
 
@@ -319,18 +304,18 @@ class Levels(commands.Cog):
             return
 
         if inter.guild:
-            server_levels_on = await load_server(table="servers", server_id=inter.guild.id)
+            server_levels_on = await Data.load_db(table="servers", id=inter.guild.id)
             if server_levels_on['levels'] == 0:
                 return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
 
         await inter.response.defer(thinking=True)
 
-        levels_info = await Data.load_db(table="profiles", user_id=user.id, columns=["level", "exp"])
+        levels_info = await Data.load_db(table="profiles", id=user.id, columns=["level", "exp"])
         level, exp = levels_info["level"], levels_info["exp"]
         missing = round(5 * (level ** 2) + (50 * level) + 100)
-        settings = await Data.load_db(table="settings", user_id=user.id)
+        settings = await Data.load_db(table="settings", id=user.id)
         if settings['experiments'] == 1:
-            rep = await Data.load_db(table="rep", user_id=user.id)
+            rep = await Data.load_db(table="rep", id=user.id)
 
             user_data = {
                 "name": str(user) if settings['private'] == 0 else user.name,

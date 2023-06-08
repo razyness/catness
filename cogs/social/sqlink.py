@@ -23,10 +23,10 @@ class Link(commands.Cog):
             data = await Data.load_db("profiles", user_id)
             if data is None:
                 async with aiosqlite.connect(DATABASE_FILE) as conn:
-                    await conn.execute(f"INSERT INTO profiles (user_id) VALUES (?)", (user_id,))
+                    await conn.execute(f"INSERT INTO profiles (id) VALUES (?)", (user_id,))
                     await conn.commit()
             async with aiosqlite.connect(DATABASE_FILE) as conn:
-                await conn.execute(f"UPDATE profiles SET {platform.value}=? WHERE user_id=?", (handle, user_id))
+                await conn.execute(f"UPDATE profiles SET {platform.value}=? WHERE id=?", (handle, user_id))
                 await conn.commit()
             response = f"Linked `{platform.name}` profile: `{handle}`"
         except Exception as e:
@@ -43,10 +43,10 @@ class Link(commands.Cog):
         try:
             user_id = interaction.user.id
             async with aiosqlite.connect(DATABASE_FILE) as conn:
-                async with conn.execute(f"SELECT {platform.value} FROM profiles WHERE user_id=?", (user_id,)) as cursor:
+                async with conn.execute(f"SELECT {platform.value} FROM profiles WHERE id=?", (user_id,)) as cursor:
                     data = await cursor.fetchone()
                 if data is not None and data[0] is not None:
-                    await conn.execute(f"UPDATE profiles SET {platform.value} = ? WHERE user_id = ?", (None, user_id))
+                    await conn.execute(f"UPDATE profiles SET {platform.value} = ? WHERE id = ?", (None, user_id))
                     await conn.commit()
                     response = f"Unlinked your `{platform.name}` profile"
                 else:

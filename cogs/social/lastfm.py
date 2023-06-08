@@ -221,7 +221,7 @@ class LastFM(commands.Cog):
 					g = "You haven't"
 
 			try:
-				social_data = await Data.load_db(table="profiles", user_id=user_id)
+				social_data = await Data.load_db(table="profiles", id=user_id)
 				if social_data['lastfm'] is None:
 					raise Exception
 				user = social_data['lastfm']

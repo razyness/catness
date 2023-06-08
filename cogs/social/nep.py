@@ -24,23 +24,23 @@ class Rep(commands.Cog):
 
 		async with aiosqlite.connect('data/data.db') as db:
 			db.row_factory = aiosqlite.Row
-			muser = await Data.load_db(table="rep", user_id=user.id)
+			muser = await Data.load_db(table="rep", id=user.id)
 			if muser is None:
-				await db.execute("INSERT INTO rep (user_id, rep, time) VALUES (?, 0, 0)", (user.id,))
+				await db.execute("INSERT INTO rep (id, rep, time) VALUES (?, 0, 0)", (user.id,))
 				await db.commit()
-				muser = await Data.load_db(table="rep", user_id=user.id)
+				muser = await Data.load_db(table="rep", id=user.id)
 		
-			ruser = await Data.load_db(table="rep", user_id=inter.user.id)
+			ruser = await Data.load_db(table="rep", id=inter.user.id)
 			if ruser is None:
-				await db.execute("INSERT INTO rep (user_id, rep, time) VALUES (?, 0, 0)", (inter.user.id,))
+				await db.execute("INSERT INTO rep (id, rep, time) VALUES (?, 0, 0)", (inter.user.id,))
 				await db.commit()
-				ruser = await Data.load_db(table="rep", user_id=inter.user.id)
+				ruser = await Data.load_db(table="rep", id=inter.user.id)
 
 			expiration_time = datetime.datetime.fromtimestamp(ruser['time']) + datetime.timedelta(hours=12)
 			
 			if expiration_time < datetime.datetime.now() or inter.user.id == 809275012980539453:
-				await db.execute("UPDATE rep SET rep=? WHERE user_id=?", (muser['rep'] + 1, user.id))
-				await db.execute("UPDATE rep SET time=? WHERE user_id=?", (int(time.time()), inter.user.id))
+				await db.execute("UPDATE rep SET rep=? WHERE id=?", (muser['rep'] + 1, user.id))
+				await db.execute("UPDATE rep SET time=? WHERE id=?", (int(time.time()), inter.user.id))
 				await db.commit()
 				await inter.response.send_message(f"You gave {user.mention} a reputation point!!")
 			else:

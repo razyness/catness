@@ -44,10 +44,10 @@ class Cake(commands.Cog):
         data = await Data.load_db("profiles", user_id)
         if data is None:
             async with aiosqlite.connect(DATABASE_FILE) as conn:
-                await conn.execute(f"INSERT INTO profiles (user_id) VALUES (?)", (user_id,))
+                await conn.execute(f"INSERT INTO profiles (id) VALUES (?)", (user_id,))
                 await conn.commit()
         async with aiosqlite.connect(DATABASE_FILE) as conn:
-            await conn.execute(f"UPDATE profiles SET cake=? WHERE user_id=?", (cake_format, user_id))
+            await conn.execute(f"UPDATE profiles SET cake=? WHERE id=?", (cake_format, user_id))
             await conn.commit()
 
         response = f"Your cake day is set to <t:{int(cake_strptime.timestamp())}:D>! The year is `{str(consider).replace('True', 'Public').replace('False', 'Private')}`"

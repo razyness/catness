@@ -52,11 +52,11 @@ icons: DictToAttr = DictToAttr({
 class Data():
 	"""Tools to manage the bot's database
 	"""
-	async def load_db(table: str, user_id: str, columns: list = None) -> Optional[dict]:
+	async def load_db(table: str, id: str, columns: list = None) -> Optional[dict]:
 		"""Get a dict of the contents of selected columns in a database's row
 		Args:
 			table (str): The name of the db table
-			user_id (str): The column to search from
+			id (str): The column to search from
 			columns (list): A list of column names to fetch
 		Returns:
 			Optional[dict]: A dictionary of the contents of the selected columns of that row
@@ -66,12 +66,12 @@ class Data():
 				query_columns = "*"
 			else:
 				query_columns = f"{', '.join(columns)}"
-			async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE user_id = ?", (user_id,)) as cursor:
+			async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE id = ?", (id,)) as cursor:
 				row = await cursor.fetchone()
 				if row is None:
-					await conn.execute(f"INSERT INTO {table} (user_id) VALUES (?)", (user_id,))
+					await conn.execute(f"INSERT INTO {table} (id) VALUES (?)", (id,))
 					await conn.commit()
-					async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE user_id = ?", (user_id,)) as cursor:
+					async with conn.execute(f"SELECT {query_columns} FROM {table} WHERE id = ?", (id,)) as cursor:
 						row = await cursor.fetchone()
 
 			if columns is None or columns == []:
@@ -87,7 +87,7 @@ class Data():
 			command (str): The sqlite command to execute
 
 			args (tuple): The arguments to pass in
-				[e.g. "UPDATE profiles SET follow_list=? WHERE user_id=?",
+				[e.g. "UPDATE profiles SET follow_list=? WHERE id=?",
 				(follow_list_str, user) <- the arguments]
 
 		Returns:
@@ -108,9 +108,9 @@ class Data():
 			async with aiosqlite.connect(DATABASE_FILE) as conn:
 				cursor = await conn.cursor()
 
-				await cursor.execute("CREATE TABLE profiles (user_id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, following TEXT)")
-				await cursor.execute("CREATE TABLE settings (user_id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0, handles INTEGER DEFAULT 1)")
-				await cursor.execute("CREATE TABLE rep (user_id INTEGER, rep INTEGER DEFAULT 0, time INTEGER DEFAULT 0)")
-				await cursor.execute("CREATE TABLE servers (server_id INTEGER, levels INTEGER DEFAULT 1)")
+				await cursor.execute("CREATE TABLE profiles (id TEXT, lastfm TEXT, steam TEXT, cake TEXT, follow_list TEXT, exp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, following TEXT)")
+				await cursor.execute("CREATE TABLE settings (id TEXT, private INTEGER DEFAULT 0, levels INTEGER DEFAULT 1, experiments INTEGER DEFAULT 0, handles INTEGER DEFAULT 1)")
+				await cursor.execute("CREATE TABLE rep (id INTEGER, rep INTEGER DEFAULT 0, time INTEGER DEFAULT 0)")
+				await cursor.execute("CREATE TABLE servers (server_id INTEGER, levels INTEGER DEFAULT 1, welcomer INTEGER DEFAULT 0)")
 
 				await conn.commit()
