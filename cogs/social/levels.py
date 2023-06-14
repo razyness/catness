@@ -15,8 +15,10 @@ from discord import app_commands, ui
 from discord.ext import commands
 
 from data import Data, DATABASE_FILE, icons
+from utils import cache
 
 
+@cache.cache(360, 60)
 async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
     compact_size = 6 if compact else 12
     offset = (page_number - 1) * compact_size
@@ -66,6 +68,7 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
 
     return embed, total_pages
 
+
 async def fetch_image(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -76,43 +79,62 @@ async def fetch_image(url):
             image = Image.open(io.BytesIO(image_data))
             return image
 
-
+@cache.cache(360, 60)
 async def create_card(user_data):
-    # Load the background image asynchronously
     background = await fetch_image(user_data['banner'])
-
     empty_canvas = easy_pil.Canvas(size=(1000, 620), color=(0, 0, 0, 0))
-
     editor = easy_pil.Editor(image=background)
     editor.resize(size=(int(1000/2), int(620/2)-40), crop=True)
 
-    gradient_editor = easy_pil.Editor(image=empty_canvas)
-    gradient = gradient_editor.rectangle(position=(
-        0, 200/2), width=1000/2, height=500/2, color=(0, 0, 0, 130), radius=0)
-    gradient = gradient.blur(mode="gussian", amount=200/2)
-    editor.paste(gradient, (0, 0-10))
+    # Create a separate canvas for blurred elements
+    blur_editor = easy_pil.Editor(image=empty_canvas)
 
     profile_shadow_editor = easy_pil.Editor(image=empty_canvas)
     profile_shadow = profile_shadow_editor.rectangle(position=(
-        98/2, 98/2), width=287/2, height=287/2, color=(0, 0, 0, 170), radius=40/2)
-    profile_shadow = profile_shadow.blur(mode="gussian", amount=20/2)
-    editor.paste(profile_shadow, (0, 0-10))
+        98/2, 98/2), width=287/2, height=287/2, color=(0, 0, 0, 90), radius=40/2)
+    blur_editor.paste(profile_shadow, (0, 0-10))
 
-    avatar_image = await fetch_image(user_data['avatar'])
-    avatar = easy_pil.Editor(avatar_image).resize(
-        (int(287/2), int(287/2))).rounded_corners(radius=40/2)
-    editor.paste(avatar, (int(98/2), int(98/2)-10))
+    gradient_editor = easy_pil.Editor(image=empty_canvas)
+    gradient = gradient_editor.rectangle(position=(
+        0, 0), width=1000/2, height=600/2, color=(0, 0, 0, 30), radius=0)
+    editor.paste(gradient, (0, 0-10))
+
+    rep_blur_editor = easy_pil.Editor(image=empty_canvas)
+    rep_shadow = rep_blur_editor.bar(position=(
+        682/2, 333/2), max_width=205/2, height=57/2, percentage=100, color=(0, 0, 0, 90), radius=15/2)
+    blur_editor.paste(rep_shadow, (0, 0-10))
 
     text_editor = easy_pil.Editor(image=empty_canvas)
     font_large = easy_pil.Font.montserrat(size=int(45/2), variant="bold")
     font_medium = easy_pil.Font.montserrat(size=int(32/2), variant="bold")
     font_small = easy_pil.Font.poppins(size=int(30/2), variant="bold")
 
+    username = text_editor.text(position=(
+        433/2, 133/2), text=user_data["name"], color=(0, 0, 0, 90), font=font_large)
+    exp_text = text_editor.text(position=(
+        104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90), font=font_small)
+    level_text = text_editor.text(position=(
+        880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
+    
+    blur_editor.paste(username, (0, 0-10))
+    blur_editor.paste(exp_text, (0, 0-10))
+    blur_editor.paste(level_text, (0, 0-10))
+
     bar_editor = easy_pil.Editor(image=empty_canvas)
     bar_shadow = bar_editor.bar(position=(98/2, 404/2), max_width=787/2,
-                                height=57/2, percentage=100, color=(0, 0, 0, 40), radius=15/2)
-    bar_shadow.blur(mode="gussian", amount=20/2)
-    editor.paste(bar_shadow, (0, 0-10))
+                                height=57/2, percentage=100, color=(0, 0, 0, 90), radius=15/2)
+    
+    blur_editor.paste(bar_shadow, (0, 0-10))
+
+    # Continue adding other elements to the blurred canvas
+
+    # Apply blur effect to the blurred canvas
+    
+    blur_editor.blur(mode="gussian", amount=20/2)
+
+    # Paste the blurred canvas onto the main canvas
+    editor.paste(blur_editor, (0, 5))
+    
     bar = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2,
                          percentage=100, color=(255, 255, 255, 70), radius=15/2)
     editor.paste(bar, (0, 0-10))
@@ -121,35 +143,28 @@ async def create_card(user_data):
     editor.paste(bar_progress, (0, 0-10))
 
     rep_bg_editor = easy_pil.Editor(image=empty_canvas)
-    rep_shadow = rep_bg_editor.bar(position=(
-        682/2, 333/2), max_width=205/2, height=57/2, percentage=100, color=(0, 0, 0, 40), radius=15/2)
-    editor.paste(rep_shadow, (0, 0-10))
     rep_bg = rep_bg_editor.bar(position=(682/2, 333/2), max_width=205/2,
                                height=57/2, percentage=100, color=(255, 255, 255, 180), radius=15/2)
     editor.paste(rep_bg, (0, 0-10))
 
-    username = text_editor.text(position=(
-        433/2, 133/2), text=user_data["name"], color=(0, 0, 0, 40), font=font_large)
-    exp_text = text_editor.text(position=(
-        104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 30), font=font_small)
-    level_text = text_editor.text(position=(
-        880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 30), align="right", font=font_small)
-    text_editor.blur(mode="gussian", amount=5/2)
-
-    for i in [username, exp_text, level_text]:
-        editor.paste(i, (0, 0-10))
+    avatar_image = await fetch_image(user_data['avatar'])
+    avatar = easy_pil.Editor(avatar_image).resize(
+        (int(287/2), int(287/2))).rounded_corners(radius=40/2)
+    editor.paste(avatar, (int(98/2), int(98/2)-10))
 
     username = text_editor.text(position=(
         433/2, 133/2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
     exp_text = text_editor.text(position=(
-        104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 80), font=font_small)
+         104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 140), font=font_small)
     level_text = text_editor.text(position=(
-        880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 80), align="right", font=font_small)
+         880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 140), align="right", font=font_small)
     rep_text = text_editor.text(position=(
-        782/2, 350/2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
+         782/2, 350/2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
 
-    for i in [username, exp_text, level_text, rep_text]:
-        editor.paste(i, (0, 0-10))
+    editor.paste(username, (0, 0-10))
+    editor.paste(exp_text, (0, 0-10))
+    editor.paste(level_text, (0, 0-10))
+    editor.paste(rep_text, (0, 0-10))
 
     return editor.image_bytes
 
@@ -291,6 +306,7 @@ class Levels(commands.Cog):
 
     @app_commands.command(description="Display your total XP and the amount of XP needed to reach the next level.")
     @app_commands.describe(user="i think you can figure it out")
+    @cache.cache(360, 60)
     async def rank(self, inter, user: discord.User = None):
         user = user or inter.user
 
@@ -343,6 +359,7 @@ class Levels(commands.Cog):
 
     @app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
     @app_commands.describe(compact="Show less users per page, to fit on mobile")
+    @cache.cache(360, 60)
     async def top(self, inter: discord.Interaction, compact: bool = False):
         await inter.response.defer(thinking=True)
         embed, pages = await get_lb_page(self.ce, 1, compact)
