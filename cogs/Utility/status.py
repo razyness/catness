@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import discord
+import psutil, pynvml
 
 from discord.ext import commands
 from discord import app_commands
@@ -9,6 +10,7 @@ from cogs.events import start_time
 
 from data import icons
 
+pynvml.nvmlInit()
 
 class Status(commands.Cog):
     def __init__(self, ce: commands.Bot):
@@ -33,18 +35,38 @@ class Status(commands.Cog):
         {shard_thing}
         """
         embed.set_thumbnail(url=self.ce.user.display_avatar.url)
-        embed.add_field(name='owner', value=f'`{razy}`', inline=True)
+        embed.add_field(name='owner', value=f'`{razy}`')
         embed.add_field(name='uptime',
                         value=f'<t:{int(start_time)}:R>',
                         inline=True)
         embed.add_field(name='total users',
-                        value=f'`{len(self.ce.users)}`', inline=True)
+                        value=f'`{len(self.ce.users)}`')
         embed.add_field(name='total guilds',
-                        value=f'`{len(self.ce.guilds)}`', inline=True)
+                        value=f'`{len(self.ce.guilds)}`')
         embed.add_field(name='d.py version',
-                        value=f'`{discord.__version__}`', inline=True)
+                        value=f'`{discord.__version__}`')
         embed.add_field(name='cmd count',
-                        value=f'`{len(cmds)}`', inline=True)
+                        value=f'`{len(cmds)}`')
+
+        if interaction.user == razy:
+            cpu_percent = psutil.cpu_percent()
+            memory_usage = psutil.virtual_memory().percent
+
+            gpu_count = pynvml.nvmlDeviceGetCount()
+            if gpu_count > 1:
+                gpu_info = []
+                for i in range(gpu_count):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                    gpu_name = pynvml.nvmlDeviceGetName(handle)
+                    gpu_memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                    gpu_info.append(f"`{gpu_name}`: `{gpu_memory_info.used / (1024**3):.2f}GB` Used")
+            else:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+                gpu_name = pynvml.nvmlDeviceGetName(handle)
+                gpu_memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                gpu_info = [f"`{gpu_memory_info.used / (1024**3):.2f}GB` Used"]
+
+            embed.add_field(name="Usage", value=f"CPU: `{cpu_percent}%` | Mem: `{memory_usage}%` {chr(10)}GPU: {chr(10).join(gpu_info)}")
 
         view = discord.ui.View(timeout=None)
         view.add_item(discord.ui.Button(
