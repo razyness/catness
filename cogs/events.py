@@ -93,7 +93,7 @@ class Events(commands.Cog):
             "consd": consd
         }
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=12)
     async def cakeloop(self):
         date = datetime.datetime.today().strftime('%d/%m/%Y')
         day, month, year = date.split("/")
@@ -115,14 +115,14 @@ class Events(commands.Cog):
                         embed = discord.Embed(title=str(cake_user))
                         embed.set_thumbnail(url=cake_user.display_avatar.url)
                         c = [
-                            "🎉 Happy Birthday, {user}! Let's party!",
-                            "🎂 It's {user}'s birthday, Wish them a wonderful day!",
-                            "🎉 It's {user}'s special day! Celebrate!",
-                            "🎁 Cheers to another year! Happy Birthday, {user}!",
-                            "🎉 Let's celebrate {user}'s birthday! Enjoy the day!"
+                            "🎉 Happy Birthday, [user]! Let's party!",
+                            "🎂 It's [user]'s birthday, Wish them a wonderful day!",
+                            "🎉 It's [user]'s special day! Celebrate!",
+                            "🎁 Cheers to another year! Happy Birthday, [user]!",
+                            "🎉 Let's celebrate [user]'s birthday! Enjoy the day!"
                         ]
                         embed.description = random.choice(
-                            c).replace("{user}", cake_user.mention)
+                            c).replace("[user]", cake_user.mention)
                         embed.set_footer(text="You can unsubscribe from their profile")
                         if cake_date["consd"]:
                             embed.description = f"{embed.description}\nThey are turning `{int(year) - int(cake_date['year'])}`"
