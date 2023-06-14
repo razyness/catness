@@ -9,3 +9,5 @@ Pillow==9.5.0
 requests==2.31.0
 toml==0.10.2
 jishaku==2.5.1
+psutil==5.9.5
+discord==2.3.0
