@@ -10,4 +10,5 @@ requests==2.31.0
 toml==0.10.2
 jishaku==2.5.1
 psutil==5.9.5
-discord==2.3.0
+discord.py==2.3.0
+pynvml==11.5.0
