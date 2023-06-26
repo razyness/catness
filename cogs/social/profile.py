@@ -146,7 +146,7 @@ class DiscordID(commands.Cog):
                 return
             data = await response.json()
             embed = discord.Embed(
-                title=f"{data['username']}#{data['discriminator']}",
+                title=f"{data['username']}#{data['discriminator']}" if data['discriminator'] != '0' else data['global_name'],
                 url=f"https://discord.com/users/{user}")
             ext = "png"
             if data["avatar"].startswith("a_"):

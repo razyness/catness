@@ -12,8 +12,8 @@ from data import Data, DATABASE_FILE, icons
 async def general_menu(settings):
 	embed = discord.Embed()
 	embed.title = "🔩 General"
-	embed.add_field(name=f"Private: {str('`Hidden`' if settings['private'] else '`Shown`')}",
-					value="Your tag won't be shown on leaderboards and other commands showing your user id / discriminator")
+	embed.add_field(name=f"Pomelo: {str('`Hidden`' if settings['private'] else '`Shown`')}",
+					value="Your tag/pomelo won't be shown on leaderboards and other commands, instead using your display name")
 	embed.add_field(name=f"Levels: {str('`Enabled`' if settings['levels'] else '`Disabled`')}",
 					value="Disabling levels will prevent you from gaining xp and leveling up")
 	embed.set_footer(text="Select a value to toggle")
@@ -24,7 +24,7 @@ async def main_menu(user, admin=False):
 	embed = discord.Embed(title=str(user))
 	embed.description = "Select an option to pick a category"
 	embed.add_field(name="🔩 General",
-					value="• Private\n• Levels", inline=True)
+					value="• Pomelo\n• Levels", inline=True)
 	embed.add_field(name="🎂 Social",
 					value="• Birth year\n• Handles\n", inline=True)
 	embed.add_field(name="🧰 Advanced",
@@ -273,7 +273,6 @@ class SocialMenu(ui.View):
 
 		await inter.response.edit_message(embed=embed, view=self)
 
-
 class GeneralMenu(ui.View):
 	def __init__(self, user, settings, admin):
 		super().__init__()
@@ -285,7 +284,7 @@ class GeneralMenu(ui.View):
 		for i in self.children:
 			if i.label:
 				i.style = colorize(
-					self.settings[i.label.lower()])
+					self.settings[i.label.lower().replace('pomelo', 'private')])
 
 	@ui.button(label=None, emoji=icons["back"], style=discord.ButtonStyle.blurple)
 	async def back(self, inter, button):
@@ -295,7 +294,7 @@ class GeneralMenu(ui.View):
 		await inter.response.edit_message(embed=embed, view=view)
 		view.msg = await inter.original_response()
 
-	@ui.button(label="Private", style=discord.ButtonStyle.gray)
+	@ui.button(label="Pomelo", style=discord.ButtonStyle.gray)
 	async def vis_button(self, inter, button):
 		async with aiosqlite.connect(DATABASE_FILE) as db:
 			value = 0

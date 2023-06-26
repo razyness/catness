@@ -334,7 +334,7 @@ class Levels(commands.Cog):
             rep = await Data.load_db(table="rep", id=user.id)
 
             user_data = {
-                "name": str(user) if settings['private'] == 0 else user.name,
+                "name": user.name if settings['private'] == 0 else user.global_name,
                 "xp": exp,
                 "next_level_xp": missing,
                 "level": level,
