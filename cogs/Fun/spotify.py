@@ -27,7 +27,7 @@ class Spotify(commands.Cog):
             a, discord.Spotify), member.activities)
 
         if song is None:
-            await interaction.response.send_message(f'`{str(member)}` is not playing a song', ephemeral=True)
+            await interaction.response.send_message(f'`{member.global_name}` is not playing a song', ephemeral=True)
             return
 
         else:
