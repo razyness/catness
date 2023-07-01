@@ -60,7 +60,7 @@ async def server_menu(icon, server_name, server, server_obj):
 	embed.description= f"Editing settings for `{server_name}`"
 	embed.add_field(name=f"Levels: {str('`Enabled`' if server['levels'] else '`Disabled`')}",
 					value="Disabling levels will prevent everyone in this server from gaining xp and leveling up")
-	embed.add_field(name=f"Welcomer: {str('`Enabled`' if server['welcomer'] else '`Disabled`')}",
+	embed.add_field(name=f"Welcomer: {str('`Disabled`' if server['welcomer'] == 0 else '`Enabled`' if server['welcomer'] == 1 else '`Enabled - Prompt`')}",
 		 			value=f"Greets new members with a random message. General channel is picked automatically.\nWelcome channel: {welc_channel}")
 
 	embed.set_thumbnail(url=icon)
@@ -79,7 +79,7 @@ async def advanced_menu(settings):
 
 
 def colorize(value):
-	if str(value) == "1":
+	if int(value) >= 1:
 		return discord.ButtonStyle.green
 	return discord.ButtonStyle.gray
 
@@ -158,6 +158,9 @@ class ServerMenu(ui.View):
 			value = 0
 			if self.data['welcomer'] == 0:
 				value = 1
+			elif self.data['welcomer'] == 1:
+				value = 2
+
 			await db.execute(f"UPDATE servers SET welcomer=? WHERE id=?", (value, inter.guild.id))
 			await db.commit()
 		self.data = await Data.load_db(table="servers", id=inter.guild.id)
