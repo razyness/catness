@@ -1,4 +1,4 @@
-import aiohttp
+import asyncio
 import random
 import discord
 
@@ -36,23 +36,65 @@ welcome_messages = [
     "Hey there, [username]! We're a bunch of friendly folks ready to welcome you with open arms!"
 ]
 
+class WelcomeButton(discord.ui.View):
+    def __init__(self, *, timeout=180):
+        super().__init__(timeout=timeout)
+        self.vaule = None
+        self.msg = None
+        self.reacted = []
+
+    async def disable_all(self):
+        for i in self.children:
+            i.disabled = True
+
+        if self.msg:
+            await self.delet.edit(view=self)
+        return
+
+    async def on_timeout(self) -> None:
+        await self.disable_all()
+        self.msg = None
+        self.reacted = None
+
+    @discord.ui.button(label="Say hi!", emoji=random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶""🎈", "🎄", "🕊️", "⭐", "🍀"]))
+    async def wave(self, interaction, button):
+        await interaction.response.defer()
+        if self.msg is None:
+            self.msg = await interaction.followup.send(f"{interaction.user.mention} said hi!")
+        else:
+            self.msg = await interaction.channel.fetch_message(self.msg.id)
+            if interaction.user.id not in self.reacted:
+                content = f"{interaction.user.mention}, {self.msg.content}"
+                await self.msg.edit(content=content)
+            else:
+                await interaction.followup.send("You've already greeted this individual!! :)", ephemeral=True)
+        if interaction.user.id not in self.reacted:
+            self.reacted.append(interaction.user.id)
+
 class Welcomer(commands.Cog):
     def __init__(self, ce: commands.Bot):
         self.ce = ce
 
     @commands.Cog.listener("on_member_join")
     async def welcomer(self, member):
+        if member.bot:
+            return
+        
         server_data = await data.load_db(table="servers", id=str(member.guild.id), columns=["welcomer"])
-        if server_data["welcomer"] == 0:
+        if not server_data["welcomer"] > 0:
             return
 
-        patterns = ["general", "main", "chat"]
+        patterns = ["gen", "main", "chat"]
         channel = next((channel for channel in member.guild.text_channels if any(name.lower() in channel.name.lower() for name in patterns)), None)
-        
+        view = WelcomeButton() if server_data["welcomer"] > 1 else None
+
         if channel:
-            print(random.choice(welcome_messages).replace("[username]", member.mention))
-            print(channel)
-            await channel.send(random.choice(welcome_messages).replace("[username]", member.mention))
+            og_msg = await channel.send(random.choice(welcome_messages).replace("[username]", member.mention), view=view)
+
+            if server_data["welcomer"] > 1:
+                await asyncio.sleep(180)
+                if view.reacted == [] or view.reacted is None:
+                    await og_msg.delete()
 
 async def setup(ce: commands.Bot):
     await ce.add_cog(Welcomer(ce))
