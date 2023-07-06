@@ -48,7 +48,7 @@ class WelcomeButton(discord.ui.View):
             i.disabled = True
 
         if self.msg:
-            await self.delet.edit(view=self)
+            await self.og_msg.edit(view=self)
         return
 
     async def on_timeout(self) -> None:
@@ -92,6 +92,7 @@ class Welcomer(commands.Cog):
             og_msg = await channel.send(random.choice(welcome_messages).replace("[username]", member.mention), view=view)
 
             if server_data["welcomer"] > 1:
+                view.og_msg = og_msg
                 await asyncio.sleep(180)
                 if view.reacted == [] or view.reacted is None:
                     await og_msg.delete()
