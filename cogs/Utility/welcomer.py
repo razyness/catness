@@ -42,6 +42,7 @@ class WelcomeButton(discord.ui.View):
         self.vaule = None
         self.msg = None
         self.reacted = []
+        self.children[0].emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶""🎈", "🎄", "🕊️", "⭐", "🍀"])
 
     async def disable_all(self):
         for i in self.children:
@@ -56,7 +57,7 @@ class WelcomeButton(discord.ui.View):
         self.msg = None
         self.reacted = None
 
-    @discord.ui.button(label="Say hi!", emoji=random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶""🎈", "🎄", "🕊️", "⭐", "🍀"]))
+    @discord.ui.button(label="Say hi!")
     async def wave(self, interaction, button):
         await interaction.response.defer()
         if self.msg is None:
