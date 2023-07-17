@@ -7,9 +7,10 @@ MAKESWEET = ""
 
 prefix = "."
 
+testing_guild = "don't use a string"
+
 contributors = [
 ]
-
 special = [
 ]
 
