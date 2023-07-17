@@ -20,7 +20,7 @@ class Snipe(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        if message.author.bot:
+        if message.author.bot or not message.author:
             return
 
         channel = message.channel
@@ -39,7 +39,7 @@ class Snipe(commands.Cog):
         if channel.id in self.snipe_data and message.id == self.snipe_data[channel.id].message_id:
             del self.snipe_data[channel.id]
 
-    @app_commands.command(name='snipe', description='Get last deleted message')
+    @app_commands.command(name='snipe', description='Get the last deleted message in this channel')
     @app_commands.guild_only()
     async def snipe(self, inter):
         channel = inter.channel

@@ -6,8 +6,6 @@ import psutil, pynvml
 from discord.ext import commands
 from discord import app_commands
 
-from cogs.events import start_time
-
 from data import icons
 
 pynvml.nvmlInit()
@@ -15,8 +13,8 @@ pynvml.nvmlInit()
 class Status(commands.Cog):
     def __init__(self, ce: commands.Bot):
         self.ce = ce
-
-    @app_commands.command(name='about', description='1k subs special FaQ!!! ❤')
+    
+    @app_commands.command(name='about', description='discord about me embed')
     async def status(self, interaction):
         cmds = self.ce.tree.get_commands() or await self.ce.tree.fetch_commands()
 
@@ -37,7 +35,7 @@ class Status(commands.Cog):
         embed.set_thumbnail(url=self.ce.user.display_avatar.url)
         embed.add_field(name='owner', value=f'`{razy}`')
         embed.add_field(name='uptime',
-                        value=f'<t:{int(start_time)}:R>',
+                        value=f'<t:{int(self.ce.uptime.timestamp())}:R>',
                         inline=True)
         embed.add_field(name='total users',
                         value=f'`{len(self.ce.users)}`')

@@ -61,11 +61,9 @@ class Events(commands.Cog):
 		for extension in self.extensions:
 			try:
 				await self.bot.load_extension(extension)
-				print(f'🟨 {extension} was loaded')
+				print(f'   {extension} was loaded')
 			except Exception as e:
 				print(f'🟥 {extension} was not loaded: {e}')
-
-		print('🟪 all extensions loaded!!')
 
 		try:
 			synced = await self.bot.tree.sync()
