@@ -12,3 +12,4 @@ lib64
 /data/data.db
 /data/config.toml
 start.bat
+discord.log
