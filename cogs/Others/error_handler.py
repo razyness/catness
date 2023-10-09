@@ -4,9 +4,9 @@ from discord.ext import commands
 import time
 
 class errorHandler(commands.Cog):
-    def __init__(self, ce):
-        self.ce = ce
-        self.ce.tree.on_error = self.on_tree_error
+    def __init__(self, bot):
+        self.bot = bot
+        self.bot.tree.on_error = self.on_tree_error
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -36,5 +36,5 @@ class errorHandler(commands.Cog):
         except:
             return await interaction.followup.send(message, ephemeral=True)
 
-async def setup(ce):
-    await ce.add_cog(errorHandler(ce))
+async def setup(bot):
+    await bot.add_cog(errorHandler(bot))

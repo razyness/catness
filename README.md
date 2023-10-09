@@ -1,3 +1,3 @@
-![image](https://github.com/razyness/catness/blob/main/betauro.webp)
+![image](/media/betauro.webp)
 
 scrapped Urotsuki designs
