@@ -55,10 +55,6 @@ class Tenor(commands.Cog):
 
 		await interaction.response.send_message(result)
 
-	@app_commands.command(name="woody", description="woody from Neighbours from Hell")
-	async def woody(self, inter):
-		await inter.response.send_message("https://github.com/razyness/catness/raw/main/woody.jpg")
-
 
 async def setup(bot):
 	await bot.add_cog(Tenor(bot))
