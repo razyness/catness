@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 import time
 
+
 class errorHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -26,8 +27,10 @@ class errorHandler(commands.Cog):
 
         elif isinstance(error, app_commands.MissingPermissions):
             message = f"You're missing permissions to use that"
+
         elif isinstance(error, app_commands.AppCommandError):
             message = f"oopsie detected - `{error}"
+
         else:
             raise Exception
 
@@ -35,6 +38,7 @@ class errorHandler(commands.Cog):
             return await interaction.response.send_message(message, ephemeral=True)
         except:
             return await interaction.followup.send(message, ephemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(errorHandler(bot))
