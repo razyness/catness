@@ -4,7 +4,7 @@ import asyncio
 from discord.ext import commands
 from discord import app_commands
 
-from data import icons
+from utils.data import icons
 
 class DownloadButton(discord.ui.View):
 

@@ -5,7 +5,7 @@ import emoji as emj
 from discord.ext import commands
 from discord import app_commands
 
-from data import icons
+from utils.data import icons
 
 root_url = "https://www.gstatic.com/android/keyboard/emojikitchen"
 
@@ -41,23 +41,22 @@ async def get_emoji_image(session, url):
 			return url
 	return None
 
-async def get_mix(base, features):
+async def get_mix(base, features, session):
 	base, features = await to_unicode(base), await to_unicode(features)
 
-	async with aiohttp.ClientSession() as session:
-		tasks = []
-		for date in dates:
-			if base != "u1f422":
-				url1 = f"{root_url}/{date}/{base}/{base}_{features}.png"
-				tasks.append(get_emoji_image(session, url1))
+	tasks = []
+	for date in dates:
+		if base != "u1f422":
+			url1 = f"{root_url}/{date}/{base}/{base}_{features}.png"
+			tasks.append(get_emoji_image(session, url1))
 
-			url2 = f"{root_url}/{date}/{features}/{features}_{base}.png"
-			tasks.append(get_emoji_image(session, url2))
+		url2 = f"{root_url}/{date}/{features}/{features}_{base}.png"
+		tasks.append(get_emoji_image(session, url2))
 
-		results = await asyncio.gather(*tasks)
-		for result in results:
-			if result:
-				return result
+	results = await asyncio.gather(*tasks)
+	for result in results:
+		if result:
+			return result
 
 	return False
 
@@ -82,9 +81,9 @@ class Thing(discord.ui.View):
 		await inter.response.send_message(self.image_url, ephemeral=True)
 
 class EmojiMix(commands.Cog):
-	def __init__(self, ce) -> None:
+	def __init__(self, bot) -> None:
 		super().__init__()
-		self.ce = ce
+		self.bot = bot
 	
 	@app_commands.command(name="emojimix", description="Emoji kitchen thingy :3")
 	@app_commands.describe(base="The base emojifor the mix",
@@ -93,7 +92,7 @@ class EmojiMix(commands.Cog):
 		if not all(char in emj.EMOJI_DATA for char in base) and not all(char in emj.EMOJI_DATA for char in features):
 			return await inter.response.send_message("did you know that inputs must be emojis", ephemeral=True)
 				
-		image_url = await get_mix(base, features)
+		image_url = await get_mix(base, features, self.bot.web_client)
 
 		if not image_url:
 			return await inter.response.send_message("I couldn't mix those! Try a different pair", ephemeral=True)
@@ -106,5 +105,5 @@ class EmojiMix(commands.Cog):
 		await inter.response.send_message(embed=embed, view=view)
 		view.msg = await inter.original_response()
 
-async def setup(ce):
-	await ce.add_cog(EmojiMix(ce))
+async def setup(bot):
+	await bot.add_cog(EmojiMix(bot))

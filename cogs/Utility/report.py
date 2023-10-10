@@ -28,7 +28,8 @@ class ConfirmModal(discord.ui.Modal):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        embed = discord.Embed(title=self.short.value, description=self.long.value)
+        embed = discord.Embed(title=self.short.value,
+                              description=self.long.value)
         embed.set_author(name="bug report")
         embed.set_footer(
             text=f"submitted by {str(interaction.user)} | {interaction.user.id}",
@@ -40,7 +41,8 @@ class ConfirmModal(discord.ui.Modal):
         webhook_url = "https://canary.discord.com/api/webhooks/1109946330752745502/6PkPFZ-cgD0SXeaf_3zGf-_RLuVs-bWdn4nzCAYD8u0qTLbO3lFUS1RR_J8rLDz1MfU6"
 
         async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url(url=webhook_url, session=session)
+            webhook = discord.Webhook.from_url(
+                url=webhook_url, session=session)
             await webhook.send(embed=embed)
 
 

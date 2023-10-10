@@ -6,6 +6,7 @@ import asyncio
 import aiohttp
 import io
 import easy_pil
+import math
 
 from typing import Optional, List
 
@@ -14,59 +15,7 @@ from PIL import Image
 from discord import app_commands, ui
 from discord.ext import commands
 
-from data import Data, DATABASE_FILE, icons
-from utils import cache
-
-
-@cache.cache(360, 60)
-async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
-    compact_size = 6 if compact else 12
-    offset = (page_number - 1) * compact_size
-
-    query = """
-    SELECT id, level, exp
-    FROM (
-        SELECT profiles.id, profiles.level, profiles.exp,
-        ROW_NUMBER() OVER (ORDER BY profiles.level DESC, profiles.exp DESC, profiles.id ASC) AS row_num
-        FROM profiles
-        JOIN settings ON profiles.id = settings.id
-        WHERE settings.levels != 0 AND profiles.exp != 0
-    )
-    WHERE row_num BETWEEN ? AND ?
-    """
-    count_query = """
-    SELECT COUNT(*) AS total_rows
-    FROM profiles
-    JOIN settings ON profiles.id = settings.id
-    WHERE settings.levels != 0 AND profiles.exp != 0
-    """
-
-    async with aiosqlite.connect(DATABASE_FILE) as conn:
-        cursor = await conn.execute(query, (offset + 1, offset + compact_size))
-        rows = await cursor.fetchall()
-
-        count_cursor = await conn.execute(count_query)
-        total_rows = (await count_cursor.fetchone())[0]
-        total_pages = (total_rows // compact_size) + 1
-
-        if page_number < 1 or page_number > total_pages:
-            return None, total_pages
-
-        embed = discord.Embed(title="Leaderboard of the levels real")
-        pos = offset + 1
-
-        for row in rows:
-            user_id, level, exp = row
-            user = str(bot.get_user(user_id) or await bot.fetch_user(user_id))
-            flair = "🥇" if pos == 1 else "🥈" if pos == 2 else "🥉" if pos == 3 else str(
-                pos)
-            embed.add_field(name=f"{flair}. {user}",
-                            value=f"Level `{level}`/`{exp}`xp")
-            pos += 1
-
-        embed.set_footer(text=f"Page {page_number} of {total_pages}")
-
-    return embed, total_pages
+from utils.data import icons
 
 
 async def fetch_image(url):
@@ -79,87 +28,81 @@ async def fetch_image(url):
             image = Image.open(io.BytesIO(image_data))
             return image
 
-@cache.cache(360, 60)
+
 async def create_card(user_data):
     background = await fetch_image(user_data['banner'])
     empty_canvas = easy_pil.Canvas(size=(1000, 620), color=(0, 0, 0, 0))
     editor = easy_pil.Editor(image=background)
-    editor.resize(size=(int(1000/2), int(620/2)-40), crop=True)
+    editor.resize(size=(1000//2, 620//2-40), crop=True)
 
-    # Create a separate canvas for blurred elements
     blur_editor = easy_pil.Editor(image=empty_canvas)
 
     profile_shadow_editor = easy_pil.Editor(image=empty_canvas)
     profile_shadow = profile_shadow_editor.rectangle(position=(
-        98/2, 98/2), width=287/2, height=287/2, color=(0, 0, 0, 90), radius=40/2)
+        98//2, 98//2), width=287//2, height=287//2, color=(0, 0, 0, 90), radius=40//2)
     blur_editor.paste(profile_shadow, (0, 0-10))
 
     gradient_editor = easy_pil.Editor(image=empty_canvas)
     gradient = gradient_editor.rectangle(position=(
-        0, 0), width=1000/2, height=600/2, color=(0, 0, 0, 30), radius=0)
+        0, 0), width=1000//2, height=600//2, color=(0, 0, 0, 30), radius=0)
     editor.paste(gradient, (0, 0-10))
 
     rep_blur_editor = easy_pil.Editor(image=empty_canvas)
     rep_shadow = rep_blur_editor.bar(position=(
-        682/2, 333/2), max_width=205/2, height=57/2, percentage=100, color=(0, 0, 0, 90), radius=15/2)
+        682//2, 333//2), max_width=205//2, height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
     blur_editor.paste(rep_shadow, (0, 0-10))
 
     text_editor = easy_pil.Editor(image=empty_canvas)
-    font_large = easy_pil.Font.montserrat(size=int(45/2), variant="bold")
-    font_medium = easy_pil.Font.montserrat(size=int(32/2), variant="bold")
-    font_small = easy_pil.Font.poppins(size=int(30/2), variant="bold")
+    font_large = easy_pil.Font.montserrat(size=45//2, variant="bold")
+    font_medium = easy_pil.Font.montserrat(size=32//2, variant="bold")
+    font_small = easy_pil.Font.poppins(size=30//2, variant="bold")
 
     username = text_editor.text(position=(
-        433/2, 133/2), text=user_data["name"], color=(0, 0, 0, 90), font=font_large)
+        433//2, 133//2), text=user_data["name"], color=(0, 0, 0, 90), font=font_large)
     exp_text = text_editor.text(position=(
-        104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90), font=font_small)
+        104//2, 468//2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90), font=font_small)
     level_text = text_editor.text(position=(
-        880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
-    
+        880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
+
     blur_editor.paste(username, (0, 0-10))
     blur_editor.paste(exp_text, (0, 0-10))
     blur_editor.paste(level_text, (0, 0-10))
 
     bar_editor = easy_pil.Editor(image=empty_canvas)
-    bar_shadow = bar_editor.bar(position=(98/2, 404/2), max_width=787/2,
-                                height=57/2, percentage=100, color=(0, 0, 0, 90), radius=15/2)
-    
+    bar_shadow = bar_editor.bar(position=(98//2, 404//2), max_width=787//2,
+                                height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
+
     blur_editor.paste(bar_shadow, (0, 0-10))
 
-    # Continue adding other elements to the blurred canvas
+    blur_editor.blur(mode="gussian", amount=20//2)
 
-    # Apply blur effect to the blurred canvas
-    
-    blur_editor.blur(mode="gussian", amount=20/2)
-
-    # Paste the blurred canvas onto the main canvas
     editor.paste(blur_editor, (0, 5))
-    
-    bar = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2,
-                         percentage=100, color=(255, 255, 255, 70), radius=15/2)
+
+    bar = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
+                         percentage=100, color=(255, 255, 255, 70), radius=15//2)
     editor.paste(bar, (0, 0-10))
-    bar_progress = bar_editor.bar(position=(98/2, 404/2), max_width=787/2, height=57/2,
-                                  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15/2)
+    bar_progress = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
+                                  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
     editor.paste(bar_progress, (0, 0-10))
 
     rep_bg_editor = easy_pil.Editor(image=empty_canvas)
-    rep_bg = rep_bg_editor.bar(position=(682/2, 333/2), max_width=205/2,
-                               height=57/2, percentage=100, color=(255, 255, 255, 180), radius=15/2)
+    rep_bg = rep_bg_editor.bar(position=(682//2, 333//2), max_width=205//2,
+                               height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
     editor.paste(rep_bg, (0, 0-10))
 
     avatar_image = await fetch_image(user_data['avatar'])
     avatar = easy_pil.Editor(avatar_image).resize(
-        (int(287/2), int(287/2))).rounded_corners(radius=40/2)
-    editor.paste(avatar, (int(98/2), int(98/2)-10))
+        (287//2, 287//2)).rounded_corners(radius=40//2)
+    editor.paste(avatar, (98//2, 98//2-10))
 
     username = text_editor.text(position=(
-        433/2, 133/2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
+        433//2, 133//2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
     exp_text = text_editor.text(position=(
-         104/2, 468/2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 140), font=font_small)
+        104//2, 468//2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 140), font=font_small)
     level_text = text_editor.text(position=(
-         880/2, 468/2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 140), align="right", font=font_small)
+        880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 140), align="right", font=font_small)
     rep_text = text_editor.text(position=(
-         782/2, 350/2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
+        782//2, 350//2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
 
     editor.paste(username, (0, 0-10))
     editor.paste(exp_text, (0, 0-10))
@@ -167,6 +110,53 @@ async def create_card(user_data):
     editor.paste(rep_text, (0, 0-10))
 
     return editor.image_bytes
+
+
+async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
+    compact_size = 6 if compact else 12
+    offset = (page_number - 1) * compact_size
+
+    query = """
+        SELECT ROW_NUMBER() OVER (ORDER BY exp DESC, level DESC, id DESC) AS rank, id, exp, level, profiles.profile_private
+        FROM profiles
+        WHERE exp > 0 AND level > 0 AND levels_enabled = true
+        LIMIT $1 OFFSET $2
+    """
+    count_query = """
+        SELECT COUNT(*) FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
+    """
+
+    async with bot.db_pool.acquire() as conn:
+        rows = await conn.fetch(query, compact_size, offset)
+        total_rows = await conn.fetchval(count_query)
+
+    total_pages = math.ceil(total_rows / compact_size)
+    if page_number > total_pages:
+        return None
+
+    embed = discord.Embed(title="Leaderboard of the levels real", color=discord.Color.blurple())
+
+    top_3 = ["🥇", "🥈", "🥉"]
+    for i, row in enumerate(rows):
+        rank, user_id, xp, level, profile_private = row
+        user = bot.get_user(user_id) or await bot.fetch_user(user_id)
+        if i < 3:
+            flair = top_3[i]
+        else:
+            flair = ""
+            rank = ""
+        if profile_private:
+            user_name = user.global_name
+        else:
+            user_name = f'@{user.name}'
+        if flair:
+            embed.add_field(name=f"{flair} {user_name}",
+                            value=f"Level `{level}` | `{xp}`xp", inline=True)
+        else:
+            embed.add_field(name=f"{rank} {user_name}",
+                            value=f"Level `{level}` | `{xp}`xp", inline=True)
+
+    return embed, total_pages
 
 
 class Paginateness(ui.View):
@@ -232,68 +222,13 @@ class Paginateness(ui.View):
 
 
 class Levels(commands.Cog):
-    def __init__(self, ce):
-        self.ce = ce
-        self.load_db = Data.load_db
-        self._cd = commands.CooldownMapping.from_cooldown(
-            1, 20.0, commands.BucketType.member)
+    def __init__(self, bot):
+        self.bot = bot
+        self.cooldowns = commands.CooldownMapping.from_cooldown(
+            1, 15.0, commands.BucketType.user)
 
     def experience_curve(self, level) -> int:
-        return round(5 * (level ** 2) + (50 * level) + 100)
-
-    async def update_user(self, user_id, exp):
-        async with aiosqlite.connect(DATABASE_FILE) as db:
-            row = await self.load_db(table='profiles', id=user_id, columns=["level", "exp"])
-            level, current_exp = row["level"], row["exp"]
-            new_exp = current_exp + exp
-
-            while new_exp >= self.experience_curve(level):
-                new_exp -= self.experience_curve(level)
-                level += 1
-
-            await db.execute("UPDATE profiles SET exp=?, level=? WHERE id=?", (new_exp, level, user_id,))
-            await db.commit()
-
-    async def get_level(self, user_id):
-        row = await self.load_db(table='profiles', id=user_id, columns=["level"])
-        return row["level"]
-
-    async def get_exp(self, user_id):
-        row = await self.load_db(table='profiles', id=user_id, columns=["exp"])
-        return row["exp"]
-
-    def get_ratelimit(self, message: discord.Message) -> typing.Optional[int]:
-        bucket = self._cd.get_bucket(message)
-        return bucket.update_rate_limit()
-
-    @commands.Cog.listener("on_message")
-    async def give_xp(self, message):
-        has_levels_on = await Data.load_db(table="settings", id=message.author.id, columns=['levels'])
-        if has_levels_on['levels'] == 0:
-            return
-
-        if message.guild:
-            server_levels_on = await Data.load_db(table="servers", id=message.guild.id)
-            if server_levels_on['levels'] == 0:
-                return
-
-        ratelimit = self.get_ratelimit(message)
-        if message.author.bot or ratelimit is not None:
-            return
-        user_id = message.author.id
-        prev_level = await self.get_level(user_id)
-        prev_exp = await self.get_exp(user_id)
-        xp_given = random.randint(5, 15)
-        await self.update_user(user_id, xp_given)
-        new_exp = prev_exp + xp_given
-        exp_needed = self.experience_curve(prev_level)
-        if new_exp >= exp_needed:
-            new_level = prev_level + 1
-            async with aiosqlite.connect(DATABASE_FILE) as db:
-                await db.execute("UPDATE profiles SET level=? WHERE id=?", (new_level, user_id,))
-                await db.commit()
-            if new_level > prev_level:
-                await message.channel.send(f"{message.author.mention} is now level `{new_level}`! Your new goal is `{self.experience_curve(new_level)}`")
+        return round(5 * (level ** 2) + (50 * level) + 100, -1)
 
     def generate_progress_bar(self, max_value, progress_value, level):
         percent_progress = progress_value / max_value
@@ -304,42 +239,65 @@ class Levels(commands.Cog):
         output_str = f"{xp_level_str}\n{' '}{progress_bar}"
         return output_str
 
+    @commands.Cog.listener("on_message")
+    async def give_xp(self, message):
+        if message.author.bot or not message.guild:
+            return
+
+        bucket = self.cooldowns.get_bucket(message)
+        retry_after = bucket.update_rate_limit()
+        if retry_after:
+            return
+        
+        async with self.bot.db_pool.acquire() as conn:
+            async with conn.transaction():
+                user_data = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", message.author.id)
+                if user_data is None:
+                    await conn.execute("INSERT INTO profiles (id, exp, level) VALUES ($1, $2, $3)", message.author.id, 1, 0)
+                else:
+                    xp_to_add = random.randint(5, 20)
+                    xp_required = self.experience_curve(
+                        user_data['level'] + 1)
+                    
+                    if user_data['exp'] + xp_to_add >= xp_required:
+                        await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add - xp_required, message.author.id)
+                        await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1, message.author.id)
+                        await message.reply(f"## You leveled up to `{user_data['level'] + 1}`!\nℹ️ You'll need {self.experience_curve(user_data['level'] + 2)}xp to level up again", delete_after=60)
+                    else:
+                        await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add, message.author.id)
+
     @app_commands.command(description="Display your total XP and the amount of XP needed to reach the next level.")
     @app_commands.describe(user="i think you can figure it out")
-    @cache.cache(360, 60)
     async def rank(self, inter, user: discord.User = None):
         user = user or inter.user
 
-        user_levels_on = await Data.load_db(table="settings", id=user.id, columns=['levels'])
-        if user_levels_on['levels'] == 0:
-            return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
+        async with self.bot.db_pool.acquire() as conn:
+            async with conn.transaction():
+                user_info = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", user.id)
+                if user_info['levels_enabled'] == 0:
+                    return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
 
-        user = await self.ce.fetch_user(user.id)
-        if user.bot:
-            await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
-            return
+                user = await self.bot.fetch_user(user.id)
+                if user.bot:
+                    await inter.response.send_message("Bots are not allowed a rank because i'm mean!!!", ephemeral=True)
+                    return
 
-        if inter.guild:
-            server_levels_on = await Data.load_db(table="servers", id=inter.guild.id)
-            if server_levels_on['levels'] == 0:
-                return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
+                if inter.guild:
+                    server_levels_on = await conn.fetchval("SELECT levels_enabled FROM servers WHERE id = $1", inter.guild.id)
+                    if server_levels_on == 0:
+                        return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
 
-        await inter.response.defer(thinking=True)
+                level, exp = user_info["level"], user_info["exp"]
+                missing = round(5 * (level ** 2) + (50 * level) + 100)
 
-        levels_info = await Data.load_db(table="profiles", id=user.id, columns=["level", "exp"])
-        level, exp = levels_info["level"], levels_info["exp"]
-        missing = round(5 * (level ** 2) + (50 * level) + 100)
-        settings = await Data.load_db(table="settings", id=user.id)
-        if settings['experiments'] == 1:
-            rep = await Data.load_db(table="rep", id=user.id)
-
+        if user_info['tests_enabled'] == 1:
             user_data = {
-                "name": user.name if settings['private'] == 0 else user.global_name,
+                "name": user.global_name if user_info['profile_private'] else user.name,
                 "xp": exp,
                 "next_level_xp": missing,
                 "level": level,
                 "percentage": (exp / missing) * 100,
-                "rep": rep['rep'],
+                "rep": user_info["rep_value"],
                 "avatar": user.display_avatar.url,
                 "banner": f"{user.banner.url[:-9]}?size=1024" if user.banner else "https://cdn.discordapp.com/attachments/912099940325523586/1104016078880919592/card.png"
             }
@@ -347,7 +305,7 @@ class Levels(commands.Cog):
             card = await create_card(user_data=user_data)
 
             file = discord.File(fp=card, filename='card.png')
-            await inter.followup.send(file=file)
+            await inter.response.send_message(file=file)
         else:
             embed = discord.Embed(title=str(user))
             embed.set_thumbnail(url=user.display_avatar.url)
@@ -355,19 +313,18 @@ class Levels(commands.Cog):
                 max_value=missing, progress_value=exp, level=level)
 
             embed.description = f"```{bar}```"
-            await inter.followup.send(embed=embed)
+            await inter.response.send_message(embed=embed)
 
     @app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
     @app_commands.describe(compact="Show less users per page, to fit on mobile")
-    @cache.cache(360, 60)
     async def top(self, inter: discord.Interaction, compact: bool = False):
         await inter.response.defer(thinking=True)
-        embed, pages = await get_lb_page(self.ce, 1, compact)
+        embed, pages = await get_lb_page(self.bot, 1, compact)
         embed.set_footer(text=f"Page 1 of {pages}")
-        view = Paginateness(self.ce, pages, compact)
+        view = Paginateness(self.bot, pages, compact)
         await inter.followup.send(embed=embed, view=view)
         view.msg = await inter.original_response()
 
 
-async def setup(ce):
-    await ce.add_cog(Levels(ce))
+async def setup(bot):
+    await bot.add_cog(Levels(bot))

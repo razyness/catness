@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from data import icons
+from utils.data import icons
 
 class Menu(discord.ui.View):
 
@@ -12,8 +12,8 @@ class Menu(discord.ui.View):
 
 
 class Spotify(commands.Cog):
-    def __init__(self, ce: commands.Bot):
-        self.ce = ce
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
 
     @app_commands.command(name='spotify', description='View the user\'s spotify activity')
     @app_commands.guild_only()
@@ -44,5 +44,5 @@ class Spotify(commands.Cog):
             await interaction.response.send_message(embed=embed, view=view)
 
 
-async def setup(ce: commands.Bot):
-    await ce.add_cog(Spotify(ce))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Spotify(bot))

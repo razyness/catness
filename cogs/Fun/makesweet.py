@@ -2,14 +2,13 @@ import discord
 import aiohttp
 import io, os
 
-from utils.http import HTTP
 from typing import Optional
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
 from PIL import Image
 
-from data import config
+from utils.data import config
 
 api_key = config['MAKESWEET']
 
@@ -74,9 +73,9 @@ async def make_gif(template, text=None, image=None, text_first=False):
                 return None
 
 class Makesweet(commands.Cog):
-    def __init__(self, ce) -> None:
+    def __init__(self, bot) -> None:
         super().__init__()
-        self.ce = ce
+        self.bot = bot
     
     @app_commands.command(name="makesweet", description="Funny heart locked sealed away forever")
     @app_commands.describe(template="For example heart-locket for niko my beloved",
@@ -104,5 +103,5 @@ class Makesweet(commands.Cog):
 
         await inter.followup.send(file=discord.File(gif, f"{template}.gif"))
 
-async def setup(ce):
-    await ce.add_cog(Makesweet(ce))
+async def setup(bot):
+    await bot.add_cog(Makesweet(bot))

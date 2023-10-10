@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 from typing import Literal
 
-from data import config, icons
+from utils.data import config, icons
 
 OPENAI = config["OPENAI"]
 
@@ -236,9 +236,9 @@ class ImgRegen(discord.ui.View):
 
 
 class OpenAI(commands.Cog):
-	def __init__(self, ce):
+	def __init__(self, bot):
 		super().__init__()
-		self.ce = ce
+		self.bot = bot
 
 	openai.api_key = OPENAI
 
@@ -301,5 +301,5 @@ class OpenAI(commands.Cog):
 	#	await interaction.followup.send(embed=embed)
 
 
-async def setup(ce):
-	await ce.add_cog(OpenAI(ce))
+async def setup(bot):
+	await bot.add_cog(OpenAI(bot))

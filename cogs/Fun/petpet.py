@@ -1,18 +1,22 @@
 import discord
+
 from discord.ext import commands
 from discord import app_commands
+
 from io import BytesIO
 from petpetgif import petpet as petpetgif
 
 class PetPet(commands.Cog):
-    def __init__(self, ce):
-        self.ce = ce
+    def __init__(self, bot):
+        self.bot = bot
 
     @app_commands.command(name="petpet", description="Create a petpet gif")
-    async def pet(self, inter, user: discord.User):
+    async def pet(self, inter, user: discord.User, server_avatar:bool=True):
         try:
-            image = await user.avatar.read()
-
+            if server_avatar:
+                image = await user.display_avatar.read()
+            else:
+                image = await user.avatar.read()
         except:
             await inter.response.send_message('You can only mention a member to pet pet pet pet pet pet', ephemeral=True)
             return
@@ -23,5 +27,5 @@ class PetPet(commands.Cog):
         dest.seek(0)
         await inter.response.send_message(file=discord.File(dest, filename=f"{image[0]}-petpet.gif"))
 
-async def setup(ce):
-    await ce.add_cog(PetPet(ce))
+async def setup(bot):
+    await bot.add_cog(PetPet(bot))

@@ -38,7 +38,8 @@ async def generate_color_palette(image_url, palette_size=10):
             break
 
         rgb = color.rgb
-        draw.rectangle([(x_offset, y_offset), (x_offset + 50, y_offset + 50)], fill=rgb)
+        draw.rectangle(
+            [(x_offset, y_offset), (x_offset + 50, y_offset + 50)], fill=rgb)
         x_offset += 50
         if x_offset >= palette_width:
             x_offset = 0
@@ -50,13 +51,14 @@ async def generate_color_palette(image_url, palette_size=10):
 
     return palette_bytes.getvalue()
 
+
 class Palette(commands.Cog):
-    def __init__(self, ce):
-        self.ce = ce
+    def __init__(self, bot):
+        self.bot = bot
 
     @app_commands.command(name="palette", description="Generate a color palette from someone's avatar")
-    @app_commands.describe(user = "Yes", size="Number of colors to generate. Converted to even +1")
-    async def palette(self, inter, user:discord.User=None, size:int=8):
+    @app_commands.describe(user="Yes", size="Number of colors to generate. Converted to even +1")
+    async def palette(self, inter, user: discord.User = None, size: int = 8):
         user = user or inter.user
         if size > 30:
             size = 30
@@ -64,8 +66,10 @@ class Palette(commands.Cog):
             size = 6
         await inter.response.defer(thinking=True)
         palette_image_bytes = await generate_color_palette(user.avatar.url.replace('1024', '512'), size)
-        img = discord.File(io.BytesIO(palette_image_bytes), filename='palette.png')
+        img = discord.File(io.BytesIO(palette_image_bytes),
+                           filename='palette.png')
         await inter.followup.send(content=f"{user.mention}'s palette", file=img)
 
-async def setup(ce):
-    await ce.add_cog(Palette(ce))
+
+async def setup(bot):
+    await bot.add_cog(Palette(bot))

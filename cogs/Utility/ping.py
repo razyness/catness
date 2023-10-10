@@ -15,5 +15,6 @@ class Ping(commands.Cog):
         ping = (time.monotonic() - before) * 1000
         await interaction.edit_original_response(content=f"Pong! `{int((ping + self.ce.latency) / 2)} ms`")
 
+
 async def setup(ce: commands.Bot):
     await ce.add_cog(Ping(ce))
