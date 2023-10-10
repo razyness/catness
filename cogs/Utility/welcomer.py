@@ -5,8 +5,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from data import Data as data
-
 welcome_messages = [
     "Welcome, {user}! Get comfy and enjoy the company!",
     "Hey there, {user}! We've been waiting for you. Let's have some fun!",
@@ -42,7 +40,7 @@ class WelcomeButton(discord.ui.View):
         self.vaule = None
         self.msg = None
         self.reacted = []
-        self.children[0].emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶""🎈", "🎄", "🕊️", "⭐", "🍀"])
+        self.children[0].emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶", "<:angle:1154534259462262815>", "🎈", "🎄", "🕊️", "⭐", "🍀"])
 
     async def disable_all(self):
         for i in self.children:
@@ -81,18 +79,19 @@ class Welcomer(commands.Cog):
         if member.bot:
             return
         
-        server_data = await data.load_db(table="servers", id=str(member.guild.id), columns=["welcomer"])
-        if not server_data["welcomer"] > 0:
-            return
+        async with self.bot.db_pool.acquire() as conn:
+            server_data = await conn.fetchrow("SELECT welcome_type FROM servers WHERE id = $1", str(member.guild.id))
+            if not int(server_data) > 0:
+                return
 
         patterns = ["gen", "main", "chat"]
         channel = next((channel for channel in member.guild.text_channels if any(name.lower() in channel.name.lower() for name in patterns)), None)
-        view = WelcomeButton() if server_data["welcomer"] > 1 else None
+        view = WelcomeButton() if int(server_data) > 1 else None
 
         if channel:
             og_msg = await channel.send(random.choice(welcome_messages).replace("{user}", member.mention), view=view)
 
-            if server_data["welcomer"] > 1:
+            if int(server_data) > 1:
                 view.og_msg = og_msg
                 await asyncio.sleep(180)
                 if view.reacted == [] or view.reacted is None:
