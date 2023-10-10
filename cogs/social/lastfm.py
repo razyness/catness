@@ -241,7 +241,8 @@ class LastFM(commands.Cog):
                         socials_dict = json.loads(socials)
                         if 'lastfm' in socials_dict:
                             user = socials_dict['lastfm']
-
+                        else:
+                            raise Exception
             except Exception as e:
                 print(e)
                 await interaction.response.send_message(f"{g} linked a `LastFM` account! Run </link:1080264642569441380> to do so", ephemeral=True)

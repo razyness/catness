@@ -96,6 +96,7 @@ class Steam(commands.Cog):
 				g = f"<@{user_id}> hasn't"
 				if user_id == interaction.user.id:
 					g = "You haven't"
+
 			try:
 				async with self.bot.db_pool.acquire() as conn:
 					async with conn.transaction():
@@ -103,14 +104,18 @@ class Steam(commands.Cog):
 						socials_dict = json.loads(socials)
 						if 'steam' in socials_dict:
 							user = socials_dict['steam']
+						else:
+							raise Exception
+
 			except Exception as e:
-				print(e)
 				await interaction.response.send_message(f"{g} linked a `Steam` account! Run </link:1080264642569441380> to do so", ephemeral=True)
 				return
+
 		try:
 			embed = await mainPage(user, self.bot.web_client)
 			await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
-		except:
+
+		except Exception as e:
 			await interaction.response.send_message(f"I couldn't find the user. Did you use the vanity url of the user?", ephemeral=True)
 
 
