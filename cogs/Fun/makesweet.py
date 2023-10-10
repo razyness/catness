@@ -44,7 +44,7 @@ async def to_bytes(media_url):
                 return file_object.getvalue()
 
 
-async def make_gif(template, text=None, image=None, text_first=False):
+async def make_gif(template, session, text=None, image=None, text_first=False):
     url = f"https://api.makesweet.com/make/{template}"
 
     headers = {
@@ -63,14 +63,13 @@ async def make_gif(template, text=None, image=None, text_first=False):
     if text and text_first:
         url = url + f'&textfirst=1'
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, data=data) as response:
-            if response.status == 200:
-                r = await response.content.read()
-                return io.BytesIO(r)
-            else:
-                print(f"Request failed with status {response.status}")
-                return None
+    async with session.post(url, headers=headers, data=data) as response:
+        if response.status == 200:
+            r = await response.content.read()
+            return io.BytesIO(r)
+        else:
+            print(f"Request failed with status {response.status}")
+            return None
 
 class Makesweet(commands.Cog):
     def __init__(self, bot) -> None:
@@ -97,7 +96,7 @@ class Makesweet(commands.Cog):
             return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
 
         await inter.response.defer(thinking=True)
-        gif = await make_gif(template, text, image, swap)
+        gif = await make_gif(template, self.bot.web_client, text, image, swap)
         if gif is None:
             raise Exception("No gif was returned")
 

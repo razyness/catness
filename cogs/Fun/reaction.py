@@ -8,10 +8,10 @@ class Reaction(commands.Cog):
 	@app_commands.command(name='reaction', description='Live slug reaction')
 	async def reaction(self, interaction):
 		try:
-			r = self.bot.session.get(f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={self.bot.config['TENOR']}&client_key=tenor-api&limit=50&random=true")
-			result = await r.json()
-			result = result["results"][0]["itemurl"]
-			await interaction.response.send_message(result)
+			async with self.bot.web_client.get(f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={self.bot.config['TENOR']}&client_key=tenor-api&limit=50&random=true") as r:
+				result = await r.json()
+				result = result["results"][0]["itemurl"]
+				await interaction.response.send_message(result)
 		except Exception as e:
 			print(e)
 	
