@@ -52,23 +52,30 @@ class Link(commands.Cog):
     async def unlink(self, inter, platform: Choice[str]):
         user = inter.user
         async with self.bot.db_pool.acquire() as conn:
-            socials = await conn.fetchval("SELECT socials FROM profiles WHERE id = $1", user.id)
-            if socials == '{}':
+            socials = await conn.fetchval("SELECT socials, cake FROM profiles WHERE id = $1", user.id)
+            if socials == '{}' and platform.value != 'cake':
                 await inter.response.send_message(f"You don't have any socials linked", ephemeral=True)
                 return
 
             socials = json.loads(socials)
-            if platform.value not in socials:
+            if platform.value not in socials and platform.value != 'cake':
                 await inter.response.send_message(f"You don't have your `{platform.name}` linked", ephemeral=True)
                 return
 
-            del socials[platform.value]
-            await conn.execute(
-                "UPDATE profiles SET socials = $1 WHERE id = $2",
-                json.dumps(socials),
-                user.id
-            )
-            await inter.response.send_message(f"I have removed `{platform.name}` from your linked socials", ephemeral=True)
+            if platform.value == 'cake':
+                await conn.execute(
+                    "UPDATE profiles SET cake = NULL WHERE id = $1",
+                    user.id
+                )
+                await inter.response.send_message(f"I have removed your birthday forever", ephemeral=True)
+            else:
+                del socials[platform.value]
+                await conn.execute(
+                    "UPDATE profiles SET socials = $1 WHERE id = $2",
+                    json.dumps(socials),
+                    user.id
+                )
+                await inter.response.send_message(f"I have removed `{platform.name}` from your linked socials", ephemeral=True)
 
 
 async def setup(bot):

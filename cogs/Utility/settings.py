@@ -1,12 +1,13 @@
 from typing import Optional
 import discord
-
+import json
 from discord import ui
 from discord.ext import commands
 from discord import app_commands
 from discord.utils import MISSING
 
 from utils.data import icons
+from utils import blocking
 
 
 async def load_db(db_pool, id, table):
@@ -46,15 +47,18 @@ async def main_menu(user, admin=False):
 	return embed
 
 
-async def social_menu(settings, user):
+async def social_menu(settings, *args):
 	embed = discord.Embed()
 	embed.title = "🎂 Social"
-	birthday = settings['cake']
-	year_bool = False if not birthday or not birthday['cake'] else birthday['cake'].split(":")[
-		1]
-	warn = "⚠️ `Your birthday is not set`\n" if not birthday or birthday[
-		'cake'] is None else None
-	embed.add_field(name=f"Birth year: {str('`Shown`' if year_bool == 'True' else '`Hidden`')}",
+	birthday = await blocking.run_blocking(lambda: json.loads(settings['cake']))
+	warn = None
+	
+	if birthday:
+		year_bool = True if birthday['consider'] else False
+	else:
+		warn = "⚠️ `Your birthday is not set`\n"
+
+	embed.add_field(name=f"Birth year: {str('`Shown`' if year_bool else '`Hidden`')}",
 					value=f"{warn}Hiding your birth year will not reveal your age in reminders"
 					"and your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
 	embed.set_footer(text="Select a value to toggle")
@@ -116,32 +120,28 @@ class ConfirmModal(ui.Modal):
 
 		await interaction.response.send_message(f"Wait while i delete everything i know about you...", ephemeral=True)
 		async with self.db_pool.acquire() as conn:
-			follows = {'follows': {'following': '[]', 'followers': '[]'}} or await load_db(db_pool=self.db_pool, table="profiles", id=interaction.user.id)
+			follows = await load_db(db_pool=self.db_pool, table="profiles", id=interaction.user.id)
 			follows = follows['follows']
 
-			for i in eval(follows['following']):
+			for i in follows['following']:
 				i = int(i)
+
 				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-				print(userdata)
+				userdata = userdata
 				follow_list = userdata['follows']
 				follow_list['followers'].remove(interaction.user.id)
-				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", str(follow_list), i)
-
-				if interaction.user.id in follow_list:
-					follow_list['followers'].remove(interaction.user.id)
-					await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", str(follow_list), i)
-
-			for i in eval(follows['followers']):
+				follow_list = await blocking.run_blocking(lambda: json.dumps(follow_list))
+				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
+			
+			for i in follows['followers']:
 				i = int(i)
+
 				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-				print(userdata)
+				userdata = userdata
 				follow_list = userdata['follows']
 				follow_list['following'].remove(interaction.user.id)
-				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", str(follow_list), i)
-
-				if interaction.user.id in follow_list:
-					follow_list['following'].remove(interaction.user.id)
-					await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", str(follow_list), i)
+				follow_list = await blocking.run_blocking(lambda: json.dumps(follow_list))
+				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
 
 			await conn.execute("DELETE FROM profiles WHERE id=$1", interaction.user.id)
 		await interaction.followup.send("Everything is gone, bye-bye!", ephemeral=True)
@@ -207,7 +207,7 @@ class AdvancedMenu(ui.View):
 		self.settings = settings
 		self.admin = admin
 		self.db_pool = db_pool
-		
+
 		for i in self.children:
 			if not i.label or i.label == "Reset Data":
 				continue
@@ -260,8 +260,8 @@ class SocialMenu(ui.View):
 					i.style = discord.ButtonStyle.gray
 					i.disabled = True
 					continue
-				i.style = colorize("0" if self.birthday.split(":")[
-								   1] == "False" else "1")
+				i.style = colorize(
+					"0" if not self.birthday['consider'] else "1")
 				continue
 
 			i.style = colorize(
@@ -278,17 +278,18 @@ class SocialMenu(ui.View):
 	@ui.button(label="Birth year", style=discord.ButtonStyle.gray)
 	async def bday_button(self, inter, button):
 		async with self.db_pool.acquire() as conn:
-			date, year_bool = self.birthday.split(":")
-			value = f"{date}:True"
-			if year_bool == "True":
-				year_bool = "False"
-				value = f"{date}:False"
-			await conn.execute(f"UPDATE profiles SET cake=$1 WHERE id=$2", (value, self.user.id))
-		birthday = await load_db(db_pool=self.db_pool, table="profiles", id=self.user.id)
-		date, year_bool = self.birthday.split(":")
-		year_bool = "0" if year_bool == "True" else "1"
+			if self.birthday['consider']:
+				self.birthday['consider'] = False
+			else:
+				self.birthday['consider'] = True
+			
+			cake = await blocking.run_blocking(lambda: json.dumps(self.birthday))
+			await conn.execute(f"UPDATE profiles SET cake=$1 WHERE id=$2", cake, self.user.id)
+
+		self.settings['cake'] = cake
+
+		year_bool = "1" if self.birthday['consider'] else "0"
 		button.style = colorize(value=year_bool)
-		self.birthday = birthday['cake']
 		embed = await social_menu(self.settings, inter.user)
 
 		await inter.response.edit_message(embed=embed, view=self)
@@ -377,8 +378,9 @@ class SettingsMenu(ui.View):
 		embed = await social_menu(self.settings, self.user)
 
 		birthday = await load_db(db_pool=self.db_pool, table="profiles", id=self.user.id)
+		cake = await blocking.run_blocking(lambda: json.loads(birthday['cake']))
 		await inter.response.defer()
-		await self.msg.edit(embed=embed, view=SocialMenu(inter.user, self.settings, birthday['cake'], self.admin, self.db_pool))
+		await self.msg.edit(embed=embed, view=SocialMenu(inter.user, self.settings, cake, self.admin, self.db_pool))
 
 	@ui.button(label="Advanced", emoji="🧰", style=discord.ButtonStyle.blurple)
 	async def advanced_button(self, inter, button):
