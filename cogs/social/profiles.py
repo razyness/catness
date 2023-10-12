@@ -4,6 +4,7 @@ import calendar
 import json
 
 from utils.data import icons
+from utils import blocking
 
 from datetime import datetime
 from discord import app_commands
@@ -11,32 +12,37 @@ from discord.ext import commands
 
 
 class RemoveView(discord.ui.View):
-	def __init__(self, user, author):
+	def __init__(self, profile_user, inter_user, db_pool):
 		super().__init__()
 		self.value = None
-		self.user = user
-		self.author = author
+		self.profile_user = profile_user
+		self.inter_user = inter_user
+		self.db_pool = db_pool
 
-	async def remove_birthday(self, user, author):
-		async with self.bot.db_pool.acquire() as conn:
+	async def remove_birthday(self, profile_user, inter_user):
+		async with self.db_pool.acquire() as conn:
 			async with conn.transaction():
-				user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", user.id)
-				self_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", author.id)
+				inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
+				profile_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", profile_user.id)
 
-				user_follows = user_data['follows']
-				self_follows = self_user_data['follows']
+				inter_data = await blocking.run_blocking(lambda: json.loads(inter_user_data['follows']))
+				profile_data = await blocking.run_blocking(lambda: json.loads(profile_user_data['follows']))
 
-				if user.id in self_follows['following'] and author.id in user_follows['follow_list']:
-					self_follows['following'].remove(user.id)
-					user_follows['follow_list'].remove(author.id)
+				if profile_user.id in inter_data['following'] and inter_user.id in profile_data['followers']:
+					inter_data['following'].remove(profile_user.id)
+					inter_data = await blocking.run_blocking(lambda: json.dumps(inter_data))
 
-					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", self_follows, user.id)
-					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", user_follows, author.id)
+					profile_data['followers'].remove(inter_user.id)
+					profile_data = await blocking.run_blocking(lambda: json.dumps(profile_data))
+
+					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", inter_data, inter_user.id)
+					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", profile_data, profile_user.id)
+
 
 	@discord.ui.button(label="Cancel", emoji=icons.remove, style=discord.ButtonStyle.red)
 	async def remove_cake(self, inter, button):
-		await self.remove_birthday(self.user, self.author)
-		await inter.response.send_message(f"You will not be notified on {self.user.mention}'s birthday", ephemeral=True)
+		await self.remove_birthday(self.profile_user, self.inter_user)
+		await inter.response.send_message(f"You will not be notified on {self.profile_user.mention}'s birthday", ephemeral=True)
 
 
 class ProfileView(discord.ui.View):
@@ -44,43 +50,53 @@ class ProfileView(discord.ui.View):
 		super().__init__()
 		self.value = None
 		self.bot = bot
-		self.user = user
+		self.profile_user = user
 
 	async def disable_all(self):
 		for i in self.children:
-			i.disabled = True
+			if not i.url:
+				i.disabled = True
 		await self.msg.edit(view=self)
 
 	async def on_timeout(self):
 		await self.disable_all()
 
-	async def notify_action(self, user, author):
+	async def notify_action(self, profile_user, inter_user):
 		async with self.bot.db_pool.acquire() as conn:
 			async with conn.transaction():
-				user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", user.id)
-				self_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", author.id)
+				inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
 
-				user_follows = user_data['follows']
-				self_follows = self_user_data['follows']
+				if inter_user_data is None:
+					await conn.execute("INSERT INTO profiles (id, follows) VALUES ($1, $2)", inter_user.id, {"followers": [], "following": []})
+					inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
 
-				if user.id in self_follows['following'] and author.id in user_follows['follow_list']:
-					self_follows['following'].append(user.id)
-					user_follows['follow_list'].append(author.id)
+				profile_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", profile_user.id)
 
-					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", self_follows, user.id)
-					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", user_follows, author.id)
-					return f"You will be notified on {self.user.mention}'s birthday !!"
+				inter_data = await blocking.run_blocking(lambda: json.loads(inter_user_data['follows']))
+				profile_data = await blocking.run_blocking(lambda: json.loads(profile_user_data['follows']))
+
+				if profile_user.id not in inter_data['following'] and inter_user.id not in profile_data['followers']:
+					inter_data['following'].append(profile_user.id)
+					inter_data = await blocking.run_blocking(lambda: json.dumps(inter_data))
+
+					profile_data['followers'].append(inter_user.id)
+					profile_data = await blocking.run_blocking(lambda: json.dumps(profile_data))
+
+					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", inter_data, inter_user.id)
+					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", profile_data, profile_user.id)
+
+					return f"You will be notified on {self.profile_user.mention}'s birthday !!"
 				else:
-					return f"You are already following {self.user.mention}'s birthday (frown)"
+					return f"You are already following {self.profile_user.mention}'s birthday (frown, loser)"
 
 	@discord.ui.button(label="Notify me!", emoji="🎂", style=discord.ButtonStyle.blurple)
 	async def notify(self, inter, button):
-		resp = await self.notify_action(self.user, inter.user)
-		view = RemoveView(self.user, inter.user)
+		resp = await self.notify_action(self.profile_user, inter.user)
+		view = RemoveView(self.profile_user, inter.user, self.bot.db_pool)
 		await inter.response.send_message(resp, view=view, ephemeral=True)
 
 	async def interaction_check(self, interaction) -> bool:
-		if interaction.user.id == self.user.id:
+		if interaction.user.id == self.profile_user.id:
 			await interaction.response.send_message("You can't follow your own birthday, you should remember it i think", ephemeral=True)
 			return False
 		return True
@@ -93,13 +109,13 @@ class Profile(commands.Cog):
 
 	@app_commands.command(name='profile', description='View anyone\'s profile almost')
 	@app_commands.describe(user="Hello pick a user or user id or mention leave empty for yourself")
-	async def discord_id(self, interaction, user: str = None):
+	async def discord_id(self, interaction, user: str = None, ephemeral:bool=False):
 		if user is None:
 			user = interaction.user.id
 		elif user.startswith("<@"):
 			user = int(user[2:-1])
 		try:
-			user = self.bot.get_user(int(user)) or await self.bot.fetch_user()
+			user = await self.bot.fetch_user(int(user))
 		except:
 			return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
 
@@ -137,6 +153,10 @@ class Profile(commands.Cog):
 		embed.description = result
 
 		if user.bot:
+			for i in view.children:
+				if not i.url:
+					view.remove_item(i)
+
 			await interaction.response.send_message(embed=embed, view=view)
 			view.msg = await interaction.original_response()
 			return
@@ -162,8 +182,27 @@ class Profile(commands.Cog):
 					socials_str = '\n'.join(socials_list)
 					embed.add_field(name='Socials', value=socials_str)
 
-		await interaction.response.send_message(embed=embed)
+				cake = await conn.fetchval("SELECT cake FROM profiles WHERE id = $1", user.id)
+				if cake:
+					cake = await blocking.run_blocking(lambda: json.loads(cake))
+					if cake['consider']:
+						value = discord.utils.format_dt(datetime(cake['year'], cake['month'], cake['day']), style='D')
+					else:
+						value = f"`{calendar.month_name[cake['month']]} {cake['day']}`"
+					embed.add_field(name='Birthday', value=value)
+				else:
+					for i in view.children:
+						if not i.url:
+							view.remove_item(i)
 
+				level = await conn.fetchval("SELECT level FROM profiles WHERE id = $1", user.id)
+				exp = await conn.fetchval("SELECT exp FROM profiles WHERE id = $1", user.id)
+				
+				if (level, exp) != (0, 0):
+					embed.add_field(name='Rank', value=f'Level `{level}` | `{exp}`xp')
+
+		await interaction.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
+		view.msg = await interaction.original_response()
 
 async def setup(bot):
 	await bot.add_cog(Profile(bot))
