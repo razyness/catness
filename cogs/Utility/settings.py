@@ -50,7 +50,7 @@ async def main_menu(user, admin=False):
 async def social_menu(settings, *args):
 	embed = discord.Embed()
 	embed.title = "🎂 Social"
-	birthday = await blocking.run_blocking(lambda: json.loads(settings['cake']))
+	birthday = await blocking.run(lambda: json.loads(settings['cake']))
 	warn = None
 	
 	if birthday:
@@ -121,26 +121,26 @@ class ConfirmModal(ui.Modal):
 		await interaction.response.send_message(f"Wait while i delete everything i know about you...", ephemeral=True)
 		async with self.db_pool.acquire() as conn:
 			follows = await load_db(db_pool=self.db_pool, table="profiles", id=interaction.user.id)
-			follows = follows['follows']
+			follows = await blocking.run(lambda: json.loads(follows['follows']))
 
 			for i in follows['following']:
 				i = int(i)
 
 				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-				userdata = userdata
-				follow_list = userdata['follows']
+
+				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
 				follow_list['followers'].remove(interaction.user.id)
-				follow_list = await blocking.run_blocking(lambda: json.dumps(follow_list))
+				follow_list = await blocking.run(lambda: json.dumps(follow_list))
 				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
 			
 			for i in follows['followers']:
 				i = int(i)
 
 				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-				userdata = userdata
-				follow_list = userdata['follows']
+
+				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
 				follow_list['following'].remove(interaction.user.id)
-				follow_list = await blocking.run_blocking(lambda: json.dumps(follow_list))
+				follow_list = await blocking.run(lambda: json.dumps(follow_list))
 				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
 
 			await conn.execute("DELETE FROM profiles WHERE id=$1", interaction.user.id)
@@ -283,7 +283,7 @@ class SocialMenu(ui.View):
 			else:
 				self.birthday['consider'] = True
 			
-			cake = await blocking.run_blocking(lambda: json.dumps(self.birthday))
+			cake = await blocking.run(lambda: json.dumps(self.birthday))
 			await conn.execute(f"UPDATE profiles SET cake=$1 WHERE id=$2", cake, self.user.id)
 
 		self.settings['cake'] = cake
@@ -378,7 +378,7 @@ class SettingsMenu(ui.View):
 		embed = await social_menu(self.settings, self.user)
 
 		birthday = await load_db(db_pool=self.db_pool, table="profiles", id=self.user.id)
-		cake = await blocking.run_blocking(lambda: json.loads(birthday['cake']))
+		cake = await blocking.run(lambda: json.loads(birthday['cake']))
 		await inter.response.defer()
 		await self.msg.edit(embed=embed, view=SocialMenu(inter.user, self.settings, cake, self.admin, self.db_pool))
 
