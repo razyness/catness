@@ -49,7 +49,7 @@ class Cake(commands.Cog):
 
 		user_id = inter.user.id
 
-		cake_format = await blocking.run_blocking(lambda: json.dumps(cake_format))
+		cake_format = await blocking.run(lambda: json.dumps(cake_format))
 
 		async with self.bot.db_pool.acquire() as conn:
 			async with conn.transaction():

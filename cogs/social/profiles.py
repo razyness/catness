@@ -25,15 +25,15 @@ class RemoveView(discord.ui.View):
 				inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
 				profile_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", profile_user.id)
 
-				inter_data = await blocking.run_blocking(lambda: json.loads(inter_user_data['follows']))
-				profile_data = await blocking.run_blocking(lambda: json.loads(profile_user_data['follows']))
+				inter_data = await blocking.run(lambda: json.loads(inter_user_data['follows']))
+				profile_data = await blocking.run(lambda: json.loads(profile_user_data['follows']))
 
 				if profile_user.id in inter_data['following'] and inter_user.id in profile_data['followers']:
 					inter_data['following'].remove(profile_user.id)
-					inter_data = await blocking.run_blocking(lambda: json.dumps(inter_data))
+					inter_data = await blocking.run(lambda: json.dumps(inter_data))
 
 					profile_data['followers'].remove(inter_user.id)
-					profile_data = await blocking.run_blocking(lambda: json.dumps(profile_data))
+					profile_data = await blocking.run(lambda: json.dumps(profile_data))
 
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", inter_data, inter_user.id)
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", profile_data, profile_user.id)
@@ -72,15 +72,15 @@ class ProfileView(discord.ui.View):
 
 				profile_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", profile_user.id)
 
-				inter_data = await blocking.run_blocking(lambda: json.loads(inter_user_data['follows']))
-				profile_data = await blocking.run_blocking(lambda: json.loads(profile_user_data['follows']))
+				inter_data = await blocking.run(lambda: json.loads(inter_user_data['follows']))
+				profile_data = await blocking.run(lambda: json.loads(profile_user_data['follows']))
 
 				if profile_user.id not in inter_data['following'] and inter_user.id not in profile_data['followers']:
 					inter_data['following'].append(profile_user.id)
-					inter_data = await blocking.run_blocking(lambda: json.dumps(inter_data))
+					inter_data = await blocking.run(lambda: json.dumps(inter_data))
 
 					profile_data['followers'].append(inter_user.id)
-					profile_data = await blocking.run_blocking(lambda: json.dumps(profile_data))
+					profile_data = await blocking.run(lambda: json.dumps(profile_data))
 
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", inter_data, inter_user.id)
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", profile_data, profile_user.id)
@@ -184,7 +184,7 @@ class Profile(commands.Cog):
 
 				cake = await conn.fetchval("SELECT cake FROM profiles WHERE id = $1", user.id)
 				if cake:
-					cake = await blocking.run_blocking(lambda: json.loads(cake))
+					cake = await blocking.run(lambda: json.loads(cake))
 					if cake['consider']:
 						value = discord.utils.format_dt(datetime(cake['year'], cake['month'], cake['day']), style='D')
 					else:

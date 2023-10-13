@@ -70,7 +70,7 @@ class Status(commands.Cog):
         view.add_item(discord.ui.Button(
             label='Invite', style=discord.ButtonStyle.link,
             url="https://discordapp.com/oauth2/authorize?client_id=1029864621047304203&scope=bot+applications.commands&permissions=1099511627775",
-            emoji='<:grinning_face_smiling:1109581692819210311>')
+            emoji='<:grinning:1153096096558612481>')
         )
         view.add_item(discord.ui.Button(
             label="Source",
