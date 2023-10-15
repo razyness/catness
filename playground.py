@@ -63,6 +63,14 @@ class Client(commands.AutoShardedBot):
 		if not hasattr(self, "uptime"):
 			self.uptime = discord.utils.utcnow()
 
+	async def get_or_fetch_user(self, id):
+		return self.get_user(id) or await self.fetch_user(id)
+	
+	async def is_owner(self, user):
+		if user.id in self.config['owners']:
+			return True
+		return False
+
 
 async def main():
 	logger = logging.getLogger("discord")
