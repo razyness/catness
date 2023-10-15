@@ -166,7 +166,7 @@ class fmProfile(ui.View):
     async def disable_all(self, msg="Timed out...", view=None):
         for i in self.children:
             i.disabled = True
-        await self.msg.edit(content=msg, embed=None, view=view)
+        await self.msg.edit(content=msg, embed=None, view=view, delete_after=5.0)
 
     async def on_timeout(self):
         await self.disable_all()

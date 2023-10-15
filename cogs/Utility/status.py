@@ -18,7 +18,7 @@ class Status(commands.Cog):
     async def status(self, interaction):
         cmds = self.ce.tree.get_commands() or await self.ce.tree.fetch_commands()
 
-        razy = self.ce.get_user(self.ce.owner_id or 592310159133376512) or await self.ce.fetch_user(self.ce.owner_id or 592310159133376512)
+        razy = await self.ce.get_or_fetch_user(self.ce.owner_id or 592310159133376512)
 
         embed = discord.Embed(title=str(self.ce.user))
 

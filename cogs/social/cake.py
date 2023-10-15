@@ -78,7 +78,7 @@ class Cake(commands.Cog):
 					continue
 				
 				if cake_date["day"] == day and cake_date["month"] == month:
-					cake_user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+					cake_user = await self.bot.get_or_fetch_user(user_id)
 					if follows == {}:
 						continue
 					following = follows.get("following", [])

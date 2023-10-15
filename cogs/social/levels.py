@@ -139,7 +139,7 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
 	top_3 = ["🥇", "🥈", "🥉"]
 	for i, row in enumerate(rows):
 		rank, user_id, xp, level, profile_private = row
-		user = bot.get_user(user_id) or await bot.fetch_user(user_id)
+		user = await bot.get_or_fetch_user(user_id)
 		if i < 3:
 			flair = top_3[i]
 		else:
