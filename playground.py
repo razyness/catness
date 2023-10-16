@@ -63,6 +63,7 @@ class Client(commands.AutoShardedBot):
 		if not hasattr(self, "uptime"):
 			self.uptime = discord.utils.utcnow()
 
+	# hi lizness
 	async def get_or_fetch_user(self, id):
 		return self.get_user(id) or await self.fetch_user(id)
 	
