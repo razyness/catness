@@ -1,31 +1,38 @@
-from typing import Optional
 import discord
 
+
 class View(discord.ui.View):
-	
-	def __init__(self, original_interaction, owned=False, timeout=180, **kwargs):
-		self.original_interaction = original_interaction
-		self.owned = owned
-		super().__init__(timeout=timeout, **kwargs)
 
-	def disable(self, obj):
-		if hasattr(obj, 'disabled') and not hasattr(obj, 'url'):
-			obj.disabled = True
+    def __init__(self, view_inter, owned=False, timeout=10, **kwargs):
+        self.view_inter = view_inter
+        self.owned = owned
+        super().__init__(timeout=timeout, **kwargs)
 
-	async def on_timeout(self):
-		await self.disable_all()
+    def disable(self, obj):
+        if hasattr(obj, 'url') and obj.url == None:
+            obj.disabled = True
+            return obj
 
-	async def disable_all(self):
-		[self.disable(i) for i in self.children]
-		message = await self.original_interaction.original_response()
-		if message:
-			await message.edit(view=self)
+    async def on_timeout(self):
+        await self.disable_all()
 
-	async def interaction_check(self, interaction) -> bool:
-		if not self.owned:
-			return True
+    async def disable_all(self):
+        message = await self.view_inter.original_response()
+        if not message:
+            return
 
-		if interaction.user.id != self.original_interaction.user.id:
-			await interaction.response.send_message(f'This is not your menu, run {f"`/{self.original_interaction.command.name}`" or "the command"} to open your own.', ephemeral=True)
-			return False
-		return True
+        view = View.from_message(message)
+        if not view:
+            return
+
+        [self.disable(child) for child in view.children]
+        await message.edit(view=view)
+
+    async def interaction_check(self, interaction) -> bool:
+        if not self.owned:
+            return True
+
+        if interaction.user.id != self.view_inter.user.id:
+            await interaction.response.send_message(f'This is not your menu!! Run {f"`/{self.view_inter.command.name}`" or "the command"} to open your own.', ephemeral=True)
+            return False
+        return True
