@@ -96,7 +96,7 @@ class Events(commands.Cog):
     async def on_message(self, message):
 
         if self.bot.user in message.mentions:
-            await message.channel.send(f"My prefix is `{self.bot.command_prefix}`, but you can also use `/slash` commands!")
+            await message.channel.send(f"My prefix is `{self.bot.command_prefix}`, but you can also use `/slash` commands", delete_after=10)
 
         if assert_cooldown():
             if re.search('\boh\b(?!\w)', message.content):
