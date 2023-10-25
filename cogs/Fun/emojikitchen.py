@@ -81,6 +81,8 @@ class Thing(discord.ui.View):
 		await inter.response.send_message(self.image_url, ephemeral=True)
 
 class EmojiMix(commands.Cog):
+	"""
+	Simple commands to play with emojis"""
 	def __init__(self, bot) -> None:
 		super().__init__()
 		self.bot = bot

@@ -72,6 +72,7 @@ async def make_gif(template, session, text=None, image=None, text_first=False):
             return None
 
 class Makesweet(commands.Cog):
+    """Makesweet my beloved :3 Thank you for the API key"""
     def __init__(self, bot) -> None:
         super().__init__()
         self.bot = bot
@@ -89,7 +90,7 @@ class Makesweet(commands.Cog):
         Choice(name="Nesting Doll", value="nesting-doll"),
         Choice(name="Circuit Board", value="circuit-board")
     ])
-    async def makesweet(self, inter, template:str, image:discord.Attachment=None, text:str=None, swap:bool=False):
+    async def makesweet(self, inter, template:str, image:Optional[discord.Attachment], text:Optional[str], swap:Optional[bool]=False):
         if not text and not image:
             return await inter.response.send_message(f"empty {template} gif", ephemeral=True)
         if image is not None and os.path.basename(image.url).split('.')[-1] not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:

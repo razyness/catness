@@ -47,6 +47,8 @@ class ConfirmModal(discord.ui.Modal):
 
 
 class Report(commands.Cog):
+    """This bot is always being worked on!!
+    """
     def __init__(self, ce: commands.Bot):
         self.ce = ce
 

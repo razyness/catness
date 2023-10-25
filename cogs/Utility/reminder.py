@@ -14,6 +14,9 @@ class RemindObject:
 
 
 class Reminder(commands.Cog):
+    """
+    Commands to set reminders. Work is not in progress because i am lazy
+    """
     def __init__(self, ce: commands.Bot):
         super().__init__()
         self.ce = ce

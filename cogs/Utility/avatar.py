@@ -102,6 +102,9 @@ class DownloadButton(discord.ui.View):
 
 
 class Avatar(commands.Cog):
+	"""
+	Commands related to avatars
+	"""
 	def __init__(self, ce: commands.Bot):
 		self.ce = ce
 

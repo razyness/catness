@@ -7,6 +7,9 @@ from discord.app_commands import Choice
 
 
 class Link(commands.Cog):
+    """
+    Commands to link your profiles to your discord account
+    """
     def __init__(self, bot) -> None:
         super().__init__()
         self.bot = bot

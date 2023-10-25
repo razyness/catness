@@ -222,6 +222,8 @@ class Paginateness(ui.View):
 
 
 class Levels(commands.Cog):
+	"""
+	Levels and stuff :+1: Enable rank cars with experiments"""
 	def __init__(self, bot):
 		self.bot = bot
 		self.cooldowns = commands.CooldownMapping.from_cooldown(

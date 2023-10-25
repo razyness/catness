@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import discord
 import psutil, pynvml
 
@@ -11,6 +12,9 @@ from utils import icons
 pynvml.nvmlInit()
 
 class Status(commands.Cog):
+    """
+    Commands to get information about the bot.
+    """
     def __init__(self, ce: commands.Bot):
         self.ce = ce
     
@@ -79,6 +83,12 @@ class Status(commands.Cog):
         ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+    @app_commands.command(name='ping', description='View bot\'s latency')
+    async def ping(self, interaction):
+        before = time.monotonic()
+        await interaction.response.send_message("Pinging...", ephemeral=True)
+        ping = (time.monotonic() - before) * 1000
+        await interaction.edit_original_response(content=f"Pong! `{int((ping + self.ce.latency) / 2)} ms`")
 
 async def setup(ce: commands.Bot):
     await ce.add_cog(Status(ce))

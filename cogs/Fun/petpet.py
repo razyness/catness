@@ -7,6 +7,7 @@ from io import BytesIO
 from petpetgif import petpet as petpetgif
 
 class PetPet(commands.Cog):
+    """Pet your friends (or foes)"""
     def __init__(self, bot):
         self.bot = bot
 

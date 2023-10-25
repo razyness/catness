@@ -220,6 +220,7 @@ class Reader(discord.ui.View):
 
 
 class Search(commands.Cog):
+    """A not so fully featured manga search and reader command for mangadex.org"""
     def __init__(self, bot):
         self.bot = bot
 

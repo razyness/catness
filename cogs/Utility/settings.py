@@ -399,6 +399,8 @@ class SettingsMenu(ui.View):
 
 
 class Settings(commands.Cog):
+	"""A cog for managing user settings, such as privacy, levels, etc. Chat interface.
+	"""
 	def __init__(self, bot: commands.Bot):
 		self.bot = bot
 

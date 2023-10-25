@@ -10,6 +10,8 @@ from datetime import datetime
 from utils import blocking
 
 class Cake(commands.Cog):
+	"""
+	Commands to set your birthday and get notified when it's someone's birthday (soon)"""
 	MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
 			  'August', 'September', 'October', 'November', 'December']
 	
