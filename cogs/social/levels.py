@@ -15,7 +15,7 @@ from PIL import Image
 from discord import app_commands, ui
 from discord.ext import commands
 
-from utils.data import icons
+from utils import icons
 
 
 async def fetch_image(url):

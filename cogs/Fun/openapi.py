@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 from typing import Literal
 
-from utils.data import config, icons
+from utils import config, icons
 
 OPENAI = config["OPENAI"]
 

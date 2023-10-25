@@ -10,7 +10,7 @@ from discord import app_commands
 
 from datetime import datetime
 
-from utils.data import icons
+from utils import icons
 
 
 def sort_chapters(chapters):

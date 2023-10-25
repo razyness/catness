@@ -1,7 +1,9 @@
-import discord
 from discord import app_commands
 from discord.ext import commands
+
+import discord
 import time
+import asyncpg
 
 
 class errorHandler(commands.Cog):
@@ -19,6 +21,8 @@ class errorHandler(commands.Cog):
             await ctx.send(error)
         elif isinstance(error, commands.BadArgument):
             await ctx.send(error)
+        elif isinstance(error, asyncpg.exceptions.PostgresError):
+            await ctx.send("There was an error with the database. Please try again later.")
 
     async def on_tree_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
@@ -30,6 +34,9 @@ class errorHandler(commands.Cog):
 
         elif isinstance(error, app_commands.AppCommandError):
             message = f"oopsie detected - `{error}"
+
+        elif isinstance(error, asyncpg.exceptions.PostgresError):
+            message = "There was an error with the database. Please try again later."
 
         else:
             raise Exception

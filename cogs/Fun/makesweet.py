@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.app_commands import Choice
 from PIL import Image
 
-from utils.data import config
+from utils import config
 
 api_key = config['MAKESWEET']
 

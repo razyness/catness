@@ -4,7 +4,7 @@ from discord.ext import commands
 import aiohttp
 import random
 
-from utils.data import config
+from utils import config
 
 TENOR = config["TENOR"]
 

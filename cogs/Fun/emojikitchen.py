@@ -5,7 +5,7 @@ import emoji as emj
 from discord.ext import commands
 from discord import app_commands
 
-from utils.data import icons
+from utils import icons
 
 root_url = "https://www.gstatic.com/android/keyboard/emojikitchen"
 

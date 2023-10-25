@@ -6,7 +6,7 @@ import psutil, pynvml
 from discord.ext import commands
 from discord import app_commands
 
-from utils.data import icons
+from utils import icons
 
 pynvml.nvmlInit()
 

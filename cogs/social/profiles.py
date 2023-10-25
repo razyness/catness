@@ -1,10 +1,9 @@
 import discord
-import time
+import utils
 import calendar
 import json
 
-from utils.data import icons
-from utils import blocking
+from utils import icons, blocking
 
 from datetime import datetime
 from discord import app_commands
@@ -45,21 +44,12 @@ class RemoveView(discord.ui.View):
 		await inter.response.send_message(f"You will not be notified on {self.profile_user.mention}'s birthday", ephemeral=True)
 
 
-class ProfileView(discord.ui.View):
-	def __init__(self, bot, user):
-		super().__init__()
+class ProfileView(utils.ui.View):
+	def __init__(self, bot, user, inter, owned):
+		super().__init__(inter, owned)
 		self.value = None
 		self.bot = bot
 		self.profile_user = user
-
-	async def disable_all(self):
-		for i in self.children:
-			if not i.url:
-				i.disabled = True
-		await self.msg.edit(view=self)
-
-	async def on_timeout(self):
-		await self.disable_all()
 
 	async def notify_action(self, profile_user, inter_user):
 		async with self.bot.db_pool.acquire() as conn:
@@ -93,13 +83,9 @@ class ProfileView(discord.ui.View):
 	async def notify(self, inter, button):
 		resp = await self.notify_action(self.profile_user, inter.user)
 		view = RemoveView(self.profile_user, inter.user, self.bot.db_pool)
+		if inter.user.id == self.profile_user.id:
+			return await inter.response.send_message("You can't follow your own birthday, you should remember it i think", ephemeral=True)
 		await inter.response.send_message(resp, view=view, ephemeral=True)
-
-	async def interaction_check(self, interaction) -> bool:
-		if interaction.user.id == self.profile_user.id:
-			await interaction.response.send_message("You can't follow your own birthday, you should remember it i think", ephemeral=True)
-			return False
-		return True
 
 
 class Profile(commands.Cog):
@@ -119,7 +105,7 @@ class Profile(commands.Cog):
 		except:
 			return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
 
-		view = ProfileView(self.bot, user)
+		view = ProfileView(self.bot, user, interaction, False)
 
 		view.add_item(discord.ui.Button(
 			label='Avatar', style=discord.ButtonStyle.link, url=user.avatar.url, emoji=icons.download))
@@ -202,7 +188,7 @@ class Profile(commands.Cog):
 					embed.add_field(name='Rank', value=f'Level `{level}` | `{exp}`xp')
 
 		await interaction.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
-		view.msg = await interaction.original_response()
+		view.message = await interaction.original_response()
 
 async def setup(bot):
 	await bot.add_cog(Profile(bot))

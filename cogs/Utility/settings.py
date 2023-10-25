@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.utils import MISSING
 
-from utils.data import icons
+from utils import icons
 from utils import blocking
 
 

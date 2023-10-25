@@ -2,14 +2,13 @@ from discord import app_commands
 from discord.ext import commands
 from discord import ui
 
+import utils
 import json
-import asyncio
 import discord
 
-from utils.data import icons
+from utils import icons
 
 LASTFM = None
-
 
 async def playing_status(user, session):
 
@@ -150,9 +149,9 @@ async def friends_tab(user, session):
     return embed
 
 
-class fmProfile(ui.View):
-    def __init__(self, user, author, session, timeout=180):
-        super().__init__()
+class fmProfile(utils.ui.View):
+    def __init__(self, user, author, session, inter, owned, timeout=180):
+        super().__init__(inter, owned)
         self.value = None
         self.user = user
         self.author = author
@@ -162,14 +161,6 @@ class fmProfile(ui.View):
 
         for child in self.children:
             child.disabled = True if child.label == self.selection else False
-
-    async def disable_all(self, msg="Timed out...", view=None):
-        for i in self.children:
-            i.disabled = True
-        await self.msg.edit(content=msg, embed=None, view=view, delete_after=5.0)
-
-    async def on_timeout(self):
-        await self.disable_all()
 
     @ui.button(label='Now Playing', style=discord.ButtonStyle.gray)
     async def playing(self, interaction: discord.Integration, button: ui.Button):
@@ -197,19 +188,7 @@ class fmProfile(ui.View):
 
     @ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
     async def close(self, interaction: discord.Interaction, button: ui.Button):
-
-        await self.disable_all(msg="Bye-bye")
-        self.value = False
-        self.stop()
-        await interaction.response.defer()
-        await asyncio.sleep(2)
-        await self.msg.delete()
-
-    async def interaction_check(self, interaction) -> bool:
-        if interaction.user.id != self.author:
-            await interaction.response.send_message('This is not your menu, run </lastfm:1054381044826112001> to open your own.', ephemeral=True)
-            return False
-        return True
+        await interaction.response.edit_message(content="Bye-bye", embed=None, view=None, delete_after=2)
 
 
 class LastFM(commands.Cog):
@@ -249,10 +228,9 @@ class LastFM(commands.Cog):
                 return
 
         author = interaction.user.id
-        view = fmProfile(user, author, self.bot.web_client)
+        view = fmProfile(user, author, self.bot.web_client, interaction, True)
         embed = await overview(user, self.bot.web_client)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=ephemeral)
-        view.msg = await interaction.original_response()
 
 
 async def setup(bot):

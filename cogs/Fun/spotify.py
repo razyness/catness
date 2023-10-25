@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from utils.data import icons
+from utils import icons
 
 class Menu(discord.ui.View):
 

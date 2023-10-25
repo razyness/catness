@@ -71,8 +71,8 @@ class WelcomeButton(discord.ui.View):
             self.reacted.append(interaction.user.id)
 
 class Welcomer(commands.Cog):
-    def __init__(self, ce: commands.Bot):
-        self.ce = ce
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
 
     @commands.Cog.listener("on_member_join")
     async def welcomer(self, member):
@@ -97,5 +97,5 @@ class Welcomer(commands.Cog):
                 if view.reacted == [] or view.reacted is None:
                     await og_msg.delete()
 
-async def setup(ce: commands.Bot):
-    await ce.add_cog(Welcomer(ce))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Welcomer(bot))
