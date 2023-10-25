@@ -3,7 +3,7 @@ import discord
 
 class View(discord.ui.View):
 
-    def __init__(self, view_inter, owned=False, timeout=10, **kwargs):
+    def __init__(self, view_inter, owned=False, timeout=180, **kwargs):
         self.view_inter = view_inter
         self.owned = owned
         super().__init__(timeout=timeout, **kwargs)
