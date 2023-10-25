@@ -70,9 +70,15 @@ class Client(commands.AutoShardedBot):
 	async def is_owner(self, user):
 		if user.id in self.config['owners']:
 			return True
-		return False
 
+		return await super().is_owner(user)
 
+	async def close(self):
+		await super().close()
+		await self.db_pool.close()
+		await self.web_client.close()
+
+	
 async def main():
 	logger = logging.getLogger("discord")
 	logger.setLevel(logging.INFO)
@@ -105,11 +111,19 @@ async def main():
 			command_prefix=prefix,
 			config=config
 		) as bot:
-			await bot.start(config["TOKEN"])
+			try:
+				await bot.start(config["TOKEN"])
+			finally:
+				await bot.close()
 
 async def shutdown():
-	await asyncio.gather(*asyncio.all_tasks())
+	tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+	for task in tasks:
+		task.cancel()
+	await asyncio.gather(*tasks, return_exceptions=True)
+
 	loop = asyncio.get_running_loop()
+	await loop.shutdown_asyncgens()
 	loop.stop()
 
 async def run():
