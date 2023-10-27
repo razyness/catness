@@ -12,7 +12,6 @@ from aiohttp import ClientSession
 
 config = toml.load("./config.toml")
 
-
 class Client(commands.AutoShardedBot):
 	def __init__(
 		self,
@@ -30,6 +29,14 @@ class Client(commands.AutoShardedBot):
 		self.testing_guild_id = testing_guild_id
 		self.initial_extensions = initial_extensions
 		self.config = config
+
+	def reload_config(self):
+		"""
+		Returns:
+			dict[str]: contents of the updated config file
+		"""
+		self.config = toml.load("./config.toml")
+		return self.config
 
 	async def setup_hook(self):
 		for extension in self.initial_extensions:
