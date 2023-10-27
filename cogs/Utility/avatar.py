@@ -105,8 +105,8 @@ class Avatar(commands.Cog):
 	"""
 	Commands related to avatars
 	"""
-	def __init__(self, ce: commands.Bot):
-		self.ce = ce
+	def __init__(self, bot: commands.Bot):
+		self.bot = bot
 
 	@app_commands.command(name='avatar', description='Get yours/someone\'s avatar')
 	@app_commands.describe(user='user hello person avatar')
@@ -123,5 +123,5 @@ class Avatar(commands.Cog):
 		view.author = interaction.user.id
 
 
-async def setup(ce):
-	await ce.add_cog(Avatar(ce))
+async def setup(bot):
+	await bot.add_cog(Avatar(bot))

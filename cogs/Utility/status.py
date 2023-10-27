@@ -15,36 +15,36 @@ class Status(commands.Cog):
     """
     Commands to get information about the bot.
     """
-    def __init__(self, ce: commands.Bot):
-        self.ce = ce
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
     
     @app_commands.command(name='about', description='discord about me embed')
     async def status(self, interaction):
-        cmds = self.ce.tree.get_commands() or await self.ce.tree.fetch_commands()
+        cmds = self.bot.tree.get_commands() or await self.bot.tree.fetch_commands()
 
-        razy = await self.ce.get_or_fetch_user(self.ce.owner_id or 592310159133376512)
+        razy = await self.bot.get_or_fetch_user(self.bot.owner_id or 592310159133376512)
 
-        embed = discord.Embed(title=str(self.ce.user))
+        embed = discord.Embed(title=str(self.bot.user))
 
-        if len(self.ce.shards) > 20:
-            shard_thing = f"Automatically sharded ~ `{len(self.ce.shards)}/{self.ce.shard_count}`"
+        if len(self.bot.shards) > 20:
+            shard_thing = f"Automatically sharded ~ `{len(self.bot.shards)}/{self.bot.shard_count}`"
         else:
-            shard_thing = f"Automatically sharded ~ `{', '.join(str(i) for i in self.ce.shards.keys())}/{self.ce.shard_count}`"
+            shard_thing = f"Automatically sharded ~ `{', '.join(str(i) for i in self.bot.shards.keys())}/{self.bot.shard_count}`"
 
         embed.description = f"""
         Hi i am discord bot for discord and real
-        My prefix is `{self.ce.command_prefix}` and i support `/app commands`
+        My prefix is `{self.bot.command_prefix}` and i support `/app commands`
         {shard_thing}
         """
-        embed.set_thumbnail(url=self.ce.user.display_avatar.url)
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.add_field(name='owner', value=f'`{razy}`')
         embed.add_field(name='uptime',
-                        value=f'<t:{int(self.ce.uptime.timestamp())}:R>',
+                        value=f'<t:{int(self.bot.uptime.timestamp())}:R>',
                         inline=True)
         embed.add_field(name='total users',
-                        value=f'`{len(self.ce.users)}`')
+                        value=f'`{len(self.bot.users)}`')
         embed.add_field(name='total guilds',
-                        value=f'`{len(self.ce.guilds)}`')
+                        value=f'`{len(self.bot.guilds)}`')
         embed.add_field(name='d.py version',
                         value=f'`{discord.__version__}`')
         embed.add_field(name='cmd count',
@@ -88,7 +88,7 @@ class Status(commands.Cog):
         before = time.monotonic()
         await interaction.response.send_message("Pinging...", ephemeral=True)
         ping = (time.monotonic() - before) * 1000
-        await interaction.edit_original_response(content=f"Pong! `{int((ping + self.ce.latency) / 2)} ms`")
+        await interaction.edit_original_response(content=f"Pong! `{int((ping + self.bot.latency) / 2)} ms`")
 
-async def setup(ce: commands.Bot):
-    await ce.add_cog(Status(ce))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Status(bot))
