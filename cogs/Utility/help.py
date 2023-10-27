@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from discord.ext.commands import DefaultHelpCommand
 
+
 class HelpDropdown(ui.Select):
     def __init__(self, bot):
         self.bot = bot
@@ -41,6 +42,7 @@ class HelpDropdown(ui.Select):
         embed.description = "### " + (cog.description or "No description.")
         embed.set_footer(text=f"{self.bot.user}",
                          icon_url=self.bot.user.display_avatar.url)
+
         for cmd in cmd_list:
             cmd_desc = cmd.description or "No description."
 
@@ -53,22 +55,16 @@ class HelpDropdown(ui.Select):
                         else:
                             cmd_desc += f"\n<{param.name}>: {param.description}"
                     cmd_desc += "```"
-            elif hasattr(cmd, 'parent') and hasattr(cmd.parent, 'parameters'):
-                cmd_desc += "```"
-                if cmd.parent.parameters:
-                    cmd_desc += "\n"
-                    for param in cmd.parent.parameters:
-                        if not param.required:
-                            cmd_desc += f"\n[{param.name}]: {param.description}"
-                        else:
-                            cmd_desc += f"\n<{param.name}>: {param.description}"
-                cmd_desc += "```"
+
+            name = cmd.name
+            if hasattr(cmd, 'parent') and cmd.parent:
+                name = f'{cmd.parent.name} {cmd.name}'
 
             if isinstance(cmd, app_commands.Command):
-                embed.add_field(name=f"/{cmd.name}",
+                embed.add_field(name=f"/{name}",
                                 value=cmd_desc, inline=False)
-            else:
-                embed.add_field(name=f"#{cmd.name}",
+            elif isinstance(cmd, commands.Command):
+                embed.add_field(name=f"#{name}",
                                 value=cmd_desc, inline=False)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -87,24 +83,12 @@ class Help(commands.Cog):
 
     @commands.hybrid_command(name="help", description="Shows a command browser")
     async def help(self, ctx):
-
         description = """
         Here's a helpful list of commands you can use!
 
         To learn more about a command, just choose the group from the dropdown menu.
         As for parameters, `<>` means it's required, and `[]` means it's optional.
         Also, `#` means it's a regular command, and `/` means it's an app command.
-
-        Here's an example:
-
-        **Group name**
-         group description
-
-        **/ or # Command name**
-         command description
-```<required>: description
-[optional]: description```
-(for each command)
         """
         embed = discord.Embed(title="Command list",
                               description=description)
@@ -113,7 +97,9 @@ class Help(commands.Cog):
                          icon_url="https://cdn.discordapp.com/emojis/1112740924934594670.gif?size=96")
 
         view = ui.View().add_item(HelpDropdown(self.bot))
-        await ctx.send(embed=embed, view=view, delete_after=180, ephemeral=True)
+
+        await ctx.defer(ephemeral=True)
+        await ctx.author.send(embed=embed, view=view, delete_after=180)
 
 
 async def setup(bot):
