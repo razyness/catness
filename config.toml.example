@@ -1,24 +1,28 @@
+### super secret things
 TOKEN = ""
 LASTFM = ""
 STEAM = ""
 OPENAI = ""
 TENOR = ""
 MAKESWEET = ""
-prefix = ""
 
-### User IDs for contributors
+### actual config
+prefix = ""
+report_channel = 1234
+
+### user IDs for contributors
 contributors = [
 ]
 
-### User IDs for friends
+### user IDs for friends
 special = [
 ]
 
-### User IDs for the bot owners (Include yourself)
+### user IDs for the bot owners (Include yourself)
 owners = [
 ]
 
 
-### Statuses the bot will cycle through.
+### statuses the bot will cycle through.
 catchphrases = [
 ]
