@@ -33,7 +33,7 @@ class Events(commands.Cog):
         self.bot = bot
         self.tree = bot.tree
         self.blocked = ["cogs.events", "cogs.fun.openapi",
-                        'cogs.others.error_handler', 'cogs.fun.manga']
+                        'cogs.fun.manga']
         self.cogs_path = pathlib.Path("cogs")
         self.extensions = [self.format_cog(str(item)) for item in self.cogs_path.glob(
             '**/*.py') if self.format_cog(str(item)) not in self.blocked]
