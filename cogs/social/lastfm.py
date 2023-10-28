@@ -6,7 +6,7 @@ import utils
 import json
 import discord
 
-from utils import icons
+from utils import icons, blocking
 
 LASTFM = None
 
@@ -217,7 +217,7 @@ class LastFM(commands.Cog):
                 async with self.bot.db_pool.acquire() as conn:
                     async with conn.transaction():
                         socials = await conn.fetchval("SELECT socials FROM profiles WHERE id = $1", user_id)
-                        socials_dict = json.loads(socials)
+                        socials_dict = await blocking.run(lambda: json.loads(socials))
                         if 'lastfm' in socials_dict:
                             user = socials_dict['lastfm']
                         else:

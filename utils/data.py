@@ -39,5 +39,6 @@ icons: DictToAttr = DictToAttr({
 	"special": "<:Special:1078664371661713449>",
 	"bot": "<:bot:1078091845051088979>",
 	"nitro": "<:nitro:1078094211351584928>",
-	"github": "<:github:1114661850118897806>"
+	"github": "<:github:1114661850118897806>",
+    "osu_supporter": "<:osu_supporter:1167584560624717876>"
 })
