@@ -11,3 +11,4 @@ lib64
 config.toml
 start.bat
 discord.log
+__pycache__
