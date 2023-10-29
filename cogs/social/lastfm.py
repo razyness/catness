@@ -76,7 +76,7 @@ async def overview(user, session):
     else:
         embed.title = f'{user_data["user"]["realname"]}'
         footer_thing = ''
-    embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
+    embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"] or 'https://lastfm.freetls.fastly.net/i/u/avatar170s/818148bf682d429dc215c1705eb27b98.png')
     embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
                      icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
     embed.set_footer(
@@ -115,19 +115,25 @@ async def friends_tab(user, session):
 
     async with session.get(friendList) as resp:
         friendList = await resp.json()
-
+        
     if user_data["user"]["subscriber"] == "1":
         embed.title = f'🔹 •  {user_data["user"]["realname"]}'
         footer_thing = ' • 🔹 premium subscriber'
     else:
         embed.title = f'{user_data["user"]["realname"]}'
         footer_thing = ''
-    embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"])
+    embed.set_thumbnail(url=user_data["user"]["image"][2]["#text"] or 'https://lastfm.freetls.fastly.net/i/u/avatar170s/818148bf682d429dc215c1705eb27b98.png')
     embed.set_author(name=f'last.fm - {user_data["user"]["name"]}', url=user_data["user"]["url"],
                      icon_url='https://cdn2.iconfinder.com/data/icons/social-icon-3/512/social_style_3_lastfm-512.png')
     embed.set_footer(
         text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
     j = 1
+
+    if friendList['error'] == 6:
+        embed.description = f'{user_data["user"]["name"]} has no friends :('
+        embed.color = 0xe4141e
+        return embed
+
     for i in friendList["friends"]["user"]:
         if j < 25:
             if len(i["name"]) > 256:
