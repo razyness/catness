@@ -9,6 +9,13 @@ from discord.utils import MISSING
 from utils import icons
 from utils import blocking
 
+labels = {
+			'pomelo': 'profile_private',
+			'levels': 'levels_enabled',
+			'experiments': 'tests_enabled',
+			'welcomer': 'welcome_type'
+
+		}
 
 async def load_db(db_pool, id, table):
 	async with db_pool.acquire() as conn:
@@ -50,7 +57,11 @@ async def main_menu(user, admin=False):
 async def social_menu(settings, *args):
 	embed = discord.Embed()
 	embed.title = "🎂 Social"
-	birthday = await blocking.run(lambda: json.loads(settings['cake']))
+	birthday = None
+	year_bool = None
+	if settings['cake']:
+		birthday = await blocking.run(lambda: json.loads(settings['cake']))
+
 	warn = None
 	
 	if birthday:
@@ -156,10 +167,9 @@ class ServerMenu(ui.View):
 		self.db_pool = db_pool
 
 		for i in self.children:
-			if not i.label or i.label == "Reset Data":
-				continue
-			i.style = colorize(
-				self.data[i.label.lower()])
+			if i.label and i.label not in ["Reset Data"]:
+				replacement = labels.get(i.label.lower(), i.label.lower())
+				i.style = colorize(self.data[replacement])
 
 	@ui.button(label=None, emoji=icons["back"], style=discord.ButtonStyle.blurple)
 	async def back(self, inter, button):
@@ -172,11 +182,11 @@ class ServerMenu(ui.View):
 	@ui.button(label="Levels", style=discord.ButtonStyle.gray)
 	async def lvl_button(self, inter, button):
 		async with self.db_pool.acquire() as conn:
-			value = 0
-			if self.data['levels_enabled'] == 0:
-				value = 1
-			await conn.execute(f"UPDATE servers SET levels_enabled=$1 WHERE id=$2", (value, inter.guild.id))
-		self.data = await load_db(db_pool=self.db_pool, table="profiles", id=inter.guild.id)
+			value = False
+			if not self.data['levels_enabled']:
+				value = True
+			await conn.execute(f"UPDATE servers SET levels_enabled=$1 WHERE id=$2", value, inter.guild.id)
+		self.data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
 		button.style = colorize(value=self.data['levels_enabled'])
 		embed = await server_menu(inter.guild.icon.url, inter.guild.name, self.data, inter.guild)
 
@@ -186,14 +196,14 @@ class ServerMenu(ui.View):
 	async def welc_button(self, inter, button):
 		async with self.db_pool.acquire() as conn:
 			value = 0
-			if self.data['welcomer'] == 0:
+			if self.data['welcome_type'] == 0:
 				value = 1
-			elif self.data['welcomer'] == 1:
+			elif self.data['welcome_type'] == 1:
 				value = 2
 
-			await conn.execute(f"UPDATE servers SET welcomer=$1 WHERE id=$2", (value, inter.guild.id))
-		self.data = await load_db(db_pool=self.db_pool, table="profiles", id=inter.guild.id)
-		button.style = colorize(value=self.data['welcomer'])
+			await conn.execute(f"UPDATE servers SET welcome_type=$1 WHERE id=$2", value, inter.guild.id)
+		self.data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
+		button.style = colorize(value=self.data['welcome_type'])
 		embed = await server_menu(inter.guild.icon.url, inter.guild.name, self.data, inter.guild)
 
 		await inter.response.edit_message(embed=embed, view=self)
@@ -209,10 +219,9 @@ class AdvancedMenu(ui.View):
 		self.db_pool = db_pool
 
 		for i in self.children:
-			if not i.label or i.label == "Reset Data":
-				continue
-			i.style = colorize(
-				self.settings[i.label.lower().replace("experiments", "tests_enabled")])
+			if i.label and i.label not in ["Reset Data"]:
+				replacement = labels.get(i.label.lower(), i.label.lower())
+				i.style = colorize(self.settings[replacement])
 
 	@ui.button(label=None, emoji=icons["back"], style=discord.ButtonStyle.blurple)
 	async def back(self, inter, button):
@@ -304,11 +313,6 @@ class GeneralMenu(ui.View):
 		self.admin = admin
 		self.db_pool = db_pool
 
-		labels = {
-			'pomelo': 'profile_private',
-			'levels': 'levels_enabled',
-			'experiments': 'tests_enabled'
-		}
 		for i in self.children:
 			if i.label:
 				replacement = labels.get(i.label.lower(), i.label.lower())
@@ -376,9 +380,10 @@ class SettingsMenu(ui.View):
 	@ui.button(label="Social", emoji="🎂", style=discord.ButtonStyle.blurple)
 	async def social_button(self, inter, button):
 		embed = await social_menu(self.settings, self.user)
-
-		birthday = await load_db(db_pool=self.db_pool, table="profiles", id=self.user.id)
-		cake = await blocking.run(lambda: json.loads(birthday['cake']))
+		cake = None
+		self.settings = await load_db(db_pool=self.db_pool, table="profiles", id=self.user.id)
+		if self.settings['cake']:
+			cake = await blocking.run(lambda: json.loads(self.settings['cake']))
 		await inter.response.defer()
 		await self.msg.edit(embed=embed, view=SocialMenu(inter.user, self.settings, cake, self.admin, self.db_pool))
 
@@ -391,7 +396,7 @@ class SettingsMenu(ui.View):
 
 	@ui.button(label="Server", emoji="📂", style=discord.ButtonStyle.blurple, row=2)
 	async def serv_button(self, inter, button):
-		data = await load_db(db_pool=self.db_pool, table="profiles", id=inter.guild.id)
+		data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
 		embed = await server_menu(icon=inter.guild.icon.url, server_name=inter.guild.name, server=data, server_obj=inter.guild)
 
 		await inter.response.defer()

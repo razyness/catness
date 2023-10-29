@@ -22,7 +22,7 @@ class ConfirmModal(discord.ui.Modal):
         style=discord.TextStyle.long,
         label="Details / how to reproduce",
         required=True,
-        min_length=200,
+        min_length=100,
         max_length=4000,
         placeholder="When i press x button after y button it fails and like\nFeel free to use codeblocks if needed"
     )

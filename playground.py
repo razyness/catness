@@ -55,11 +55,11 @@ class Client(commands.AutoShardedBot):
 			),
 		)
 
-		for guild in self.guilds:
+		async for guild in self.fetch_guilds():
 			async with self.db_pool.acquire() as conn:
 				try:
-					await conn.execute("INSERT INTO servers (id) VALUES ($1) ON CONFLICT DO NOTHING", guild.id)
-					if conn.rows_affected:
+					r = await conn.execute("INSERT INTO servers (id) VALUES ($1)", guild.id)
+					if r:
 						print(f"➕ I was added to the guild {guild.name} | {guild.id}, and added it to my database")
 				except asyncpg.exceptions.PostgresError as e:
 					if "duplicate key value violates unique constraint" in str(e):
