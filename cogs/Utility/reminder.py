@@ -7,6 +7,7 @@ import time as tm
 import uuid
 import discord
 
+from utils import ui, icons
 
 class RemindObject:
     def __init__(self, id: str, task: str, remind_time: int, channel: tuple = None, reminder_id: str = None):
@@ -16,6 +17,52 @@ class RemindObject:
         self.channel = channel
         self.reminder_id = reminder_id or str(uuid.uuid4())
 
+class ReminderView(ui.View):
+    def __init__(self, bot: commands.Bot, view_inter: discord.Interaction, reminders_list, **kwargs):
+        super().__init__(view_inter=view_inter, owned=False, **kwargs)
+        self.bot = bot
+        self.inter = view_inter
+        self.reminders_list = reminders_list
+        self.create_buttons()
+
+    def create_buttons(self):
+        self.clear_items()
+        for i, reminder_id in enumerate(self.reminders_list):
+            button = discord.ui.Button(style=discord.ButtonStyle.red, label=str(i+1), emoji=icons.close)
+            button.custom_id = reminder_id
+            button.callback = lambda i=button, r=reminder_id, l=button.label: self.remove_reminder(i, r, l)
+            self.add_item(button)
+
+    async def on_timeout(self):
+        message = await self.view_inter.original_response()
+        if not message:
+            return
+        await message.edit(view=None)
+
+    async def remove_reminder(self, interaction, reminder_id, label):
+        message = await self.inter.original_response()
+
+        async with self.bot.db_pool.acquire() as conn:
+            await conn.execute("DELETE FROM reminders WHERE reminder_id = $1", reminder_id)
+
+        self.reminders_list.remove(reminder_id)
+        self.create_buttons()
+
+        if not self.reminders_list:
+            await message.edit(content="There are no reminders set.", embed=None, view=None)
+
+        else:
+            embed = message.embeds[0]
+            embed.remove_field(int(label)-1)
+
+            new_embed = discord.Embed(title=embed.title, description=embed.description, color=embed.color)
+            for i, field in enumerate(embed.fields):
+                new_embed.add_field(name=f"{i + 1}. {field.name[2:]}", value=field.value, inline=field.inline)
+            embed = new_embed
+
+            await message.edit(embed=embed, view=self if self.reminders_list else None)
+
+        await interaction.response.defer()
 
 class Reminder(commands.Cog):
     """
@@ -110,14 +157,16 @@ class Reminder(commands.Cog):
                     reminders, key=lambda r: r['remind_time'])
                 embed = discord.Embed(
                     title="Existing Reminders")
-                for reminder in reminder_list:
+                for i, reminder in enumerate(reminder_list):
                     emoji = "🔒" if reminder['private'] else "#️⃣"
                     task = reminder['task']
                     channel = reminder['channel']
-                    embed.add_field(name=f"{emoji} {task}", value=f"Expires <t:{reminder['remind_time']}:R>\n{f'<#{channel}>' if channel.isdigit() else ''}", inline=False)
-                
+                    embed.add_field(name=f"{i+1}. {task}", value=f"Expires <t:{reminder['remind_time']}:R> | {emoji}\n{f'<#{channel}>' if channel.isdigit() else ''}", inline=False)
+
+                reminders_list = [reminder['reminder_id'] for reminder in reminder_list]
+                view = ReminderView(self.bot, view_inter=inter, reminders_list=reminders_list)
                 embed.set_footer(text='🔒 DM reminders, #️⃣ Channel reminders')
-                await inter.response.send_message(embed=embed, ephemeral=True)
+                await inter.response.send_message(embed=embed, view=view, ephemeral=True)
             else:
                 await inter.response.send_message("There are no reminders set.", ephemeral=True)
 
