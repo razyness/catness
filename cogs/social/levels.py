@@ -223,7 +223,7 @@ class Paginateness(ui.View):
 
 class Levels(commands.Cog):
 	"""
-	Levels and stuff :+1: Enable rank cars with experiments"""
+	Levels and stuff :3 Enable rank cars with experiments"""
 	def __init__(self, bot):
 		self.bot = bot
 		self.cooldowns = commands.CooldownMapping.from_cooldown(
@@ -254,8 +254,11 @@ class Levels(commands.Cog):
 		async with self.bot.db_pool.acquire() as conn:
 			async with conn.transaction():
 				user_data = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", message.author.id)
+				server_data = await conn.fetchrow("SELECT * FROM servers WHERE id = $1", message.guild.id)
 				if user_data is None:
 					await conn.execute("INSERT INTO profiles (id, exp, level) VALUES ($1, $2, $3)", message.author.id, 1, 0)
+				elif not user_data['levels_enabled'] or not server_data['levels_enabled']:
+					return
 				else:
 					xp_to_add = random.randint(5, 20)
 					xp_required = self.experience_curve(
