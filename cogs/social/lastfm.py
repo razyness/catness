@@ -129,7 +129,9 @@ async def friends_tab(user, session):
         text=f'{user_data["user"]["name"]} has {user_data["user"]["playcount"]} scrobbles {footer_thing}')
     j = 1
 
-    if friendList['error'] == 6:
+    try:
+        friendList["friends"]
+    except:
         embed.description = f'{user_data["user"]["name"]} has no friends :('
         embed.color = 0xe4141e
         return embed
