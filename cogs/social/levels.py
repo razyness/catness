@@ -117,24 +117,27 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
 	offset = (page_number - 1) * compact_size
 
 	query = """
-		SELECT ROW_NUMBER() OVER (ORDER BY exp DESC, level DESC, id DESC) AS rank, id, exp, level, profiles.profile_private
+		SELECT ROW_NUMBER() OVER (ORDER BY level DESC, exp DESC, id DESC) AS rank, id, exp, level, profiles.profile_private
 		FROM profiles
 		WHERE exp > 0 AND level > 0 AND levels_enabled = true
-		LIMIT $1 OFFSET $2
+		OFFSET $1 FETCH FIRST $2 ROWS ONLY
 	"""
 	count_query = """
-		SELECT COUNT(*) FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
+		SELECT COUNT(*) FROM (
+			SELECT 1 FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
+		) AS subquery
 	"""
 
 	async with bot.db_pool.acquire() as conn:
-		rows = await conn.fetch(query, compact_size, offset)
+		rows = await conn.fetch(query, offset, compact_size)
 		total_rows = await conn.fetchval(count_query)
 
 	total_pages = math.ceil(total_rows / compact_size)
 	if page_number > total_pages:
 		return None
 
-	embed = discord.Embed(title="Leaderboard of the levels real", color=discord.Color.blurple())
+	embed = discord.Embed(
+		title="Leaderboard of the levels real", color=discord.Color.blurple())
 
 	top_3 = ["🥇", "🥈", "🥉"]
 	for i, row in enumerate(rows):
@@ -144,18 +147,18 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
 			flair = top_3[i]
 		else:
 			flair = ""
-			rank = ""
 		if profile_private:
 			user_name = user.global_name
 		else:
 			user_name = f'@{user.name}'
-		if flair:
+		if flair and page_number == 1:
 			embed.add_field(name=f"{flair} {user_name}",
 							value=f"Level `{level}` | `{xp}`xp", inline=True)
 		else:
-			embed.add_field(name=f"{rank} {user_name}",
+			embed.add_field(name=f"{rank}. {user_name}",
 							value=f"Level `{level}` | `{xp}`xp", inline=True)
 
+	embed.set_footer(text=f"Page {page_number} of {total_pages}")
 	return embed, total_pages
 
 
@@ -224,6 +227,7 @@ class Paginateness(ui.View):
 class Levels(commands.Cog):
 	"""
 	Levels and stuff :3 Enable rank cars with experiments"""
+
 	def __init__(self, bot):
 		self.bot = bot
 		self.cooldowns = commands.CooldownMapping.from_cooldown(
@@ -250,7 +254,7 @@ class Levels(commands.Cog):
 		retry_after = bucket.update_rate_limit()
 		if retry_after:
 			return
-		
+
 		async with self.bot.db_pool.acquire() as conn:
 			async with conn.transaction():
 				user_data = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", message.author.id)
@@ -263,7 +267,7 @@ class Levels(commands.Cog):
 					xp_to_add = random.randint(5, 20)
 					xp_required = self.experience_curve(
 						user_data['level'])
-					
+
 					if user_data['exp'] + xp_to_add >= xp_required:
 						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add - xp_required, message.author.id)
 						await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1, message.author.id)
@@ -282,7 +286,7 @@ class Levels(commands.Cog):
 				if user_info is None:
 					await conn.execute("INSERT INTO profiles (id) VALUES ($1)", user.id)
 					user_info = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", user.id)
-				
+
 				if not user_info['levels_enabled']:
 					return await inter.response.send_message("Their level is turned off!!!!", ephemeral=True)
 
