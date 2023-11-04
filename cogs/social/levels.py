@@ -14,16 +14,15 @@ from discord.ext import commands
 from utils import icons, blocking
 
 async def get_user_position(bot, user_id):
-		query = """
-			SELECT COUNT(*) FROM (
-				SELECT id FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
-				ORDER BY level DESC, exp DESC, id DESC
-			) AS subquery
-			WHERE id = $1
-		"""
-		async with bot.db_pool.acquire() as conn:
-			position = await conn.fetchval(query, user_id)
-		return position
+    query = """
+        SELECT COUNT(*) + 1
+        FROM profiles
+        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1)
+    """
+    async with bot.db_pool.acquire() as conn:
+        position = await conn.fetchval(query, user_id)
+    return position
+
 
 def get_image(url):
 	response = requests.get(url)
