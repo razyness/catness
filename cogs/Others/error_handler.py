@@ -11,6 +11,12 @@ class errorHandler(commands.Cog):
         self.bot = bot
         self.bot.tree.on_error = self.on_tree_error
 
+    async def cog_load(self):
+        self.bot.tree.on_error = self.on_tree_error
+    
+    async def cog_unload(self):
+        self.bot.tree.on_error = None
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
