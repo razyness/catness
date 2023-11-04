@@ -1,36 +1,41 @@
-import aiosqlite
 import random
 import discord
-import typing
+import requests
 import asyncio
-import aiohttp
 import io
 import easy_pil
 import math
-
-from typing import Optional, List
 
 from PIL import Image
 
 from discord import app_commands, ui
 from discord.ext import commands
 
-from utils import icons
+from utils import icons, blocking
+
+async def get_user_position(bot, user_id):
+		query = """
+			SELECT COUNT(*) FROM (
+				SELECT id FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
+				ORDER BY level DESC, exp DESC, id DESC
+			) AS subquery
+			WHERE id = $1
+		"""
+		async with bot.db_pool.acquire() as conn:
+			position = await conn.fetchval(query, user_id)
+		return position
+
+def get_image(url):
+	response = requests.get(url)
+	if response.status_code != 200:
+		raise ValueError(f"Failed to fetch image, status code: {response.status_code}")
+	image_data = response.content
+	image = Image.open(io.BytesIO(image_data))
+	return image
 
 
-async def fetch_image(url):
-	async with aiohttp.ClientSession() as session:
-		async with session.get(url) as resp:
-			if resp.status != 200:
-				raise ValueError(
-					f"Failed to fetch image, status code: {resp.status}")
-			image_data = await resp.read()
-			image = Image.open(io.BytesIO(image_data))
-			return image
-
-
-async def create_card(user_data):
-	background = await fetch_image(user_data['banner'])
+def create_card(user_data):
+	background = get_image(user_data['banner'])
 	empty_canvas = easy_pil.Canvas(size=(1000, 620), color=(0, 0, 0, 0))
 	editor = easy_pil.Editor(image=background)
 	editor.resize(size=(1000//2, 620//2-40), crop=True)
@@ -90,7 +95,7 @@ async def create_card(user_data):
 							   height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
 	editor.paste(rep_bg, (0, 0-10))
 
-	avatar_image = await fetch_image(user_data['avatar'])
+	avatar_image = get_image(user_data['avatar'])
 	avatar = easy_pil.Editor(avatar_image).resize(
 		(287//2, 287//2)).rounded_corners(radius=40//2)
 	editor.paste(avatar, (98//2, 98//2-10))
@@ -112,7 +117,7 @@ async def create_card(user_data):
 	return editor.image_bytes
 
 
-async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
+async def get_lb_page(bot, author, page_number: int, compact: bool) -> tuple:
 	compact_size = 6 if compact else 12
 	offset = (page_number - 1) * compact_size
 
@@ -158,6 +163,8 @@ async def get_lb_page(bot, page_number: int, compact: bool) -> tuple:
 			embed.add_field(name=f"{rank}. {user_name}",
 							value=f"Level `{level}` | `{xp}`xp", inline=True)
 
+	position = await get_user_position(bot, author)
+	embed.description = f"Your position is `#{position}`. Neat!"
 	embed.set_footer(text=f"Page {page_number} of {total_pages}")
 	return embed, total_pages
 
@@ -200,7 +207,7 @@ class Paginateness(ui.View):
 	async def prev(self, inter, button):
 
 		self._current_page -= 1
-		embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
+		embed = await get_lb_page(bot=self._bot, author=inter.user.id, page_number=self._current_page, compact=self._compact)
 		await self.update_buttons(inter)
 		await self.msg.edit(embed=embed[0])
 		self._pages = embed[1]
@@ -208,7 +215,7 @@ class Paginateness(ui.View):
 	@ui.button(emoji=icons.page_right, style=discord.ButtonStyle.blurple)
 	async def next(self, inter, button):
 		self._current_page += 1
-		embed = await get_lb_page(bot=self._bot, page_number=self._current_page, compact=self._compact)
+		embed = await get_lb_page(bot=self._bot, author=inter.user.id, page_number=self._current_page, compact=self._compact)
 		await self.update_buttons(inter)
 		await self.msg.edit(embed=embed[0])
 		self._pages = embed[1]
@@ -280,6 +287,10 @@ class Levels(commands.Cog):
 	async def rank(self, inter, user: discord.User = None):
 		user = user or inter.user
 
+		position = await get_user_position(self.bot, user.id)
+		if position is None:
+			return await inter.response.send_message("User not found", ephemeral=True)
+
 		async with self.bot.db_pool.acquire() as conn:
 			async with conn.transaction():
 				user_info = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", user.id)
@@ -316,7 +327,7 @@ class Levels(commands.Cog):
 			}
 
 			await inter.response.defer(thinking=True)
-			card = await create_card(user_data=user_data)
+			card = await blocking.run(lambda: create_card(user_data=user_data))
 
 			file = discord.File(fp=card, filename='card.png')
 			await inter.followup.send(file=file)
@@ -326,13 +337,13 @@ class Levels(commands.Cog):
 			bar = self.generate_progress_bar(
 				max_value=missing, progress_value=exp, level=level)
 
-			embed.description = f"```{bar}```"
+			embed.description = f"Your position is `#{position}`\n```{bar}```"
 			await inter.response.send_message(embed=embed)
 
 	@app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
 	@app_commands.describe(compact="Show less users per page, to fit on mobile")
 	async def top(self, inter: discord.Interaction, compact: bool = False):
-		embed, pages = await get_lb_page(self.bot, 1, compact)
+		embed, pages = await get_lb_page(self.bot, inter.user.id, 1, compact)
 		embed.set_footer(text=f"Page 1 of {pages}")
 		view = Paginateness(self.bot, pages, compact)
 		await inter.response.send_message(embed=embed, view=view)
