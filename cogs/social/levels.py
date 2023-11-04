@@ -14,14 +14,21 @@ from discord.ext import commands
 from utils import icons, blocking
 
 async def get_user_position(bot, user_id):
-    query = """
-        SELECT COUNT(*) + 1
-        FROM profiles
-        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1)
-    """
-    async with bot.db_pool.acquire() as conn:
-        position = await conn.fetchval(query, user_id)
-    return position
+	query = """
+		SELECT
+    		CASE
+    		    WHEN EXISTS (SELECT 1 FROM profiles WHERE id = $1)
+    		    THEN (
+    		        SELECT COUNT(*) + 1
+    		        FROM profiles
+    		        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1)
+    		    )
+    		    ELSE 0 -- or any other value you want to return
+    		END;
+	"""
+	async with bot.db_pool.acquire() as conn:
+		position = await conn.fetchval(query, user_id)
+	return position
 
 
 def get_image(url):
@@ -163,7 +170,10 @@ async def get_lb_page(bot, author, page_number: int, compact: bool) -> tuple:
 							value=f"Level `{level}` | `{xp}`xp", inline=True)
 
 	position = await get_user_position(bot, author)
-	embed.description = f"Your position is `#{position}`. Neat!"
+	if position == 0:
+		embed.description = f"You are not ranked. Not neat."
+	else:
+		embed.description = f"Your position is `#{position}`. Neat!"
 	embed.set_footer(text=f"Page {page_number} of {total_pages}")
 	return embed, total_pages
 
@@ -336,7 +346,11 @@ class Levels(commands.Cog):
 			bar = self.generate_progress_bar(
 				max_value=missing, progress_value=exp, level=level)
 
-			embed.description = f"Your position is `#{position}`\n```{bar}```"
+			if position == 0:
+				embed.description = f"You are not ranked. Not neat."
+			else:
+				embed.description = f"Your position is `#{position}`. Neat!"
+			embed.description += f"\n```{bar}```"
 			await inter.response.send_message(embed=embed)
 
 	@app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
