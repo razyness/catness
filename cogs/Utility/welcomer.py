@@ -59,16 +59,16 @@ class WelcomeButton(discord.ui.View):
     async def wave(self, interaction, button):
         await interaction.response.defer()
         if self.msg is None:
-            self.msg = await interaction.followup.send(f"{interaction.user.mention} said hi!")
+            self.msg = await interaction.followup.send(f"{interaction.user.mention} says hi!")
         else:
             self.msg = await interaction.channel.fetch_message(self.msg.id)
-            if interaction.user.id not in self.reacted:
-                content = f"{interaction.user.mention}, {self.msg.content}"
+            if interaction.user not in self.reacted:
+                content = f"{', '.join(i.mention for i in self.reacted)}, {interaction.user.mention} say hi!!"
                 await self.msg.edit(content=content)
             else:
                 await interaction.followup.send("You've already greeted this individual!! :)", ephemeral=True)
-        if interaction.user.id not in self.reacted:
-            self.reacted.append(interaction.user.id)
+        if interaction.user not in self.reacted:
+            self.reacted.append(interaction.user)
 
 class Welcomer(commands.Cog):
     def __init__(self, bot: commands.Bot):
