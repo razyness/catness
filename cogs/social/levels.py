@@ -21,9 +21,9 @@ async def get_user_position(bot, user_id):
     		    THEN (
     		        SELECT COUNT(*) + 1
     		        FROM profiles
-    		        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1)
+    		        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1 AND levels_enabled = true)
     		    )
-    		    ELSE 0 -- or any other value you want to return
+    		    ELSE 0
     		END;
 	"""
 	async with bot.db_pool.acquire() as conn:
