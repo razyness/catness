@@ -77,6 +77,9 @@ async def social_menu(settings, *args):
 
 
 async def server_menu(icon, server_name, server, server_obj):
+	if icon:
+		icon = icon.url
+		
 	patterns = ["general", "main", "chat"]
 	welc_channel = next((channel for channel in server_obj.text_channels if any(
 		name.lower() in channel.name.lower() for name in patterns)), None)
