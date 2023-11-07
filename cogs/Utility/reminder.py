@@ -66,7 +66,7 @@ class ReminderView(ui.View):
 
 class Reminder(commands.Cog):
     """
-    Commands to set, view and edit (soon) your reminders. Up to 5 at a time.
+    Commands to set, view and dismiss your reminders. Up to 5 at a time.
     """
 
     def __init__(self, bot: commands.Bot):
@@ -121,6 +121,12 @@ class Reminder(commands.Cog):
         Choice(name="Hour(s)", value="h"),
         Choice(name="Minute(s)", value="m")
     ])
+    @app_commands.describe(
+        task="What do you want to be reminded of",
+        time="How long until the reminder goes off",
+        unit="What unit of time (d, h, m)",
+        private="Should the reminder be sent in DMs"
+    )
     async def remind(self, inter: commands.Context, task: str, time: int, unit: str = "h", private: bool = False):
         # i think this is right
         units = {"d": 86400, "h": 3600, "m": 60}

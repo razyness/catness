@@ -84,11 +84,11 @@ class Help(commands.Cog):
     @commands.hybrid_command(name="help", description="Shows a command browser")
     async def help(self, ctx):
         description = """
-        Here's a helpful list of commands you can use!
+Here's a helpful list of commands you can use!
 
-        To learn more about a command, just choose the group from the dropdown menu.
-        As for parameters, `<>` means it's required, and `[]` means it's optional.
-        Also, `#` means it's a regular command, and `/` means it's an app command.
+To learn more about a command, just choose the group from the dropdown menu.
+As for parameters, `<>` means it's required, and `[]` means it's optional.
+Also, `#` means it's a regular command, and `/` means it's an app command.
         """
         embed = discord.Embed(title="Command list",
                               description=description)
@@ -100,6 +100,8 @@ class Help(commands.Cog):
 
         await ctx.defer(ephemeral=True)
         await ctx.author.send(embed=embed, view=view, delete_after=180)
+        if ctx.message:
+            await ctx.message.add_reaction("✅")
 
 
 async def setup(bot):
