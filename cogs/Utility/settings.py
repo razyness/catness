@@ -188,7 +188,7 @@ class ServerMenu(ui.View):
 			await conn.execute(f"UPDATE servers SET levels_enabled=$1 WHERE id=$2", value, inter.guild.id)
 		self.data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
 		button.style = colorize(value=self.data['levels_enabled'])
-		embed = await server_menu(inter.guild.icon.url, inter.guild.name, self.data, inter.guild)
+		embed = await server_menu(inter.guild.icon, inter.guild.name, self.data, inter.guild)
 
 		await inter.response.edit_message(embed=embed, view=self)
 
@@ -204,7 +204,7 @@ class ServerMenu(ui.View):
 			await conn.execute(f"UPDATE servers SET welcome_type=$1 WHERE id=$2", value, inter.guild.id)
 		self.data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
 		button.style = colorize(value=self.data['welcome_type'])
-		embed = await server_menu(inter.guild.icon.url, inter.guild.name, self.data, inter.guild)
+		embed = await server_menu(inter.guild.icon, inter.guild.name, self.data, inter.guild)
 
 		await inter.response.edit_message(embed=embed, view=self)
 
@@ -397,7 +397,7 @@ class SettingsMenu(ui.View):
 	@ui.button(label="Server", emoji="📂", style=discord.ButtonStyle.blurple, row=2)
 	async def serv_button(self, inter, button):
 		data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
-		embed = await server_menu(icon=inter.guild.icon.url, server_name=inter.guild.name, server=data, server_obj=inter.guild)
+		embed = await server_menu(icon=inter.guild.icon, server_name=inter.guild.name, server=data, server_obj=inter.guild)
 
 		await inter.response.defer()
 		await self.msg.edit(embed=embed, view=ServerMenu(data, self.admin, self.db_pool))
