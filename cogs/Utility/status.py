@@ -32,9 +32,9 @@ class Status(commands.Cog):
             shard_thing = f"Automatically sharded ~ `{', '.join(str(i) for i in self.bot.shards.keys())}/{self.bot.shard_count}`"
 
         embed.description = f"""
-        Hi i am discord bot for discord and real
-        My prefix is `{self.bot.command_prefix}` and i support `/app commands`
-        {shard_thing}
+Hi i am discord bot for discord and real
+My prefix is `{self.bot.command_prefix}` and i support `/app commands`
+{shard_thing}
         """
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.add_field(name='owner', value=f'`{razy}`')
