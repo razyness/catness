@@ -9,6 +9,7 @@ import discord
 
 from utils import ui, icons
 
+
 class RemindObject:
     def __init__(self, id: str, task: str, remind_time: int, channel: tuple = None, reminder_id: str = None):
         self.id = id
@@ -16,6 +17,7 @@ class RemindObject:
         self.remind_time = remind_time
         self.channel = channel
         self.reminder_id = reminder_id or str(uuid.uuid4())
+
 
 class ReminderView(ui.View):
     def __init__(self, bot: commands.Bot, view_inter: discord.Interaction, reminders_list, **kwargs):
@@ -28,9 +30,11 @@ class ReminderView(ui.View):
     def create_buttons(self):
         self.clear_items()
         for i, reminder_id in enumerate(self.reminders_list):
-            button = discord.ui.Button(style=discord.ButtonStyle.red, label=str(i+1), emoji=icons.close)
+            button = discord.ui.Button(
+                style=discord.ButtonStyle.red, label=str(i+1), emoji=icons.close)
             button.custom_id = reminder_id
-            button.callback = lambda i=button, r=reminder_id, l=button.label: self.remove_reminder(i, r, l)
+            button.callback = lambda i=button, r=reminder_id, l=button.label: self.remove_reminder(
+                i, r, l)
             self.add_item(button)
 
     async def on_timeout(self):
@@ -55,14 +59,17 @@ class ReminderView(ui.View):
             embed = message.embeds[0]
             embed.remove_field(int(label)-1)
 
-            new_embed = discord.Embed(title=embed.title, description=embed.description, color=embed.color)
+            new_embed = discord.Embed(
+                title=embed.title, description=embed.description, color=embed.color)
             for i, field in enumerate(embed.fields):
-                new_embed.add_field(name=f"{i + 1}. {field.name[2:]}", value=field.value, inline=field.inline)
+                new_embed.add_field(
+                    name=f"{i + 1}. {field.name[2:]}", value=field.value, inline=field.inline)
             embed = new_embed
 
             await message.edit(embed=embed, view=self if self.reminders_list else None)
 
         await interaction.response.defer()
+
 
 class Reminder(commands.Cog):
     """
@@ -89,7 +96,7 @@ class Reminder(commands.Cog):
         else:
             channel = self.bot.get_channel(remind_obj.channel[1]) or await self.bot.fetch_channel(remind_obj.channel[1])
             if channel:
-                await channel.send(f"{user.mention} reminder: {remind_obj.task}")
+                await channel.send(f"{user.mention} !!! {remind_obj.task}")
 
         async with self.bot.db_pool.acquire() as conn:
             await conn.execute("DELETE FROM reminders WHERE reminder_id = $1", remind_obj.reminder_id)
@@ -150,9 +157,11 @@ class Reminder(commands.Cog):
                 self.reminders[remind_obj.id] = remind_obj
 
         if not private:
-            await inter.response.send_message(f"I'll remind you here: `{remind_obj.task}`, <t:{int(remind_obj.remind_time)}:R>")
+            embed = discord.Embed(description=remind_obj.task)
+            await inter.response.send_message(f"I'll remind you here, <t:{int(remind_obj.remind_time)}:R>", embed=embed)
         else:
-            await inter.response.send_message(f"You'll receive a DM: `{remind_obj.task}`, <t:{int(remind_obj.remind_time)}:R>", ephemeral=True)
+            embed = discord.Embed(description=remind_obj.task)
+            await inter.response.send_message(f"You'll receive a DM, <t:{int(remind_obj.remind_time)}:R>", embed=embed, ephemeral=True)
 
     @group.command(name="view", description="View existing reminders")
     async def view_reminders(self, inter: commands.Context):
@@ -167,10 +176,13 @@ class Reminder(commands.Cog):
                     emoji = "🔒" if reminder['private'] else "#️⃣"
                     task = reminder['task']
                     channel = reminder['channel']
-                    embed.add_field(name=f"{i+1}. {task}", value=f"Expires <t:{reminder['remind_time']}:R> | {emoji}\n{f'<#{channel}>' if channel.isdigit() else ''}", inline=False)
+                    embed.add_field(
+                        name=f"{i+1}. {task}", value=f"Expires <t:{reminder['remind_time']}:R> | {emoji}\n{f'<#{channel}>' if channel.isdigit() else ''}", inline=False)
 
-                reminders_list = [reminder['reminder_id'] for reminder in reminder_list]
-                view = ReminderView(self.bot, view_inter=inter, reminders_list=reminders_list)
+                reminders_list = [reminder['reminder_id']
+                                  for reminder in reminder_list]
+                view = ReminderView(self.bot, view_inter=inter,
+                                    reminders_list=reminders_list)
                 embed.set_footer(text='🔒 DM reminders, #️⃣ Channel reminders')
                 await inter.response.send_message(embed=embed, view=view, ephemeral=True)
             else:
