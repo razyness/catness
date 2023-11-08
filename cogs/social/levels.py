@@ -287,7 +287,10 @@ class Levels(commands.Cog):
 					if user_data['exp'] + xp_to_add >= xp_required:
 						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add - xp_required, message.author.id)
 						await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1, message.author.id)
-						await message.reply(f"## You leveled up to `{user_data['level'] + 1}`!\nℹ️ You'll need {self.experience_curve(user_data['level'] + 1)}xp to level up again", delete_after=60)
+						emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶", "<:angle:1154534259462262815>", "🎈", "🎄", "🕊️", "⭐", "🍀"])
+						embed = discord.Embed(title=f"{emoji} You leveled up to **{user_data['level'] + 1}**!")
+						embed.set_footer(text=f"You'll need {self.experience_curve(user_data['level'] + 1)}xp to level up again")
+						await message.reply(embed=embed, delete_after=60)
 					else:
 						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add, message.author.id)
 
