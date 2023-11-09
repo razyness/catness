@@ -155,7 +155,7 @@ async def get_lb_page(bot, author, page_number: int, compact: bool) -> tuple:
 		return None
 
 	embed = discord.Embed(
-		title="Leaderboard of the levels real", color=discord.Color.blurple())
+		title="Leaderboard of the levels real")
 
 	top_3 = ["🥇", "🥈", "🥉"]
 	for i, row in enumerate(rows):
