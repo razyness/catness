@@ -74,6 +74,8 @@ def create_card(user_data):
 		104//2, 468//2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90), font=font_small)
 	level_text = text_editor.text(position=(
 		880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
+	position_shadow = text_editor.text(position=(
+            880//2, 133//2), text=user_data['position'], color=(0, 0, 0, 90), align="right", font=font_large)
 
 	blur_editor.paste(username, (0, 0-10))
 	blur_editor.paste(exp_text, (0, 0-10))
@@ -81,7 +83,9 @@ def create_card(user_data):
 
 	bar_editor = easy_pil.Editor(image=empty_canvas)
 	bar_shadow = bar_editor.bar(position=(98//2, 404//2), max_width=787//2,
-								height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
+                             height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
+
+	blur_editor.paste(position_shadow, (0, 0-10))
 
 	blur_editor.paste(bar_shadow, (0, 0-10))
 
@@ -90,15 +94,15 @@ def create_card(user_data):
 	editor.paste(blur_editor, (0, 5))
 
 	bar = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-						 percentage=100, color=(255, 255, 255, 70), radius=15//2)
+                      percentage=100, color=(255, 255, 255, 70), radius=15//2)
 	editor.paste(bar, (0, 0-10))
 	bar_progress = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-								  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
+                               percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
 	editor.paste(bar_progress, (0, 0-10))
 
 	rep_bg_editor = easy_pil.Editor(image=empty_canvas)
 	rep_bg = rep_bg_editor.bar(position=(682//2, 333//2), max_width=205//2,
-							   height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
+                            height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
 	editor.paste(rep_bg, (0, 0-10))
 
 	avatar_image = get_image(user_data['avatar'])
@@ -115,13 +119,16 @@ def create_card(user_data):
 	rep_text = text_editor.text(position=(
 		782//2, 350//2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
 
+	position_text = text_editor.text(position=(
+            880//2, 133//2), text=user_data['position'], color=(255, 255, 255, 200), align="right", font=font_large)
+
+	editor.paste(position_text, (0, 0-10))
 	editor.paste(username, (0, 0-10))
 	editor.paste(exp_text, (0, 0-10))
 	editor.paste(level_text, (0, 0-10))
 	editor.paste(rep_text, (0, 0-10))
 
 	return editor.image_bytes
-
 
 async def get_lb_page(bot, author, page_number: int, compact: bool) -> tuple:
 	compact_size = 6 if compact else 12
@@ -335,7 +342,8 @@ class Levels(commands.Cog):
 				"percentage": (exp / missing) * 100,
 				"rep": user_info["rep_value"],
 				"avatar": user.display_avatar.url,
-				"banner": f"{user.banner.url[:-9]}?size=1024" if user.banner else "https://cdn.discordapp.com/attachments/912099940325523586/1104016078880919592/card.png"
+				"banner": f"{user.banner.url[:-9]}?size=1024" if user.banner else "https://cdn.discordapp.com/attachments/912099940325523586/1104016078880919592/card.png",
+				"position": f"#{position}" if position > 0 else "Unranked",
 			}
 
 			await inter.response.defer(thinking=True)
