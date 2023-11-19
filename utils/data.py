@@ -35,10 +35,11 @@ icons: DictToAttr = DictToAttr({
 	"back": "<:back:1101510067880202301>",
 	"page_left": "<:page_left:1112880577390055544>",
 	"page_right": "<:page_right:1112880675067015188>",
-	"close": "<:close:1114209439122210918>",
+	"close": "<:close:1175843411576754277>",
 	"special": "<:Special:1078664371661713449>",
 	"bot": "<:bot:1078091845051088979>",
 	"nitro": "<:nitro:1078094211351584928>",
 	"github": "<:github:1114661850118897806>",
-    "osu_supporter": "<:osu_supporter:1167584560624717876>"
+    "osu_supporter": "<:osu_supporter:1167584560624717876>",
+    "confirm": "<:confirm:1175842297481547889>"
 })
