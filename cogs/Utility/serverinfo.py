@@ -91,7 +91,7 @@ class ServerView(ui.View):
         embeds = self.generate_embeds(title=f"Members in {self.guild.name}",
                                       footer=f"Showing {len(data) - 2}/{len(self.guild.members)} - Some members may be missing due to discord limitations",
                                       data=data)
-        if conf:
+        if self.guild.member_count > 1000 and conf:
             await interaction.followup.send(embed=embeds[0], ephemeral=True)
         else:
             await interaction.response.send_message(embed=embeds[0], ephemeral=True)
