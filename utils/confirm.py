@@ -19,6 +19,9 @@ class ConfirmationDialog(View):
         self.choice = False
         await self.stop()
 
+    async def on_timeout(self):
+        return
+
 async def confirmation(invoke, title, description):
     """
     A function that displays a confirmation dialog and waits for user input.
