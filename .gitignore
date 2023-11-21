@@ -11,4 +11,6 @@ lib64
 config.toml
 start.bat
 discord.log
+.venv
+.vscode
 __pycache__
