@@ -55,17 +55,32 @@ class Client(commands.AutoShardedBot):
 			),
 		)
 
-		async for guild in self.fetch_guilds():
-			async with self.db_pool.acquire() as conn:
-				try:
-					r = await conn.execute("INSERT INTO servers (id) VALUES ($1)", guild.id)
-					if r:
-						print(f"➕ I was added to the guild {guild.name} | {guild.id}, and added it to my database")
-				except asyncpg.exceptions.PostgresError as e:
-					if "duplicate key value violates unique constraint" in str(e):
-						continue
-					print(f"🟧 I could not add the guild {guild.name} | {guild.id} to my database:", e)
+		async with self.db_pool.acquire() as conn:
+			db_guilds = await conn.fetch("SELECT id FROM servers")
 
+		db_guild_ids = {record['id'] for record in db_guilds}
+		fetched_guilds = {guild async for guild in self.fetch_guilds()}
+
+		for guild in fetched_guilds:
+			if guild.id not in db_guild_ids:
+				async with self.db_pool.acquire() as conn:
+					try:
+						await conn.execute("INSERT INTO servers (id) VALUES ($1)", guild.id)
+						print(f"➕ I was added to the guild {guild.name} | {guild.id}, and added it to my database")
+					except asyncpg.exceptions.PostgresError as e:
+						if "duplicate key value violates unique constraint" in str(e):
+							continue
+						print(f"🟧 I could not add the guild {guild.name} | {guild.id} to my database:", e)
+
+		for db_guild_id in db_guild_ids:
+			if db_guild_id not in [guild.id for guild in fetched_guilds]:
+				async with self.db_pool.acquire() as conn:
+					try:
+						await conn.execute("DELETE FROM servers WHERE id = $1", db_guild_id)
+						print(f"➖ I was removed from the guild with ID {db_guild_id}, and removed it from my database")
+					except asyncpg.exceptions.PostgresError as e:
+						print(f"🟧 I could not remove the guild with ID {db_guild_id} from my database:", e)
+				
 	async def on_ready(self):
 		if not hasattr(self, "uptime"):
 			self.uptime = discord.utils.utcnow()
