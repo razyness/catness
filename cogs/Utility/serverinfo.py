@@ -25,7 +25,7 @@ class DownloadEmotes(ui.View):
 
         with zipfile.ZipFile(zip_file, 'w') as zip_obj:
             i = 0
-            for emoji in inter.guild.emojis:
+            for emoji in self.guild.emojis:
                 url = emoji.url
                 async with self.bot.web_client.get(url) as response:
                     if response.status == 200:
