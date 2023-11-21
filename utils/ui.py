@@ -16,7 +16,7 @@ class View(discord.ui.View):
     async def on_timeout(self):
         try:
             await self.disable_all()
-        except discord.NotFound:
+        except discord.NotFound or discord.HTTPException:
             pass
 
     async def disable_all(self):
