@@ -17,16 +17,6 @@ if TYPE_CHECKING:
 
 start_time = time.time()
 
-last_executed = 0
-
-
-def assert_cooldown():
-    global last_executed
-    if last_executed + 5.0 < time.time():
-        last_executed = time.time()
-        return True
-    return False
-
 
 class Events(commands.Cog):
     def __init__(self, bot: Client):
@@ -93,14 +83,13 @@ class Events(commands.Cog):
                     f"🟥 I could not remove the guild {guild.name} | {guild.id} from my database:", e)
 
     @commands.Cog.listener()
+    @commands.cooldown(1, 5.0, commands.BucketType.user)
     async def on_message(self, message):
 
         if self.bot.user.mentioned_in(message):
-            await message.channel.send(f"My prefix is `{self.bot.command_prefix}`, but you can also use `/slash` commands", delete_after=10)
-
-        if assert_cooldown():
-            if re.search('\boh\b(?!\w)', message.content):
-                await message.channel.send("oh")
+            await message.channel.send(f"My prefix is `{self.bot.command_prefix}`, but you can also use `/slash` commands.", delete_after=5)
+        if re.search('\boh\b(?!\w)', message.content):
+            await message.channel.send("oh")
 
 
 async def setup(bot):
