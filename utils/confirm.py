@@ -22,7 +22,7 @@ class ConfirmationDialog(View):
     async def on_timeout(self):
         return
 
-async def confirmation(invoke, title, description):
+async def send(invoke, title, description):
     """
     A function that displays a confirmation dialog and waits for user input.
 

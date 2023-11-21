@@ -77,7 +77,7 @@ class ServerView(ui.View):
     @discord.ui.button(label="Show all members", style=discord.ButtonStyle.blurple)
     async def members_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.guild.member_count > 1000:
-            conf = await confirm.confirmation(interaction, "Are you sure?", "May cause spam on large servers")
+            conf = await confirm.send(interaction, "Are you sure?", f"This server has `{self.guild.member_count}` members. Get ready for some spam!")
             if not conf:
                 return
 
@@ -100,7 +100,11 @@ class ServerView(ui.View):
     
     @discord.ui.button(label="Show all emojis", style=discord.ButtonStyle.blurple)
     async def emojis_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+        if len(self.guild.emojis) > 250:
+            conf = await confirm.send(interaction, "Are you sure?", f"This server has `{len(self.guild.emojis)}` emojis. Get ready for some spam!")
+            if not conf:
+                return
+        
         data = ['## Static:\n']
         for i in self.emojis["static"]:
             data.append(str(i))
@@ -115,9 +119,15 @@ class ServerView(ui.View):
         view = DownloadEmotes(self.bot, interaction, self.guild)
 
         if len(embeds) == 1:
-            await interaction.response.send_message(embed=embeds[0], view=view, ephemeral=True)
+            if len(self.guild.emojis) > 150 and conf:
+                await interaction.followup.send(embed=embeds[0], view=view, ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=embeds[0], view=view, ephemeral=True)
         else:
-            await interaction.response.send_message(embed=embeds[0], ephemeral=True)
+            if len(self.guild.emojis) > 150 and conf:
+                await interaction.followup.send(embed=embeds[0], ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=embeds[0], ephemeral=True)
             for i in embeds[1:]:
                 if i == embeds[-1]:
                     await interaction.followup.send(embed=i, view=view, ephemeral=True)
