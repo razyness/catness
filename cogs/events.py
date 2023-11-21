@@ -13,7 +13,7 @@ import discord
 from discord.ext import commands, tasks
 
 if TYPE_CHECKING:
-    from playground import Bot
+    from playground import Client
 
 start_time = time.time()
 
@@ -29,7 +29,7 @@ def assert_cooldown():
 
 
 class Events(commands.Cog):
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Client):
         self.bot = bot
         self.tree = bot.tree
         self.blocked = ["cogs.events", "cogs.fun.openapi",
