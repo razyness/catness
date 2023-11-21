@@ -14,7 +14,10 @@ class View(discord.ui.View):
             return obj
 
     async def on_timeout(self):
-        await self.disable_all()
+        try:
+            await self.disable_all()
+        except discord.NotFound:
+            pass
 
     async def disable_all(self):
         message = await self.view_inter.original_response()
