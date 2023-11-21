@@ -141,6 +141,8 @@ catchphrases = [
 ]
 ```
 
+There are a few hardcoded variables (can't be bothered to list them)
+  
 ## Customization
 
 To customize the emojis used in the bot, replace the emojis in `./utils/data.py` with those that you uploaded to a server
