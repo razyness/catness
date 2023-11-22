@@ -108,6 +108,8 @@ class Events(commands.Cog):
 				if color_hex != data["colors"][0]["hex"]:
 					embed.title = f"#{color_hex}"
 					embed.description = f"**Closest color:** `{data['colors'][0]['name']}`"
+				if len(color_hex[1:]) != 6:
+					embed.colour = discord.Colour(int(data['colors'][0]['hex'][1:], 16))
 				embed.set_thumbnail(
 					url=f"https://dummyimage.com/100x70/{color_hex}/{color_hex}.png")
 				fields = [
