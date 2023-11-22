@@ -82,14 +82,42 @@ class Events(commands.Cog):
                 print(
                     f"🟥 I could not remove the guild {guild.name} | {guild.id} from my database:", e)
 
-    @commands.Cog.listener()
+    @commands.Cog.listener("on_message")
     @commands.cooldown(1, 5.0, commands.BucketType.user)
-    async def on_message(self, message):
-
-        if self.bot.user.mentioned_in(message):
-            await message.channel.send(f"My prefix is `{self.bot.command_prefix}`, but you can also use `/slash` commands.", delete_after=5)
+    async def oh_thing(self, message):
         if re.search('\boh\b(?!\w)', message.content):
             await message.channel.send("oh")
+
+    @commands.Cog.listener("on_message")
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+
+        if message.content == f"<@!{self.bot.user.id}>":
+            await message.channel.send(f"Hello, my prefix is `{self.bot.config['prefix']}`")
+
+        color_hex = re.search('#(([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})$', message.content)
+        if color_hex:
+            color_hex = color_hex.group()
+            color_hex = color_hex[1:]
+            async with self.bot.web_client.get(f"https://api.color.pizza/v1/{color_hex}") as r:
+                data = await r.json()
+                await message.add_reaction('🎨')
+                await message.channel.typing()
+                embed = discord.Embed(title=data["paletteTitle"], color=int(data['colors'][0]['hex'][1:], 16))
+                embed.set_thumbnail(
+                    url=f"https://dummyimage.com/100x70/{color_hex}/{color_hex}.png")
+                fields = [
+                    ("Hex", f"`{data['colors'][0]['hex']}`", False),
+                    ("RGB", f"`{data['colors'][0]['rgb']['r']}`, `{data['colors'][0]['rgb']['g']}`, `{data['colors'][0]['rgb']['b']}`", False),
+                    ("HSL",
+                     f"`{round(data['colors'][0]['hsl']['h'], 2)}`, `{round(data['colors'][0]['hsl']['s'], 2)}`, `{round(data['colors'][0]['hsl']['l'], 2)}`", False)
+                ]
+                for name, value, inline in fields:
+                    embed.add_field(name=name, value=value, inline=inline)
+                embed.set_footer(text=f"Provided by color.pizza and dummyimage.com")
+                await message.reply(embed=embed, delete_after=60.0)
+
 
 
 async def setup(bot):
