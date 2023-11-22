@@ -44,7 +44,7 @@ class DownloadEmotes(ui.View):
                         return
         
         zip_file.seek(0)
-        await inter.followup.send(file=discord.File(zip_file, f'{self.guild.id}_emotes.zip'), ephemeral=True)
+        await inter.followup.send(inter.user.mention, file=discord.File(zip_file, f'{self.guild.id}_emotes.zip'), ephemeral=True)
 
 class ServerView(ui.View):
     def __init__(self, bot, guild, members, roles, emojis, view_inter, owned=False, timeout=180, **kwargs):
@@ -161,6 +161,9 @@ class ServerInfo(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="server", description="Get information about the server")
+    @app_commands.describe(
+        ephemeral = "Whether or not the message should be visible to everyone"
+    )
     async def serverinfo(self, inter: discord.Interaction, ephemeral: bool = True):
         guild = inter.guild
 
@@ -198,19 +201,18 @@ class ServerInfo(commands.Cog):
         created = f'<t:{int(datetime.timestamp(guild.created_at))}:D>'
         channels = (len(guild.text_channels), len(
             guild.voice_channels), len(guild.categories))
-        rules = guild.rules_channel.mention
         boost = (guild.premium_tier, guild.premium_subscription_count)
 
-        description = ""
+        description = []
         if guild.description:
-            description += f"\nDescription: {guild.description}"
-        if rules:
-            description += f"Rules channel: {rules}"
+            description.append(f"Description: {guild.description}")
+        if guild.rules_channel:
+            description.append(f"Rules channel: {guild.rules_channel.mention}")
         if roles["booster"]:
-            description += f"Booster role: {roles['booster'].mention}"
+            description.append(f"Booster role: {roles['booster'].mention}")
 
         embed = discord.Embed(
-            title=f"Server Info for {guild.name}", description=f"Rules channel: {rules}" if rules else None)
+            title=f"Server Info for {guild.name}", description="\n".join(description) or "This is a pretty cool server.")
         embed.add_field(name="Owner", value=guild.owner.mention)
         embed.add_field(
             name="Members", value=f"`{len(members['users'])}` users\n`{len(members['bots'])}` bots")
