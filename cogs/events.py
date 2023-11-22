@@ -85,8 +85,8 @@ class Events(commands.Cog):
 	@commands.Cog.listener("on_message")
 	@commands.cooldown(1, 5.0, commands.BucketType.user)
 	async def oh_thing(self, message):
-		if re.search('\boh\b(?!\w)', message.content):
-			await message.channel.send("oh")
+		if 'oh' in message.content:
+			await message.channel.send('oh')
 
 	@commands.Cog.listener("on_message")
 	async def on_message(self, message):
@@ -104,7 +104,10 @@ class Events(commands.Cog):
 				data = await r.json()
 				await message.add_reaction('🎨')
 				await message.channel.typing()
-				embed = discord.Embed(title=data["paletteTitle"], color=int(data['colors'][0]['hex'][1:], 16))
+				embed = discord.Embed(title=data["paletteTitle"], color=int(color_hex[1:], 16))
+				if color_hex != data["colors"][0]["hex"]:
+					embed.title = f"#{color_hex}"
+					embed.description = f"**Closest color:** `{data['colors'][0]['name']}`"
 				embed.set_thumbnail(
 					url=f"https://dummyimage.com/100x70/{color_hex}/{color_hex}.png")
 				fields = [
@@ -117,7 +120,6 @@ class Events(commands.Cog):
 					embed.add_field(name=name, value=value, inline=inline)
 				embed.set_footer(text=f"Provided by color.pizza and dummyimage.com")
 				await message.reply(embed=embed, delete_after=60.0)
-
 
 
 async def setup(bot):
