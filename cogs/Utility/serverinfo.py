@@ -184,7 +184,13 @@ class ServerInfo(commands.Cog):
                 continue
             if r.is_premium_subscriber():
                 roles["booster"] = r
-            elif r.permissions.administrator or (r.permissions.manage_guild and r.permissions.manage_roles and r.permissions.manage_channels and r.permissions.manage_messages):
+            elif (r.permissions.administrator or
+                r.permissions.manage_roles or 
+                r.permissions.manage_channels or 
+                r.permissions.manage_messages or
+                r.permissions.ban_members or
+                r.permissions.kick_members
+                ):
                 roles["mod"].append(r)
             elif not r.is_bot_managed() or not r.is_integration():
                 roles["normal"].append(r)
