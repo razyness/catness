@@ -104,11 +104,11 @@ class Events(commands.Cog):
 				data = await r.json()
 				await message.add_reaction('🎨')
 				await message.channel.typing()
-				embed = discord.Embed(title=data["paletteTitle"], color=int(color_hex[1:], 16))
-				if color_hex != data["colors"][0]["hex"]:
+				embed = discord.Embed(title=data["paletteTitle"], color=int(color_hex, 16))
+				if f"#{color_hex}" != str(data["colors"][0]["hex"]):
 					embed.title = f"#{color_hex}"
 					embed.description = f"**Closest color:** `{data['colors'][0]['name']}`"
-				if len(color_hex[1:]) != 6:
+				if len(color_hex) != 6:
 					embed.colour = discord.Colour(int(data['colors'][0]['hex'][1:], 16))
 				embed.set_thumbnail(
 					url=f"https://dummyimage.com/100x70/{color_hex}/{color_hex}.png")
@@ -121,7 +121,7 @@ class Events(commands.Cog):
 				for name, value, inline in fields:
 					embed.add_field(name=name, value=value, inline=inline)
 				embed.set_footer(text=f"Provided by color.pizza and dummyimage.com")
-				await message.reply(embed=embed, delete_after=60.0)
+				await message.reply(embed=embed, delete_after=120.0)
 
 
 async def setup(bot):
