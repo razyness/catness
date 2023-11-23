@@ -85,7 +85,7 @@ class Events(commands.Cog):
 	@commands.Cog.listener("on_message")
 	@commands.cooldown(1, 5.0, commands.BucketType.user)
 	async def oh_thing(self, message):
-		if 'oh' in message.content:
+		if 'oh' in message.content and not message.author.bot:
 			await message.channel.send('oh')
 
 	@commands.Cog.listener("on_message")
