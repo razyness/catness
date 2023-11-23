@@ -17,6 +17,7 @@ class ConfirmationDialog(View):
     @discord.ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
     async def no(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.choice = False
+        await super().stop()
         await self.stop()
 
     async def on_timeout(self):
