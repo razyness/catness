@@ -1,11 +1,13 @@
 import discord
+import asyncio
 import zipfile
+import aiohttp
 
 from datetime import datetime
 from discord.ext import commands
 from discord import app_commands
 
-from utils import ui, confirm
+from utils import ui, confirm, blocking
 from utils.data import icons
 
 from io import BytesIO
@@ -17,34 +19,67 @@ class DownloadEmotes(ui.View):
         self.bot = bot
         self.view_inter = view_inter
         self.guild: discord.Guild = guild
+        self.saved = {}
     
-    @discord.ui.button(label="Download", emoji=icons.download, style=discord.ButtonStyle.blurple)
-    async def download(self, inter:discord.Interaction, button):
-        await inter.response.send_message(f"Downloading... (0/{len(self.guild.emojis)})", ephemeral=True)
-        zip_file = BytesIO()
-
-        with zipfile.ZipFile(zip_file, 'w') as zip_obj:
-            i = 0
-            for emoji in self.guild.emojis:
-                url = emoji.url
-                async with self.bot.web_client.get(url) as response:
-                    if response.status == 200:
-                        image_data = await response.read()
-                        image = Image.open(BytesIO(image_data))
-                        image_filename = f"{emoji.name}.png"
+    async def download_emoji(self, session, emoji, zip_obj, semaphore):
+        url = emoji.url
+        async with semaphore:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    image_data = await response.read()
+                    image_byte_io = BytesIO(image_data)
+                    if emoji.animated:  # If the emoji is animated, save it as a GIF
+                        image_filename = f"{emoji.name}.gif"
+                    else:  # If the emoji is not animated, convert it to a PNG
+                        image = Image.open(image_byte_io)
                         image_byte_io = BytesIO()
                         image.save(image_byte_io, format='PNG')
-                        zip_obj.writestr(
-                            image_filename, image_byte_io.getvalue())
-                        i += 1
-                        message = f"Downloading... ({i}/{len(self.guild.emojis)})"
-                        await inter.edit_original_response(content=message)
+                        image_filename = f"{emoji.name}.png"
+
+                    # Handle emojis with the same name
+                    if image_filename in self.saved:
+                        self.saved[image_filename] += 1
+                        name, extension = image_filename.rsplit('.', 1)
+                        image_filename = f"{name}-{self.saved[image_filename]}.{extension}"
                     else:
-                        await inter.followup.send(f"Failed to download {emoji.name}", ephemeral=True)
-                        return
+                        self.saved[image_filename] = 0
+
+                    image_byte_io.seek(0)
+                    zip_obj.writestr(image_filename, image_byte_io.getvalue())
+                    return True
+                else:
+                    return False
+
+    @discord.ui.button(label="Download", style=discord.ButtonStyle.blurple)
+    async def download(self, inter: discord.Interaction, button: discord.ui.Button):
+        button.disabled = True
+        await inter.response.edit_message(view=self)
         
+        message = await inter.followup.send("Downloading...", ephemeral=True)
+        zip_file = BytesIO()
+        zip_obj = zipfile.ZipFile(zip_file, 'w')
+        semaphore = asyncio.Semaphore(15)
+        tasks = []
+
+        async with aiohttp.ClientSession() as session:  # Create session here
+            for i, emoji in enumerate(self.guild.emojis, start=1):
+                task = self.download_emoji(session, emoji, zip_obj, semaphore)
+                tasks.append(task)
+                if i % 10 == 0 or i == len(self.guild.emojis):
+                    percentage = int((i / len(self.guild.emojis)) * 100)
+                    await message.edit(content=f"Downloading... `({percentage}%)`")
+            
+            await message.edit(content="Downloading... `100%`\nZipping... This may take a while")
+            await asyncio.gather(*tasks)
+
+        await asyncio.to_thread(zip_obj.close)
         zip_file.seek(0)
-        await inter.followup.send(inter.user.mention, file=discord.File(zip_file, f'{self.guild.id}_emotes.zip'), ephemeral=True)
+        self.saved = {}
+        await message.edit(content=("Downloading... `100%`\nZipping... This may take a while\nUploading..."))
+        await inter.followup.send(file=discord.File(zip_file, f'{self.guild.id}_emotes.zip'), ephemeral=True)
+        await message.delete()
+        button.disabled = False
+        await inter.edit_original_response(view=self)
 
 class ServerView(ui.View):
     def __init__(self, bot, guild, members, roles, emojis, view_inter, owned=False, timeout=180, **kwargs):
