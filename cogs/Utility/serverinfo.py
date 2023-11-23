@@ -50,7 +50,7 @@ class DownloadEmotes(ui.View):
                 else:
                     return False
 
-    @discord.ui.button(label="Download", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Download", style=discord.ButtonStyle.blurple, emoji=icons.download)
     async def download(self, inter: discord.Interaction, button: discord.ui.Button):
         button.disabled = True
         await inter.response.edit_message(view=self)
