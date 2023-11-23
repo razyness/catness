@@ -1,6 +1,7 @@
 import discord
 import aiohttp
-import io, os
+import io
+import urllib.parse
 
 from typing import Optional
 from discord.ext import commands
@@ -90,10 +91,12 @@ class Makesweet(commands.Cog):
         Choice(name="Nesting Doll", value="nesting-doll"),
         Choice(name="Circuit Board", value="circuit-board")
     ])
+
     async def makesweet(self, inter, template:str, image:Optional[discord.Attachment], text:Optional[str], swap:Optional[bool]=False):
         if not text and not image:
             return await inter.response.send_message(f"empty {template} gif", ephemeral=True)
-        if image is not None and os.path.basename(image.url).split('.')[-1] not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
+        file_extension = urllib.parse.urlparse(image.url).path.split('.')[-1]
+        if image is not None and file_extension not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
             return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
 
         await inter.response.defer(thinking=True)
