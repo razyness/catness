@@ -96,7 +96,8 @@ class Events(commands.Cog):
 		if message.content == f"<@!{self.bot.user.id}>":
 			await message.channel.send(f"Hello, my prefix is `{self.bot.config['prefix']}`")
 
-		color_hex = re.search('#(([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})', message.content)
+		color_hex = re.search(
+			'(?<!<)#(?:([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})(?!\S|>)', message.content)
 		if color_hex:
 			color_hex = color_hex.group()
 			color_hex = color_hex[1:]
