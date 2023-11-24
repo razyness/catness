@@ -97,10 +97,10 @@ class Events(commands.Cog):
 			await message.channel.send(f"Hello, my prefix is `{self.bot.config['prefix']}`")
 
 		color_hex = re.search(
-			'(?<!<)#(?:([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})(?!\S|>)', message.content)
+			'(?<!<)/#(?:([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})(?!\S|>)', message.content)
 		if color_hex:
 			color_hex = color_hex.group()
-			color_hex = color_hex[1:]
+			color_hex = color_hex[2:]
 			async with self.bot.web_client.get(f"https://api.color.pizza/v1/{color_hex}") as r:
 				data = await r.json()
 				await message.add_reaction('🎨')
