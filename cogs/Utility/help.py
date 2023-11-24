@@ -89,6 +89,8 @@ Here's a helpful list of commands you can use!
 To learn more about a command, just choose the group from the dropdown menu.
 As for parameters, `<>` means it's required, and `[]` means it's optional.
 Also, `#` means it's a regular command, and `/` means it's an app command.
+
+Fun fact: placing a / before a color hex will show you the closest color to it!
         """
         embed = discord.Embed(title="Command list",
                               description=description)
