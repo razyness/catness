@@ -1,13 +1,14 @@
+from typing import Optional
 import discord
 
-from discord import ui
 from discord import app_commands
 from discord.ext import commands
 
 from discord.ext.commands import DefaultHelpCommand
 
+from utils.ui import View
 
-class HelpDropdown(ui.Select):
+class HelpDropdown(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
         placeholder = "Select a command"
@@ -69,6 +70,22 @@ class HelpDropdown(ui.Select):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+class ThingView(View):
+    def __init__(self, invoke, timeout: float | None = 180):
+        super().__init__(view_inter=invoke, timeout=timeout)
+
+    @discord.ui.button(label="View on-message commands")
+    async def viewthing(self, interaction: discord.Interaction, button: discord.ui.Button, ):
+        embed = discord.Embed(title="On-message commands",
+                              description="These commands can be used by typing them in chat.")
+        for i in {
+            "y/n": "include it to your message to make a poll",
+            "/#000000": "Get the closest color to a hex code, and preview the color",
+            "booster hearts": "reacts with ❤ to all booster messages",
+        }.items():
+            embed.add_field(name=i[0], value=i[1], inline=True)
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -98,7 +115,7 @@ Fun fact: placing a / before a color hex will show you the closest color to it!
         embed.set_footer(text="This message will delete in 3 minutes.",
                          icon_url="https://cdn.discordapp.com/emojis/1112740924934594670.gif?size=96")
 
-        view = ui.View().add_item(HelpDropdown(self.bot))
+        view = ThingView(ctx).add_item(HelpDropdown(self.bot))
 
         await ctx.defer(ephemeral=True)
         await ctx.author.send(embed=embed, view=view, delete_after=180)
