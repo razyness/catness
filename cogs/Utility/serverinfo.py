@@ -176,16 +176,16 @@ class ServerView(ui.View):
         data = list()        
         for i in self.roles["normal"]:
             data.append(i.mention)
-        data.append('## Normal:')
+        data.append('\n## Normal:\n')
         for i in self.roles["mod"]:
             data.append(i.mention)
-        data.append('## Mods:')
+        data.append('## Mods:\n')
 
         data.reverse()
         embeds = self.generate_embeds(title=f"Roles in {self.guild.name}",
                                       footer=f"Total: {len(self.guild.roles)}",
                                       data=data,
-                                      new_line=True)
+                                      new_line=False)
         await interaction.response.send_message(embed=embeds[0], ephemeral=True)
         for i in embeds[1:]:
             await interaction.followup.send(embed=i, ephemeral=True)

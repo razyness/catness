@@ -49,7 +49,7 @@ async def main_menu(user, admin=False):
 	embed.set_footer(text="Select a value to toggle")
 	if admin:
 		embed.add_field(name="📂 Server",
-						value="• Levels\n• Welcomer", inline=True)
+                  value="• Levels\n• Welcomer\n• Features", inline=True)
 	embed.set_thumbnail(url=user.display_avatar.url)
 	return embed
 
@@ -90,8 +90,9 @@ async def server_menu(icon, server_name, server, server_obj):
 	embed.add_field(name=f"Levels: {str('`Enabled`' if server['levels_enabled'] else '`Disabled`')}",
 					value="Disabling levels will prevent everyone in this server from gaining xp and leveling up")
 	embed.add_field(name=f"Welcomer: {str('`Disabled`' if server['welcome_type'] == 0 else '`Enabled`' if server['welcome_type'] == 1 else '`Enabled - Prompt`')}",
-					value=f"Greets new members with a random message. General channel is picked automatically.\nWelcome channel: {welc_channel}")
-
+					value=f"Greets new members with a random message.\nWelcome channel: {welc_channel}")
+	embed.add_field(name=f"Features: {str('`Enabled`' if server['features'] else '`Disabled`')}",
+					value="Enables on message features such as /#color previews, booster hearts, etc. for this server")
 	embed.set_thumbnail(url=icon)
 	embed.set_footer(text="Select a value to toggle")
 	return embed
@@ -211,6 +212,18 @@ class ServerMenu(ui.View):
 
 		await inter.response.edit_message(embed=embed, view=self)
 
+	@ui.button(label="Features", style=discord.ButtonStyle.gray)
+	async def feat_button(self, inter, button):
+		async with self.db_pool.acquire() as conn:
+			value = False
+			if not self.data['features']:
+				value = True
+			await conn.execute(f"UPDATE servers SET features=$1 WHERE id=$2", value, inter.guild.id)
+		self.data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
+		button.style = colorize(value=self.data['features'])
+		embed = await server_menu(inter.guild.icon, inter.guild.name, self.data, inter.guild)
+
+		await inter.response.edit_message(embed=embed, view=self)
 
 class AdvancedMenu(ui.View):
 	def __init__(self, user, settings, admin, db_pool):
