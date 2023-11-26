@@ -83,7 +83,8 @@ ALTER TABLE public.reminders OWNER TO postgres;
 CREATE TABLE public.servers (
     id bigint NOT NULL,
     levels_enabled boolean DEFAULT true,
-    welcome_type numeric DEFAULT 0
+    welcome_type numeric DEFAULT 0,
+    features BOOLEAN DEFAULT TRUE
 );
 
 ALTER TABLE public.servers OWNER TO postgres;
