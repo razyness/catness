@@ -7,9 +7,22 @@ import psutil, pynvml
 from discord.ext import commands
 from discord import app_commands
 
-from utils import icons
+from utils import icons, ui
+
+from .changelogs import Changelog
 
 pynvml.nvmlInit()
+
+class ThingView(ui.View):
+    def __init__(self, invoke: discord.Interaction, bot):
+        super().__init__(view_inter=invoke)
+        self.invoke = invoke
+        self.bot = bot
+    
+    @discord.ui.button(label='Show changelog', style=discord.ButtonStyle.blurple)
+    async def changelog(self, interaction, button):
+        changelog = Changelog(interaction, self.bot)
+        await changelog.load_changelogs()
 
 class Status(commands.Cog):
     """
@@ -70,7 +83,7 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
 
             embed.add_field(name="Usage", value=f"CPU: `{cpu_percent}%` | Mem: `{memory_usage}%` {chr(10)}GPU: {chr(10).join(gpu_info)}")
 
-        view = discord.ui.View(timeout=None)
+        view = ThingView(interaction, self.bot)
         view.add_item(discord.ui.Button(
             label='Invite', style=discord.ButtonStyle.link,
             url="https://discordapp.com/oauth2/authorize?client_id=1029864621047304203&scope=bot+applications.commands&permissions=1099511627775",
