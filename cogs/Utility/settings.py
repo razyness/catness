@@ -434,7 +434,16 @@ class Settings(commands.Cog):
 					await conn.execute("INSERT INTO profiles (id) VALUES ($1)", interaction.user.id)
 					settings = await conn.fetchrow("SELECT * FROM profiles WHERE id=$1", interaction.user.id)
 
-		admin = True if interaction.guild and interaction.user.guild_permissions.administrator else False
+		def has_permissions(r): return (
+			r.guild_permissions.administrator or
+			r.guild_permissions.manage_roles or
+			r.guild_permissions.manage_channels or
+			r.guild_permissions.manage_messages or
+			r.guild_permissions.ban_members or
+			r.guild_permissions.kick_members
+		)
+
+		admin = True if interaction.guild and (interaction.user.guild_permissions.administrator or has_permissions(interaction.user)) else False
 		menu = SettingsMenu(interaction.user, admin, db_pool=self.bot.db_pool)
 		embed = await main_menu(interaction.user, admin=admin)
 		embed.set_thumbnail(url=interaction.user.display_avatar.url)
