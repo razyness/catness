@@ -34,7 +34,7 @@ class Paginator(View):
 				self.children[0].disabled = False
 
 		page.set_footer(
-			text=f"{self._footers[self._page]+' - ' if self._footers[self._page] else ''}page {self._page + 1}/{len(self._pages)}",
+			text=f"{self._footers[self._page] if self._footers[self._page] else ''}\n{self._page + 1}/{len(self._pages)}",
 			icon_url=page.footer.icon_url)
 		await self.original_message.edit(embed=page, view=self)
 
@@ -44,7 +44,7 @@ class Paginator(View):
 
 		self._footers.append(page.footer.text)
 		page.set_footer(
-			text=f"{self._footers[self._page]+' - ' if self._footers[self._page] else ''}page {self._page + 1}/{len(self._pages)}",
+			text=f"{self._footers[self._page] if self._footers[self._page] else ''}\n{self._page + 1}/{len(self._pages)}",
 			icon_url=page.footer.icon_url)
 	
 	@discord.ui.button(emoji=icons.page_left, style=discord.ButtonStyle.blurple)
