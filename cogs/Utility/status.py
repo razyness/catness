@@ -9,7 +9,7 @@ from discord import app_commands
 
 from utils import icons, ui
 
-from .changelogs import Changelog
+from utils import Paginator
 
 pynvml.nvmlInit()
 
@@ -18,11 +18,45 @@ class ThingView(ui.View):
         super().__init__(view_inter=invoke)
         self.invoke = invoke
         self.bot = bot
+        self._changelog_channel = bot.get_channel(1179908797393817601)
     
+    def format_embed(self, message: discord.Message):
+        content = message.content
+        title = None
+        description = None
+        image = None
+        footer = None
+
+        parts = content.split("[")
+        for part in parts:
+            if "title=" in part:
+                title = part.split("=")[1].split("]")[0]
+            elif "description=" in part:
+                description = part.split("=")[1].split("]")[0]
+            elif "footer=" in part:
+                footer = part.split("=")[1].split("]")[0]
+            elif "thumbnail=" in part:
+                image = part.split("=")[1].split("]")[0]
+
+        embed = discord.Embed()
+        embed.title = title
+        embed.description = description
+        embed.set_footer(text=f"{message.author.display_name}: {footer}", icon_url=message.author.display_avatar.url)
+        embed.timestamp = message.created_at
+        embed.set_author(name="Changelog")
+        embed.set_thumbnail(url=image)
+        return embed
+
     @discord.ui.button(label='Show changelog', style=discord.ButtonStyle.blurple)
     async def changelog(self, interaction, button):
-        changelog = Changelog(interaction, self.bot)
-        await changelog.load_changelogs()
+        pages = []
+
+        async for message in self._changelog_channel.history(limit=50):
+            if message.author.id in self.bot.config['owners']:
+                pages.append(self.format_embed(message))
+
+        pager = Paginator(interaction, self.bot, pages, wrap=True)
+        await pager.start()
 
 class Status(commands.Cog):
     """
