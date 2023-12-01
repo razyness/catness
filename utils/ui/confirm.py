@@ -1,7 +1,7 @@
 import discord
 
-from .ui import View
-from .data import icons
+from .view import View
+from utils.data import icons
 
 class ConfirmationDialog(View):
     def __init__(self, invoke):
