@@ -5,8 +5,8 @@ import discord
 
 
 class Paginator(View):
-	def __init__(self, invoke: discord.Interaction, bot, pages: list[discord.Embed], wrap: bool = False):
-		super().__init__(view_inter=invoke)
+	def __init__(self, invoke: discord.Interaction, bot, pages: list[discord.Embed], owned:bool=True, wrap: bool = False):
+		super().__init__(view_inter=invoke, owned=owned)
 		self.invoke = invoke
 		self.bot = bot
 		self._page = 0
@@ -59,7 +59,7 @@ class Paginator(View):
 		await self.update(self._pages[self._page])
 		await interaction.response.defer()
 
-	async def start(self):
+	async def start(self, ephemeral: bool = True):
 		[self._check_embed(page) for page in self._pages]
 		
-		self.original_message = await self.invoke.response.send_message(embed=self._pages[self._page], ephemeral=True, view=self)
+		self.original_message = await self.invoke.response.send_message(embed=self._pages[self._page], ephemeral=ephemeral, view=self)
