@@ -95,9 +95,11 @@ class Makesweet(commands.Cog):
     async def makesweet(self, inter, template:str, image:Optional[discord.Attachment], text:Optional[str], swap:Optional[bool]=False):
         if not text and not image:
             return await inter.response.send_message(f"empty {template} gif", ephemeral=True)
-        file_extension = urllib.parse.urlparse(image.url).path.split('.')[-1]
-        if image is not None and file_extension not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
-            return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
+        
+        if image:
+            file_extension = urllib.parse.urlparse(image.url).path.split('.')[-1]
+            if file_extension not in ['jpeg', 'jpg', 'gif', 'png', 'webp']:
+                return await inter.response.send_message("The only allowed formats are `jpg`, `png`, `gif` and `webp`!!", ephemeral=True)
 
         await inter.response.defer(thinking=True)
         gif = await make_gif(template, self.bot.web_client, text, image, swap)
