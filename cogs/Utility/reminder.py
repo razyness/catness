@@ -18,6 +18,8 @@ class RemindObject:
         self.channel = channel
         self.reminder_id = reminder_id or str(uuid.uuid4())
 
+    def cancel(self):
+        self.remind_time = 0
 
 class ReminderView(ui.View):
     def __init__(self, bot: commands.Bot, view_inter: discord.Interaction, reminders_list, **kwargs):
@@ -90,13 +92,16 @@ class Reminder(commands.Cog):
             await asyncio.sleep(remaining_time)
 
         user = await self.bot.get_or_fetch_user(remind_obj.id)
-        if remind_obj.channel[0]:
-            if user:
-                await user.send(f"Reminder: {remind_obj.task}")
-        else:
-            channel = self.bot.get_channel(remind_obj.channel[1]) or await self.bot.fetch_channel(remind_obj.channel[1])
-            if channel:
-                await channel.send(f"{user.mention} !!! {remind_obj.task}")
+
+        if remind_obj.remind_time != 0:
+
+            if remind_obj.channel[0]:
+                if user:
+                    await user.send(f"Reminder: {remind_obj.task}")
+            else:
+                channel = self.bot.get_channel(remind_obj.channel[1]) or await self.bot.fetch_channel(remind_obj.channel[1])
+                if channel:
+                    await channel.send(f"{user.mention} !!! {remind_obj.task}")
 
         async with self.bot.db_pool.acquire() as conn:
             await conn.execute("DELETE FROM reminders WHERE reminder_id = $1", remind_obj.reminder_id)
@@ -104,7 +109,7 @@ class Reminder(commands.Cog):
     @tasks.loop(seconds=60)
     async def check_reminders(self):
         async with self.bot.db_pool.acquire() as conn:
-            reminders = await conn.fetch("SELECT * FROM reminders WHERE remind_time <= $1", int(tm.time() + 60))
+            reminders = await conn.fetch("SELECT * FROM reminders WHERE remind_time <= $1", round(tm.time() + 60))
             for reminder in reminders:
                 remind_obj = RemindObject(
                     id=reminder['id'],
@@ -113,7 +118,7 @@ class Reminder(commands.Cog):
                     channel=(reminder['private'], reminder['channel']),
                     reminder_id=reminder['reminder_id']
                 )
-                await self.send_reminder(remind_obj, remaining_time=reminder['remind_time'] - int(tm.time()))
+                await self.send_reminder(remind_obj, remaining_time=reminder['remind_time'] - round(tm.time()))
 
     @check_reminders.before_loop
     async def before_check_reminders(self):
@@ -142,7 +147,7 @@ class Reminder(commands.Cog):
             private = True
 
         reminder_uuid = str(uuid.uuid4())
-        remind_time = int(tm.time()) + time * units[unit]
+        remind_time = max(round(tm.time()) + 60, round(tm.time()) + time * units[unit])
 
         remind_obj = RemindObject(inter.user.id, task, remind_time, (True, None) if private else (
             False, inter.channel.id), reminder_uuid)
