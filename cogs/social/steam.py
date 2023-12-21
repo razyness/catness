@@ -39,7 +39,7 @@ async def mainPage(user, session):
 	userInfo = userInfo["response"]["players"][0]
 	embed = discord.Embed(
 		description=f"`{userInfo['profileurl'].split('/')[4]}` is level `{userLevel['response']['player_level']}`")
-	embed.add_field(name="Member since", value="<t:1640450437:R>")
+	embed.add_field(name="Member since", value=f"<t:{userInfo['timecreated']}:R>")
 	name = "Status"
 	statuscolor = 0x66c0f4
 
