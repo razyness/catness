@@ -312,10 +312,13 @@ class Levels(commands.Cog):
 		size = 6 if compact else 12
 		pages = []
 
-		for _ in range(math.ceil(self.bot.cached_leaderboard["total_entries"] / size)):
+		shown = len(self.bot.cached_leaderboard['entries'])
+		total = self.bot.cached_leaderboard['total_entries']
+
+		for _ in range(math.ceil(len(self.bot.cached_leaderboard["entries"]) / size)):
 			embed = discord.Embed()
 			embed.title = "Leaderboard of the levels real"
-			embed.description=f"Your position is `#{pos}`. Neat!"
+			embed.description = f"Your position is `#{pos}`. Neat!\nShowing `{shown}` of `{total}`"
 			embed.set_footer(text="The leaderboard updates hourly.")
 			pages.append(embed)
 
