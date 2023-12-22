@@ -8,6 +8,7 @@ from discord.utils import MISSING
 
 from utils import icons
 from utils import blocking
+from utils import confirm
 
 labels = {
 			'pomelo': 'profile_private',
@@ -115,53 +116,6 @@ def colorize(value):
 	return discord.ButtonStyle.gray
 
 
-class ConfirmModal(ui.Modal):
-	def __init__(self, *, title: str = "Do you want to be forgotten?", timeout: float | None = 120, db_pool) -> None:
-		super().__init__(title=title, timeout=timeout)
-		self.db_pool = db_pool
-
-	confirmation = discord.ui.TextInput(
-		style=discord.TextStyle.short,
-		label="This cannot be undone",
-		required=False,
-		max_length=500,
-		placeholder="Type anything here and press submit to confirm."
-	)
-
-	async def on_submit(self, interaction: discord.Interaction):
-		if not self.confirmation.value:
-			await interaction.response.send_message(f"Alright, come back if you change your mind!", ephemeral=True)
-			return
-
-		await interaction.response.send_message(f"Wait while i delete everything i know about you...", ephemeral=True)
-		async with self.db_pool.acquire() as conn:
-			follows = await load_db(db_pool=self.db_pool, table="profiles", id=interaction.user.id)
-			follows = await blocking.run(lambda: json.loads(follows['follows']))
-
-			for i in follows['following']:
-				i = int(i)
-
-				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-
-				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
-				follow_list['followers'].remove(interaction.user.id)
-				follow_list = await blocking.run(lambda: json.dumps(follow_list))
-				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
-			
-			for i in follows['followers']:
-				i = int(i)
-
-				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
-
-				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
-				follow_list['following'].remove(interaction.user.id)
-				follow_list = await blocking.run(lambda: json.dumps(follow_list))
-				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
-
-			await conn.execute("DELETE FROM profiles WHERE id=$1", interaction.user.id)
-		await interaction.followup.send("Everything is gone, bye-bye!", ephemeral=True)
-
-
 class ServerMenu(ui.View):
 	def __init__(self, data, admin, db_pool):
 		super().__init__()
@@ -262,8 +216,39 @@ class AdvancedMenu(ui.View):
 
 	@ui.button(label="Reset Data", style=discord.ButtonStyle.red)
 	async def reset_data(self, inter, button):
-		modal = ConfirmModal(db_pool=self.db_pool)
-		await inter.response.send_modal(modal)
+		conf = await confirm.send(inter, "Do you want to be forgotten?", "This cannot be undone")
+		if not conf:
+			await inter.followup.send("Alright, come back if you change your mind!", ephemeral=True)
+			return
+		
+		await inter.followup.send(f"Wait while i delete everything i know about you...", ephemeral=True)
+		async with self.db_pool.acquire() as conn:
+			follows = await load_db(db_pool=self.db_pool, table="profiles", id=inter.user.id)
+			follows = await blocking.run(lambda: json.loads(follows['follows']))
+
+			for i in follows['following']:
+				i = int(i)
+
+				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
+
+				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
+				follow_list['followers'].remove(inter.user.id)
+				follow_list = await blocking.run(lambda: json.dumps(follow_list))
+				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
+			
+			for i in follows['followers']:
+				i = int(i)
+
+				userdata = await load_db(db_pool=self.db_pool, table="profiles", id=i)
+
+				follow_list = await blocking.run(lambda: json.loads(userdata['follows']))
+				follow_list['following'].remove(inter.user.id)
+				follow_list = await blocking.run(lambda: json.dumps(follow_list))
+				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
+
+			await conn.execute("DELETE FROM profiles WHERE id=$1", inter.user.id)
+		await inter.followup.send("Everything is gone, bye-bye!", ephemeral=True)
+
 
 
 class SocialMenu(ui.View):
