@@ -16,35 +16,30 @@ class Paginator(View):
 		self._footers = []
 
 		if not self._wrap:
-			self.children[0].disabled = True
+			self.children[0].disabled = (self._page == 0)
+			self.children[1].disabled = (self._page + 1 == len(self._pages))
+
 
 	async def update(self, page):
 		if not self.original_message:
 			self.original_message = await self.invoke.original_response()
 
 		if not self._wrap:
-			if self._page + 1 == len(self._pages):
-				self.children[1].disabled = True
-			else:
-				self.children[1].disabled = False
-	
-			if self._page == 0:
-				self.children[0].disabled = True
-			else:
-				self.children[0].disabled = False
+			self.children[0].disabled = (self._page == 0)
+			self.children[1].disabled = (self._page + 1 == len(self._pages))
 
 		page.set_footer(
-			text=f"{self._footers[self._page] if self._footers[self._page] else ''}\n{self._page + 1}/{len(self._pages)}",
+			text=f"{self._footers[self._page] or ''}\n{self._page + 1}/{len(self._pages)}",
 			icon_url=page.footer.icon_url)
 		await self.original_message.edit(embed=page, view=self)
 
 	def _check_embed(self, page):
 		if not isinstance(page, discord.Embed):
-			raise TypeError("Page must be a discord.Embed")
+			raise TypeError("Page must be a discord.Embed, got " + print(page))
 
 		self._footers.append(page.footer.text)
 		page.set_footer(
-			text=f"{self._footers[self._page] if self._footers[self._page] else ''}\n{self._page + 1}/{len(self._pages)}",
+			text=f"{self._footers[self._page] or ''}\n{self._page + 1}/{len(self._pages)}",
 			icon_url=page.footer.icon_url)
 	
 	@discord.ui.button(emoji=icons.page_left, style=discord.ButtonStyle.blurple)
@@ -59,7 +54,13 @@ class Paginator(View):
 		await self.update(self._pages[self._page])
 		await interaction.response.defer()
 
+	@discord.ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
+	async def _close(self, interaction, button):
+		await interaction.response.defer()
+		await self.original_message.edit(content="Bye-bye", embed=None, view=None, delete_after=5)
+
 	async def start(self, ephemeral: bool = True):
 		[self._check_embed(page) for page in self._pages]
 		
-		self.original_message = await self.invoke.response.send_message(embed=self._pages[self._page], ephemeral=ephemeral, view=self)
+		await self.invoke.response.send_message(embed=self._pages[self._page], ephemeral=ephemeral, view=self)
+		self.original_message = await self.invoke.original_response()
