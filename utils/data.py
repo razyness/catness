@@ -41,5 +41,7 @@ icons: DictToAttr = DictToAttr({
 	"nitro": "<:nitro:1078094211351584928>",
 	"github": "<:github:1114661850118897806>",
     "osu_supporter": "<:osu_supporter:1167584560624717876>",
-    "confirm": "<:confirm:1175842297481547889>"
+    "confirm": "<:confirm:1175842297481547889>",
+    "first": "<:first:1187785002625278112>",
+    "last": "<:last:1187785003933896734>"
 })
