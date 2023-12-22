@@ -14,19 +14,25 @@ class Paginator(View):
 		self.original_message = None
 		self._wrap = wrap
 		self._footers = []
+		
+		self.children[0].disabled = (self._page == 0)
+		self.children[3].disabled = (self._page + 1 == len(self._pages))
 
 		if not self._wrap:
-			self.children[0].disabled = (self._page == 0)
-			self.children[1].disabled = (self._page + 1 == len(self._pages))
-
+			self.children[1].disabled = (self._page == 0)
+			self.children[2].disabled = (self._page + 1 == len(self._pages))
+	
 
 	async def update(self, page):
 		if not self.original_message:
 			self.original_message = await self.invoke.original_response()
 
+		self.children[0].disabled = (self._page == 0)
+		self.children[3].disabled = (self._page + 1 == len(self._pages))
+
 		if not self._wrap:
-			self.children[0].disabled = (self._page == 0)
-			self.children[1].disabled = (self._page + 1 == len(self._pages))
+			self.children[1].disabled = (self._page == 0)
+			self.children[2].disabled = (self._page + 1 == len(self._pages))
 
 		page.set_footer(
 			text=f"{self._footers[self._page] or ''}\n{self._page + 1}/{len(self._pages)}",
@@ -42,6 +48,12 @@ class Paginator(View):
 			text=f"{self._footers[self._page] or ''}\n{self._page + 1}/{len(self._pages)}",
 			icon_url=page.footer.icon_url)
 	
+	@discord.ui.button(emoji=icons.first, style=discord.ButtonStyle.blurple)
+	async def first(self, interaction, button):
+		self._page = 0
+		await self.update(self._pages[self._page])
+		await interaction.response.defer()
+
 	@discord.ui.button(emoji=icons.page_left, style=discord.ButtonStyle.blurple)
 	async def back(self, interaction, button):
 		self._page = self._page - 1 if self._page > 0 else (len(self._pages) - 1 if self._wrap else 0)
@@ -54,6 +66,12 @@ class Paginator(View):
 		await self.update(self._pages[self._page])
 		await interaction.response.defer()
 
+	@discord.ui.button(emoji=icons.last, style=discord.ButtonStyle.blurple)
+	async def last(self, interaction, button):
+		self._page = len(self._pages) - 1
+		await self.update(self._pages[self._page])
+		await interaction.response.defer()
+
 	@discord.ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
 	async def _close(self, interaction, button):
 		await interaction.response.defer()
@@ -61,6 +79,7 @@ class Paginator(View):
 
 	async def start(self, ephemeral: bool = True):
 		[self._check_embed(page) for page in self._pages]
-		
+		if ephemeral:
+			self.remove_item(self.children[4])
 		await self.invoke.response.send_message(embed=self._pages[self._page], ephemeral=ephemeral, view=self)
 		self.original_message = await self.invoke.original_response()
