@@ -8,23 +8,24 @@ import math
 
 from PIL import Image
 
-from discord import app_commands, ui
-from discord.ext import commands
+from discord import app_commands
+from discord.ext import commands, tasks
 
-from utils import icons, blocking
+from utils import blocking, pager
+
 
 async def get_user_position(bot, user_id):
 	query = """
 		SELECT
-    		CASE
-    		    WHEN EXISTS (SELECT 1 FROM profiles WHERE id = $1)
-    		    THEN (
-    		        SELECT COUNT(*) + 1
-    		        FROM profiles
-    		        WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1 AND levels_enabled = true)
-    		    )
-    		    ELSE 0
-    		END;
+			CASE
+				WHEN EXISTS (SELECT 1 FROM profiles WHERE id = $1)
+				THEN (
+					SELECT COUNT(*) + 1
+					FROM profiles
+					WHERE (level, exp) > (SELECT level, exp FROM profiles WHERE id = $1 AND levels_enabled = true)
+				)
+				ELSE 0
+			END;
 	"""
 	async with bot.db_pool.acquire() as conn:
 		position = await conn.fetchval(query, user_id)
@@ -34,7 +35,8 @@ async def get_user_position(bot, user_id):
 def get_image(url):
 	response = requests.get(url)
 	if response.status_code != 200:
-		raise ValueError(f"Failed to fetch image, status code: {response.status_code}")
+		raise ValueError(
+			f"Failed to fetch image, status code: {response.status_code}")
 	image_data = response.content
 	image = Image.open(io.BytesIO(image_data))
 	return image
@@ -75,7 +77,7 @@ def create_card(user_data):
 	level_text = text_editor.text(position=(
 		880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
 	position_shadow = text_editor.text(position=(
-            880//2, 133//2), text=user_data['position'], color=(0, 0, 0, 90), align="right", font=font_large)
+		880//2, 133//2), text=user_data['position'], color=(0, 0, 0, 90), align="right", font=font_large)
 
 	blur_editor.paste(username, (0, 0-10))
 	blur_editor.paste(exp_text, (0, 0-10))
@@ -83,7 +85,7 @@ def create_card(user_data):
 
 	bar_editor = easy_pil.Editor(image=empty_canvas)
 	bar_shadow = bar_editor.bar(position=(98//2, 404//2), max_width=787//2,
-                             height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
+								height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
 
 	blur_editor.paste(position_shadow, (0, 0-10))
 
@@ -94,15 +96,15 @@ def create_card(user_data):
 	editor.paste(blur_editor, (0, 5))
 
 	bar = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-                      percentage=100, color=(255, 255, 255, 70), radius=15//2)
+						 percentage=100, color=(255, 255, 255, 70), radius=15//2)
 	editor.paste(bar, (0, 0-10))
 	bar_progress = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-                               percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
+								  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
 	editor.paste(bar_progress, (0, 0-10))
 
 	rep_bg_editor = easy_pil.Editor(image=empty_canvas)
 	rep_bg = rep_bg_editor.bar(position=(682//2, 333//2), max_width=205//2,
-                            height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
+							   height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
 	editor.paste(rep_bg, (0, 0-10))
 
 	avatar_image = get_image(user_data['avatar'])
@@ -120,7 +122,7 @@ def create_card(user_data):
 		782//2, 350//2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
 
 	position_text = text_editor.text(position=(
-            880//2, 133//2), text=user_data['position'], color=(255, 255, 255, 200), align="right", font=font_large)
+		880//2, 133//2), text=user_data['position'], color=(255, 255, 255, 200), align="right", font=font_large)
 
 	editor.paste(position_text, (0, 0-10))
 	editor.paste(username, (0, 0-10))
@@ -130,123 +132,6 @@ def create_card(user_data):
 
 	return editor.image_bytes
 
-async def get_lb_page(bot, author, page_number: int, compact: bool) -> tuple:
-	compact_size = 6 if compact else 12
-	offset = (page_number - 1) * compact_size
-
-	query = """
-		SELECT ROW_NUMBER() OVER (ORDER BY level DESC, exp DESC, id DESC) AS rank, id, exp, level, profiles.profile_private
-		FROM profiles
-		WHERE exp > 0 AND level > 0 AND levels_enabled = true
-		OFFSET $1 FETCH FIRST $2 ROWS ONLY
-	"""
-	count_query = """
-		SELECT COUNT(*) FROM (
-			SELECT 1 FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
-		) AS subquery
-	"""
-
-	async with bot.db_pool.acquire() as conn:
-		rows = await conn.fetch(query, offset, compact_size)
-		total_rows = await conn.fetchval(count_query)
-
-	total_pages = math.ceil(total_rows / compact_size)
-	if page_number > total_pages:
-		return None
-
-	embed = discord.Embed(
-		title="Leaderboard of the levels real")
-
-	top_3 = ["🥇", "🥈", "🥉"]
-	for i, row in enumerate(rows):
-		rank, user_id, xp, level, profile_private = row
-		user = await bot.get_or_fetch_user(user_id)
-		if i < 3:
-			flair = top_3[i]
-		else:
-			flair = ""
-		if profile_private:
-			user_name = user.global_name
-		else:
-			user_name = f'@{user.name}'
-		if flair and page_number == 1:
-			embed.add_field(name=f"{flair} {user_name}",
-							value=f"Level `{level}` | `{xp}`xp", inline=True)
-		else:
-			embed.add_field(name=f"{rank}. {user_name}",
-							value=f"Level `{level}` | `{xp}`xp", inline=True)
-
-	position = await get_user_position(bot, author)
-	if position == 0:
-		embed.description = f"You are not ranked. Not neat."
-	else:
-		embed.description = f"Your position is `#{position}`. Neat!"
-	embed.set_footer(text=f"Page {page_number} of {total_pages}")
-	return embed, total_pages
-
-
-class Paginateness(ui.View):
-	def __init__(self, bot, pages: int, compact: bool) -> None:
-		super().__init__(timeout=180)
-
-		self._compact = compact
-		self._pages = pages
-		self._current_page = 1
-		self._bot = bot
-		self.children[0].disabled = True
-
-		if self._pages == 1:
-			self.children[1].disabled = True
-
-	async def disable_all(self, msg="Timed out...", view=None):
-		for i in self.children:
-			i.disabled = True
-		await self.msg.edit(content=msg, embed=None, view=view)
-
-	async def on_timeout(self):
-		await self.disable_all()
-
-	async def update_buttons(self, inter):
-		if self._current_page == self._pages:
-			self.children[1].disabled = True
-		else:
-			self.children[1].disabled = False
-
-		if self._current_page == 1:
-			self.children[0].disabled = True
-		else:
-			self.children[0].disabled = False
-
-		await inter.response.edit_message(view=self)
-
-	@ui.button(emoji=icons.page_left, style=discord.ButtonStyle.blurple)
-	async def prev(self, inter, button):
-
-		self._current_page -= 1
-		embed = await get_lb_page(bot=self._bot, author=inter.user.id, page_number=self._current_page, compact=self._compact)
-		await self.update_buttons(inter)
-		await self.msg.edit(embed=embed[0])
-		self._pages = embed[1]
-
-	@ui.button(emoji=icons.page_right, style=discord.ButtonStyle.blurple)
-	async def next(self, inter, button):
-		self._current_page += 1
-		embed = await get_lb_page(bot=self._bot, author=inter.user.id, page_number=self._current_page, compact=self._compact)
-		await self.update_buttons(inter)
-		await self.msg.edit(embed=embed[0])
-		self._pages = embed[1]
-
-	@ui.button(emoji=icons.close, style=discord.ButtonStyle.red)
-	async def close(self, interaction: discord.Interaction, button: ui.Button):
-
-		await self.disable_all(msg="Bye-bye")
-		self.value = False
-		self.stop()
-		await interaction.response.defer()
-		await asyncio.sleep(2)
-		await self.msg.delete()
-
-
 class Levels(commands.Cog):
 	"""
 	Levels and stuff :3 Enable rank cars with experiments"""
@@ -255,6 +140,20 @@ class Levels(commands.Cog):
 		self.bot = bot
 		self.cooldowns = commands.CooldownMapping.from_cooldown(
 			1, 15.0, commands.BucketType.user)
+
+	class Entry():
+		def __init__(self, user_id, name, level, exp, rank):
+			self.id = user_id
+			self.name = name
+			self.level = level
+			self.exp = exp
+			self.rank = rank
+
+	def cog_unload(self):
+		self.refresh_leaderboard.stop()
+
+	def cog_load(self):
+		self.refresh_leaderboard.start()
 
 	def experience_curve(self, level) -> int:
 		return round(5 * (level ** 2) + (50 * level) + 100, -1)
@@ -267,6 +166,45 @@ class Levels(commands.Cog):
 		xp_level_str = f" xp: {progress_value}/{max_value}{' '*(13-len(max_value_str)-len(str(progress_value)))}level: {level} -> {level + 1}"
 		output_str = f"{xp_level_str}\n{' '}{progress_bar}"
 		return output_str
+
+	@tasks.loop(hours=1)
+	async def refresh_leaderboard(self):
+		limit = 100
+
+		query = """
+			SELECT ROW_NUMBER() OVER (ORDER BY level DESC, exp DESC, id DESC) AS rank, id, exp, level, profiles.profile_private
+			FROM profiles
+			WHERE exp > 0 AND level > 0 AND levels_enabled = true
+			FETCH FIRST $1 ROWS ONLY
+		"""
+		count_query = """
+			SELECT COUNT(*) FROM (
+				SELECT 1 FROM profiles WHERE exp > 0 AND level > 0 AND levels_enabled = true
+			) AS subquery
+		"""
+
+		async with self.bot.db_pool.acquire() as conn:
+			rows = await conn.fetch(query, limit)
+			total_rows = await conn.fetchval(count_query)
+
+		cached_leaderboard = {"total_entries": total_rows, "entries": []}
+
+		top_3 = ["🥇", "🥈", "🥉"]
+
+		for i, row in enumerate(rows):
+			rank, user_id, exp, level, profile_private = row
+			user = await self.bot.get_or_fetch_user(user_id)
+
+			name = user.global_name if profile_private else user.name
+
+			if i < 3:
+				name = top_3[i] + name
+
+			cached_leaderboard["entries"].append(
+				self.Entry(user.id, name, level, exp, rank))
+
+		self.bot.cached_leaderboard = cached_leaderboard
+		print(self.bot.cached_leaderboard)
 
 	@commands.Cog.listener("on_message")
 	async def give_xp(self, message):
@@ -295,8 +233,10 @@ class Levels(commands.Cog):
 						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add - xp_required, message.author.id)
 						await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1, message.author.id)
 						emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶", "<:angle:1154534259462262815>", "🎈", "🎄", "🕊️", "⭐", "🍀"])
-						embed = discord.Embed(title=f"{emoji} You leveled up to **{user_data['level'] + 1}**!")
-						embed.set_footer(text=f"You'll need {self.experience_curve(user_data['level'] + 1)}xp to level up again")
+						embed = discord.Embed(
+							title=f"{emoji} You leveled up to **{user_data['level'] + 1}**!")
+						embed.set_footer(
+							text=f"You'll need {self.experience_curve(user_data['level'] + 1)}xp to level up again")
 						await message.reply(embed=embed, delete_after=60)
 					else:
 						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add, message.author.id)
@@ -367,11 +307,29 @@ class Levels(commands.Cog):
 	@app_commands.command(name="top", description="Leaderboard of sorts and stuffs")
 	@app_commands.describe(compact="Show less users per page, to fit on mobile")
 	async def top(self, inter: discord.Interaction, compact: bool = False):
-		embed, pages = await get_lb_page(self.bot, inter.user.id, 1, compact)
-		embed.set_footer(text=f"Page 1 of {pages}")
-		view = Paginateness(self.bot, pages, compact)
-		await inter.response.send_message(embed=embed, view=view)
-		view.msg = await inter.original_response()
+		pos = await get_user_position(self.bot, inter.user.id)
+
+		size = 6 if compact else 12
+		pages = []
+
+		for _ in range(math.ceil(self.bot.cached_leaderboard["total_entries"] / size)):
+			embed = discord.Embed()
+			embed.title = "Leaderboard of the levels real"
+			embed.description=f"Your position is `#{pos}`. Neat!"
+			embed.set_footer(text="The leaderboard updates hourly.")
+			pages.append(embed)
+
+		page = 0
+
+		for pos, entry in enumerate(self.bot.cached_leaderboard["entries"]):
+			if pos > 0:
+				if pos % size == 0:
+					page += 1
+
+			pages[page].add_field(
+				name=entry.name, value=f"Level `{entry.level}` | `{entry.exp}`xp")
+
+		await pager.Paginator(inter, self.bot, pages).start(ephemeral=False)
 
 
 async def setup(bot):
