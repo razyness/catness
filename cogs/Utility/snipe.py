@@ -11,7 +11,7 @@ from datetime import datetime
 from datetime import datetime
 from datetime import datetime, timedelta, timezone
 
-from utils import Paginator
+from utils import Paginator, to_relative
 
 class SnipeData:
     def __init__(self, content, author, message_id, creation_date, attachments, stickers, channel_id):
@@ -98,24 +98,10 @@ class Snipe(commands.Cog):
             return
 
         snipe_data = self.snipe_data[channel.id]
-        time_ago = datetime.now(timezone.utc) - snipe_data.creation_date
-        days = time_ago.days
-        hours = (time_ago.seconds % 86400) // 3600
-        minutes = (time_ago.seconds % 3600) // 60
-        seconds = time_ago.seconds % 60
-
-        time_ago_str = ""
-        if days > 0:
-            time_ago_str += f"{days} days"
-        else:
-            if hours > 0:
-                time_ago_str += f"{hours} hours, "
-            if minutes > 0:
-                time_ago_str += f"{minutes} minutes, "
-        time_ago_str += f"{seconds} seconds ago"
-
+        time_ago = to_relative(snipe_data.creation_date.timestamp())
+        
         embed = discord.Embed(title=None, description=snipe_data.content)
-        embed.set_author(name=f"{snipe_data.author} · {time_ago_str}",
+        embed.set_author(name=f"{snipe_data.author} · {time_ago}",
                          icon_url=snipe_data.author.display_avatar.url)
 
         if not snipe_data.attachments and not snipe_data.stickers:
@@ -125,7 +111,7 @@ class Snipe(commands.Cog):
             pages = []
             for page in (snipe_data.attachments + snipe_data.stickers):
                 temp = discord.Embed(title=None, description=snipe_data.content)
-                temp.set_author(name=f"{snipe_data.author} · {time_ago_str}",
+                temp.set_author(name=f"{snipe_data.author} · {time_ago}",
                          icon_url=snipe_data.author.display_avatar.url)
                 temp.set_image(url=page.url)
                 if isinstance(page, discord.StickerItem):
@@ -166,17 +152,11 @@ class Snipe(commands.Cog):
             return
 
         snipe_data = self.edit_snipe_data[channel.id]
-        time_ago = datetime.now(timezone.utc) - snipe_data.creation_date
-        minutes = (time_ago.seconds % 3600) // 60
-        seconds = time_ago.seconds % 60
-
-        time_ago_str = ""
-        if minutes > 0:
-            time_ago_str += f"{minutes} minutes and "
-        time_ago_str += f"{seconds} seconds ago"
+        time_ago = to_relative(snipe_data.creation_date.timestamp())
+        
 
         embed = discord.Embed(title=None, description=snipe_data.before)
-        embed.set_author(name=f"{snipe_data.author} · {time_ago_str}",
+        embed.set_author(name=f"{snipe_data.author} · {time_ago}",
                          icon_url=snipe_data.author.display_avatar.url,
                          url=snipe_data.jump_url)
 

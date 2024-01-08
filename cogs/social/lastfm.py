@@ -6,7 +6,10 @@ import utils
 import json
 import discord
 
-from utils import icons, blocking
+from datetime import datetime
+import time
+
+from utils import icons, blocking, to_relative
 
 LASTFM = None
 
@@ -46,17 +49,16 @@ async def playing_status(user, session):
             for i in now_playing["recenttracks"]["track"][0]:
                 if i == "@attr":
                     status = '  •  Now Playing'
-                    date = ""
                     break
                 elif i == "date":
                     status = ""
-                    date = f'on <t:{now_playing["recenttracks"]["track"][0]["date"]["uts"]}:f>'
+                    embed.set_footer(text=f'{embed.footer.text}- {to_relative(now_playing["recenttracks"]["track"][0]["date"]["uts"])}')
                     break
             embed.set_thumbnail(
                 url=now_playing["recenttracks"]["track"][0]["image"][2]["#text"])
             embed.title = f'{now_playing["recenttracks"]["track"][0]["name"]}{status}'
             embed.url = now_playing["recenttracks"]["track"][0]["url"]
-            embed.description = f'by `{now_playing["recenttracks"]["track"][0]["artist"]["#text"]}`\non `{now_playing["recenttracks"]["track"][0]["album"]["#text"]}`\n{date}'
+            embed.description = f'by `{now_playing["recenttracks"]["track"][0]["artist"]["#text"]}`\non `{now_playing["recenttracks"]["track"][0]["album"]["#text"]}`'
     except Exception as e:
         embed.add_field(name=f'Something went wrong!',
                         value=f'`{str(e)}`')
