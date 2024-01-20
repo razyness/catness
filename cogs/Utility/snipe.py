@@ -1,15 +1,12 @@
 import discord
 import asyncio
-import re
 
 from pathlib import Path
 from urllib.parse import urlparse
 
 from discord.ext import commands
 from discord import app_commands
-from datetime import datetime
-from datetime import datetime
-from datetime import datetime, timedelta, timezone
+from datetime import timezone
 
 from utils import Paginator, to_relative
 
