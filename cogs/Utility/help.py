@@ -8,6 +8,7 @@ from discord.ext.commands import DefaultHelpCommand
 
 from utils.ui import View
 
+
 class HelpDropdown(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
@@ -70,6 +71,7 @@ class HelpDropdown(discord.ui.Select):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+
 class ThingView(View):
     def __init__(self, invoke, timeout: float | None = 180):
         super().__init__(view_inter=invoke, timeout=timeout)
@@ -87,19 +89,106 @@ class ThingView(View):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+
 class Help(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
+        self.command_dict = {}
 
     async def cog_unload(self):
         self.bot.help_command = DefaultHelpCommand
 
     async def cog_load(self):
+        for cog_name, cog in self.bot.cogs.items():
+            for command in cog.walk_app_commands():
+                self.insert_command(command)
         self.bot.help_command = None
 
+    def insert_command(self, command):
+        command_info = {
+            "group": isinstance(command, app_commands.commands.Group),
+            "name": command.name,
+            "description": command.description,
+            "params": {},
+            "children": {}
+        }
+
+        if hasattr(command, 'parameters') and command.parameters:
+            for param in command.parameters:
+                command_info["params"][param.name] = {
+                    "required": param.required,
+                    "description": param.description
+                }
+
+        self.command_dict[command.name] = command_info
+
+        if isinstance(command, app_commands.commands.Group):
+            for subcommand in command.walk_commands():
+                self.insert_subcommand(command, subcommand)
+
+    def insert_subcommand(self, parent_command, subcommand):
+        subcommand_info = {
+            "name": subcommand.name,
+            "parent": parent_command.name,
+            "description": subcommand.description,
+            "params": {}
+        }
+
+        if hasattr(subcommand, 'parameters') and subcommand.parameters:
+            for param in subcommand.parameters:
+                subcommand_info["params"][param.name] = {
+                    "required": param.required,
+                    "description": param.description
+                }
+
+        self.command_dict[parent_command.name]["children"][subcommand.name] = subcommand_info
+
     @commands.hybrid_command(name="help", description="Shows a command browser")
-    async def help(self, ctx):
+    @app_commands.describe(command="Name of command")
+    async def help_cmd(self, ctx, cmd: str = None):
+        if cmd:
+            for cmd in self.command_dict:
+                if cmd != cmd:
+                    continue
+                
+                embed = discord.Embed(title=f"{cmd} info")
+
+                command_info = self.command_dict[cmd]
+                cmd_desc = command_info["description"]
+
+                if not command_info["group"]:
+                    if command_info["params"]:
+                        cmd_desc += "```"
+                        for param_name, param_info in command_info["params"].items():
+                            cmd_desc += f"\n{'[' if not param_info['required'] else '<'}{param_name}{']' if not param_info['required'] else '>'}: {param_info['description']}"
+                        cmd_desc += "```"
+
+                    embed.add_field(name=f"/{command_info['name']}",
+                                    value=cmd_desc, inline=False)
+                
+                else:
+                    for subcommand in command_info["children"].items():
+                        subcommand = subcommand[1]
+                        cmd_desc = subcommand["description"]
+                        if subcommand["params"]:
+                            cmd_desc += "```"
+
+                            for param_name, param_info in subcommand["params"].items():
+                                cmd_desc += f"\n{'[' if not param_info['required'] else '<'}{param_name}{']' if not param_info['required'] else '>'}: {param_info['description']}"
+                            
+                            cmd_desc += "```"
+
+                        embed.add_field(name=f"/{subcommand['parent']} {subcommand['name']}",
+                                        value=cmd_desc, inline=False)
+
+
+                embed.set_footer(text="[ ] optional, < > required", icon_url=self.bot.user.avatar.url)
+
+                return await ctx.reply(embed=embed, ephemeral=True, delete_after=180)
+
+            return await ctx.message.add_reaction("❌") if ctx.message else None
+
         description = """
 Here's a helpful list of commands you can use!
 
