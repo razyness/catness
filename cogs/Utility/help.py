@@ -146,10 +146,10 @@ class Help(commands.Cog):
 
     @commands.hybrid_command(name="help", description="Shows a command browser")
     @app_commands.describe(command="Name of command")
-    async def help_cmd(self, ctx, cmd: str = None):
-        if cmd:
+    async def help_cmd(self, ctx, command: str = None):
+        if command:
             for cmd in self.command_dict:
-                if cmd != cmd:
+                if command != cmd:
                     continue
                 
                 embed = discord.Embed(title=f"{cmd} info")
