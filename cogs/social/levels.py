@@ -204,7 +204,6 @@ class Levels(commands.Cog):
 				self.Entry(user.id, name, level, exp, rank))
 
 		self.bot.cached_leaderboard = cached_leaderboard
-		print(self.bot.cached_leaderboard)
 
 	@commands.Cog.listener("on_message")
 	async def give_xp(self, message):
