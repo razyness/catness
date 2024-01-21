@@ -1,9 +1,6 @@
 from dateutil.relativedelta import relativedelta
-import calendar
-from datetime import datetime, timezone, timedelta
-import toml
-
 from datetime import datetime, timezone
+import toml
 
 
 class DictToAttr(dict):
@@ -79,7 +76,7 @@ def to_relative(timestamp):
     ]
 
     non_zero = [(unit, value)
-                      for unit, value in time_units if value > 0][:2]
+                for unit, value in time_units if value > 0][:2]
 
     relative = ', '.join(
         f'{value} {unit}{"s" if value != 1 else ""}' for unit, value in non_zero)
