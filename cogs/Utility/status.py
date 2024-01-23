@@ -140,7 +140,7 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
 
     @app_commands.command(name="vote", description="vote for me on top.gg 😁")
     async def vote(self, interaction):
-        
+
         async def callback(interaction):
             await interaction.response.send_message(f"Okay! See you in <t:{int(time.time() + 43200)}:R> :heart:", ephemeral=True)
             await asyncio.sleep(43200)
@@ -151,7 +151,7 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
 
         menu = ButtonMenu(interaction, self.bot)
         menu.add_button(callback=callback, label="Yes, please!", style="blurple")
-        await interaction.response.send_message("Thanks for voting!! Can i remind you in 12 hours?", view=menu, ephemeral=True)
+        await interaction.response.send_message("Here's a link: https://top.gg/bot/1008875850403414049/vote\nThanks for voting!! Can i remind you in 12 hours?", view=menu, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Status(bot))
