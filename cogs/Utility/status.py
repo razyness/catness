@@ -139,10 +139,11 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
         await interaction.edit_original_response(content=f"Pong! `{int((ping + self.bot.latency) / 2)} ms`")
 
     @app_commands.command(name="vote", description="vote for me on top.gg 😁")
+    @app_commands.checks.cooldown(1, 43200, key=lambda i: i.user.id)
     async def vote(self, interaction):
 
         async def callback(inter):
-            await interaction.edit_original_response(content=f"Okay! See you in <t:{int(time.time() + 43200)}:R> :heart:", view=None)
+            await interaction.edit_original_response(content=f"Okay! See you <t:{int(time.time() + 43200)}:R> :heart:", view=None)
             await asyncio.sleep(43200)
             embed = discord.Embed(title="Vote reminder",
                                   description="Hi!! It is now time for a devious [top.gg vote](https://top.gg/bot/1008875850403414049/vote).\n"
