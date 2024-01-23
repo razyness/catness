@@ -19,7 +19,7 @@ class OnMessageCmds(commands.Cog):
 
 	@commands.Cog.listener("on_message")
 	async def hi(self, message):
-		if message.author.bot:
+		if message.author.bot or not message.guild:
 			return
 
 		features = await self.bot.db_pool.fetchval("SELECT features FROM servers WHERE id = $1", message.guild.id)
