@@ -4,12 +4,13 @@ import time
 import discord
 import psutil, pynvml
 
+import asyncio
 from discord.ext import commands
 from discord import app_commands
 
 from utils import icons, ui
 
-from utils import Paginator
+from utils import Paginator, ButtonMenu
 
 pynvml.nvmlInit()
 
@@ -136,6 +137,21 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
         await interaction.response.send_message("Pinging...", ephemeral=True)
         ping = (time.monotonic() - before) * 1000
         await interaction.edit_original_response(content=f"Pong! `{int((ping + self.bot.latency) / 2)} ms`")
+
+    @app_commands.command(name="vote", description="vote for me on top.gg 😁")
+    async def vote(self, interaction):
+        
+        async def callback(interaction):
+            await interaction.response.send_message(f"Okay! See you in <t:{int(time.time() + 43200)}:R> :heart:", ephemeral=True)
+            await asyncio.sleep(43200)
+            embed = discord.Embed(title="Vote reminder",
+                                  description="Hi!! It is now time for a devious [top.gg vote](https://top.gg/bot/1008875850403414049/vote).\n"
+                                              "Run `/vote` if you wish to be reminded again!!")
+            await interaction.user.send(embed=embed)
+
+        menu = ButtonMenu(interaction, self.bot)
+        menu.add_button(callback=callback, label="Yes, please!", style="blurple")
+        await interaction.response.send_message("Thanks for voting!! Can i remind you in 12 hours?", view=menu, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Status(bot))
