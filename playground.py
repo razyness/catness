@@ -12,7 +12,6 @@ from aiohttp import ClientSession
 
 config = toml.load("./config.toml")
 
-
 class Client(commands.AutoShardedBot):
     def __init__(
             self,
