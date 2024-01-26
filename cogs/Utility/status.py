@@ -12,6 +12,8 @@ from utils import icons, ui
 
 from utils import Paginator, ButtonMenu
 
+from cogs.utility.reminder import RemindObject
+
 pynvml.nvmlInit()
 
 class ThingView(ui.View):
@@ -143,12 +145,19 @@ My prefix is `{self.bot.command_prefix}` and i support `/app commands`
     async def vote(self, interaction):
 
         async def callback(inter):
+            task = "Hi!! It is now time for a devious [top.gg vote](https://top.gg/bot/1008875850403414049/vote).\nRun `/vote` if you wish to be reminded again!!"
+            remind_obj = RemindObject(inter.user.id, task, int(
+                time.time() + 43200), (True, None), "vote-reminder")
+
+            async with self.bot.db_pool.acquire() as conn:
+                async with conn.transaction():
+                    reminders = await conn.fetch("SELECT * FROM reminders WHERE id = $1 AND reminder_id = $2", inter.user.id, "vote-reminder")
+                    if reminders:
+                        return await interaction.edit_original_response(content="It appears that you have already set a reminder.. How did you even do this?", view=None)
+
+                    await conn.execute("INSERT INTO reminders (id, task, remind_time, private, channel, reminder_id) VALUES ($1, $2, $3, $4, $5, $6)", inter.user.id, task, remind_obj.remind_time, True, str(remind_obj.channel[1]), "vote-reminder")
+
             await interaction.edit_original_response(content=f"Okay! See you <t:{int(time.time() + 43200)}:R> :heart:", view=None)
-            await asyncio.sleep(43200)
-            embed = discord.Embed(title="Vote reminder",
-                                  description="Hi!! It is now time for a devious [top.gg vote](https://top.gg/bot/1008875850403414049/vote).\n"
-                                              "Run `/vote` if you wish to be reminded again!!")
-            await inter.user.send(embed=embed)
 
         menu = ButtonMenu(interaction, self.bot)
         menu.add_button(callback=callback, label="Yes, please!", style="blurple")
