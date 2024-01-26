@@ -12,7 +12,7 @@ from utils import icons, ui
 
 from utils import Paginator, ButtonMenu
 
-from cogs.utility.reminder import RemindObject
+from cogs.Utility.reminder import RemindObject
 
 pynvml.nvmlInit()
 
@@ -55,7 +55,7 @@ class ThingView(ui.View):
         pages = []
 
         async for message in self._changelog_channel.history(limit=50):
-            if message.author.id in self.bot.config['owners']:
+            if message.author.id in self.bot.config["ids"]["owners"]:
                 pages.append(self.format_embed(message))
 
         pager = Paginator(interaction, self.bot, pages, wrap=True)

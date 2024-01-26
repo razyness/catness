@@ -1,15 +1,29 @@
 ### super secret things
-TOKEN = ""
-LASTFM = ""
-STEAM = ""
-OPENAI = ""
-TENOR = ""
-MAKESWEET = ""
+[keys]
+TOKEN = "YOUR_DISCORD_TOKEN_HERE"
+LASTFM = "YOUR_LASTFM_API_KEY_HERE"
+STEAM = "YOUR_STEAM_API_KEY_HERE"
+TENOR = "YOUR_TENOR_API_KEY_HERE"
+MAKESWEET = "YOUR_MAKESWEET_API_KEY_HERE"
+OPENAI = "YOUR_OPENAI_API_KEY_HERE"
 
 ### actual config
-prefix = ""
+[bot_config]
+prefix = "!"
 report_channel = 1234
+### statuses the bot will cycle through.
+catchphrases = [
+]
 
+[db_config]
+user = "postgres"
+password = "admin"
+database = "catness-db"
+command_timeout = 30
+max_size = 10
+min_size = 5
+
+[ids]
 ### user IDs for contributors
 contributors = [
 ]
@@ -20,9 +34,4 @@ special = [
 
 ### user IDs for the bot owners (Include yourself)
 owners = [
-]
-
-
-### statuses the bot will cycle through.
-catchphrases = [
 ]

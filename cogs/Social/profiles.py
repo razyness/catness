@@ -130,9 +130,9 @@ class Profile(commands.Cog):
 			badges_list.append(icons.nitro)
 		if user.bot:
 			badges_list.append(icons.bot)
-		if user.id in self.bot.config["contributors"]:
+		if user.id in self.bot.config["ids"]["contributors"]:
 			badges_list.append(f'[{icons.contributor}](https://github.com/razyness/catness)')
-		if user.id in self.bot.config["special"]:
+		if user.id in self.bot.config["ids"]["special"]:
 			badges_list.append(icons.special)
 
 		result = ' '.join(badges_list)

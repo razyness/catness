@@ -212,7 +212,7 @@ class LastFM(commands.Cog):
                            ephemeral="Whether the result will be visible to you (True) or everyone else (False)")
     async def lastfm(self, interaction, user: str = None, ephemeral: bool = False):
         global LASTFM
-        LASTFM = self.bot.config['LASTFM']
+        LASTFM = self.bot.config["keys"]["LASTFM"]
         if user is None or user.startswith("<@"):
             if user is None:
                 user_id = interaction.user.id
