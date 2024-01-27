@@ -3,8 +3,6 @@ from __future__ import annotations
 import random
 import pathlib
 import time
-import asyncpg
-import re
 
 from typing import TYPE_CHECKING
 
@@ -24,8 +22,8 @@ class Events(commands.Cog):
     def __init__(self, bot: Client):
         self.bot = bot
         self.tree = bot.tree
-        self.blocked = ["cogs.events", "cogs.fun.openapi",
-                        'cogs.fun.manga']
+        self.blocked = ["cogs.events", "cogs.Fun.openapi",
+                        'cogs.Fun.manga']
         self.cogs_path = pathlib.Path("cogs")
         self.extensions = [self.format_cog(str(item)) for item in self.cogs_path.glob(
             '**/*.py') if self.format_cog(str(item)) not in self.blocked]
