@@ -6,7 +6,7 @@ import random
 
 from utils import config
 
-TENOR = config["TENOR"]
+TENOR = config["keys"]["TENOR"]
 
 
 class Tenor(commands.Cog):
@@ -57,7 +57,7 @@ class Tenor(commands.Cog):
 	@app_commands.command(name='reaction', description='Live slug reaction')
 	async def reaction(self, interaction):
 		try:
-			async with self.bot.web_client.get(f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={self.bot.config['TENOR']}&client_key=tenor-api&limit=50&random=true") as r:
+			async with self.bot.web_client.get(f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={TENOR}&client_key=tenor-api&limit=50&random=true") as r:
 				result = await r.json()
 				result = result["results"][0]["itemurl"]
 				await interaction.response.send_message(result)

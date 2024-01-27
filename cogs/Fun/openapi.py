@@ -10,7 +10,7 @@ from typing import Literal
 
 from utils import config, icons
 
-OPENAI = config["OPENAI"]
+OPENAI = config["keys"]["OPENAI"]
 
 
 #async def pedit(prompt, instructions, temp=0.5):

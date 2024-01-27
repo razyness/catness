@@ -12,6 +12,7 @@ from aiohttp import ClientSession
 
 config = toml.load("./config.toml")
 
+
 class Client(commands.AutoShardedBot):
 	def __init__(
 		self,
@@ -46,8 +47,10 @@ class Client(commands.AutoShardedBot):
 		if self.testing_guild_id:
 			guild = discord.Object(self.testing_guild_id)
 			self.tree.copy_global_to(guild=guild)
-			try: await self.tree.sync(guild=guild)
-			except: pass
+			try:
+				await self.tree.sync(guild=guild)
+			except:
+				pass
 
 		await self.change_presence(
 			status=discord.Status.idle,
@@ -55,7 +58,7 @@ class Client(commands.AutoShardedBot):
 				type=discord.ActivityType.watching, name="loading up..."
 			),
 		)
-				
+
 	async def on_ready(self):
 		if not hasattr(self, "uptime"):
 			self.uptime = discord.utils.utcnow()
@@ -63,9 +66,9 @@ class Client(commands.AutoShardedBot):
 	# hi lizness
 	async def get_or_fetch_user(self, id):
 		return self.get_user(id) or await self.fetch_user(id)
-	
+
 	async def is_owner(self, user):
-		if user.id in self.config['owners']:
+		if user.id in self.config["ids"]["owners"]:
 			return True
 
 		return await super().is_owner(user)
@@ -75,7 +78,7 @@ class Client(commands.AutoShardedBot):
 		await self.db_pool.close()
 		await self.web_client.close()
 
-	
+
 async def main():
 	logger = logging.getLogger("discord")
 	logger.setLevel(logging.INFO)
@@ -90,28 +93,36 @@ async def main():
 	handler.setFormatter(formatter)
 	logger.addHandler(handler)
 
+	connection = config["db_config"]
+
 	async with ClientSession() as web_client, asyncpg.create_pool(
-		user="postgres", password="catness", database="catness-db", command_timeout=30, max_size=10, min_size=5
+			user=connection["user"],
+			password=connection["password"],
+			database=connection["database"],
+			command_timeout=connection["command_timeout"],
+			max_size=connection["max_size"],
+			min_size=connection["min_size"]
 	) as pool:
 		intents = discord.Intents.all()
-		prefix = config["prefix"]
+		prefix = config["bot_config"]["prefix"]
 		mentions = discord.AllowedMentions(
 			roles=False, users=True, everyone=False)
 		extensions = ["jishaku", "cogs.events"]
 		async with Client(
-			db_pool=pool,
-			testing_guild_id=904460336118267954,
-			web_client=web_client,
-			initial_extensions=extensions,
-			allowed_mentions=mentions,
-			intents=intents,
-			command_prefix=prefix,
-			config=config
+				db_pool=pool,
+				testing_guild_id=904460336118267954,
+				web_client=web_client,
+				initial_extensions=extensions,
+				allowed_mentions=mentions,
+				intents=intents,
+				command_prefix=prefix,
+				config=config
 		) as bot:
 			try:
-				await bot.start(config["TOKEN"])
+				await bot.start(config["keys"]["TOKEN"])
 			finally:
 				await bot.close()
+
 
 async def shutdown():
 	tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
@@ -123,6 +134,7 @@ async def shutdown():
 	await loop.shutdown_asyncgens()
 	loop.stop()
 
+
 async def run():
 	try:
 		await main()
@@ -130,5 +142,6 @@ async def run():
 		print("Shutting down...")
 	finally:
 		await shutdown()
+
 
 asyncio.run(run())

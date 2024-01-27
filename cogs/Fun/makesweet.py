@@ -11,7 +11,7 @@ from PIL import Image
 
 from utils import config
 
-api_key = config['MAKESWEET']
+api_key = config["keys"]["MAKESWEET"]
 
 async def to_bytes(media_url):
     async with aiohttp.ClientSession() as session:

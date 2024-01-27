@@ -36,7 +36,7 @@ class ConfirmModal(discord.ui.Modal):
             icon_url=interaction.user.avatar.url)
         embed.timestamp = datetime.datetime.utcnow()
 
-        channel = self.bot.config['report_channel']
+        channel = self.bot.config["bot_config"]["report_channel"]
         channel = self.bot.get_channel(channel) or await self.bot.fetch_channel(channel)
 
         webhook = await channel.create_webhook(name='bug report')

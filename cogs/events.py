@@ -36,7 +36,7 @@ class Events(commands.Cog):
     @tasks.loop(seconds=20.0)
     async def presences(self):
         await self.bot.change_presence(status=discord.Status.online, activity=discord.CustomActivity(
-            name=random.choice(self.bot.config["catchphrases"])))
+            name=random.choice(self.bot.config["bot_config"]["catchphrases"])))
 
     @commands.Cog.listener()
     async def on_ready(self):
