@@ -103,14 +103,15 @@ class Profile(commands.Cog):
 
 		view = ProfileView(self.bot, user, interaction, False)
 
-		view.add_item(discord.ui.Button(
-			label='Avatar', style=discord.ButtonStyle.link, url=user.avatar.url, emoji=icons.download))
+		if user.avatar:
+			view.add_item(discord.ui.Button(
+				label='Avatar', style=discord.ButtonStyle.link, url=user.avatar.url, emoji=icons.download))
 
 		embed = discord.Embed(title=user.display_name)
 		embed.set_author(name=user.name)
 		embed.color = user.accent_color or discord.Color.default()
 		embed.set_image(url=user.banner.url if user.banner else None)
-		embed.set_thumbnail(url=user.display_avatar)
+		embed.set_thumbnail(url=(user.avatar or user.default_avatar))
 
 		if user.banner:
 			view.add_item(discord.ui.Button(
@@ -122,7 +123,7 @@ class Profile(commands.Cog):
 		badges_list = []
 		for flag in user.public_flags.all():
 			badges_list.append(icons[flag.name])
-		if user.avatar.url.startswith("a_") or user.banner is not None:
+		if user.avatar and user.avatar.url.startswith("a_") or user.banner is not None:
 			badges_list.append(icons.nitro)
 		if user.bot:
 			badges_list.append(icons.bot)
