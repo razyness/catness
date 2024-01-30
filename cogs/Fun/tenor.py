@@ -11,6 +11,7 @@ TENOR = config["keys"]["TENOR"]
 
 class Tenor(commands.Cog):
 	"""Various commands using the Tenor API, Tenor is a gif website!!"""
+
 	def __init__(self, bot):
 		super().__init__()
 		self.bot = bot
@@ -19,7 +20,7 @@ class Tenor(commands.Cog):
 	async def catgif(self, interaction):
 		apikey = TENOR
 		lmt = 50
-		
+
 		ckey = "tenor-api"
 
 		variations = ["cats", "kitten gif", "small cat", "cute cat", "loafed cat",
@@ -27,10 +28,10 @@ class Tenor(commands.Cog):
 
 		query = random.choice(variations).replace(" ", "+")
 
-
 		async with aiohttp.ClientSession() as session:
-				async with session.get(f"https://tenor.googleapis.com/v2/search?q={query}&key={apikey}&client_key={ckey}&limit={lmt}&random=true") as response:
-					result = await response.json()
+			async with session.get(
+					f"https://tenor.googleapis.com/v2/search?q={query}&key={apikey}&client_key={ckey}&limit={lmt}&random=true") as response:
+				result = await response.json()
 
 		result = result["results"][0]["itemurl"]
 
@@ -41,14 +42,15 @@ class Tenor(commands.Cog):
 	async def tenor(self, interaction, query: str):
 		apikey = TENOR
 		lmt = 50
-		
+
 		ckey = "tenor-api"
 
 		query = query.replace(" ", "+")
-		
+
 		async with aiohttp.ClientSession() as session:
-				async with session.get(f"https://tenor.googleapis.com/v2/search?q={query}&key={apikey}&client_key={ckey}&limit={lmt}&random=true") as response:
-					result = await response.json()
+			async with session.get(
+					f"https://tenor.googleapis.com/v2/search?q={query}&key={apikey}&client_key={ckey}&limit={lmt}&random=true") as response:
+				result = await response.json()
 
 		result = result["results"][0]["itemurl"]
 
@@ -57,12 +59,14 @@ class Tenor(commands.Cog):
 	@app_commands.command(name='reaction', description='Live slug reaction')
 	async def reaction(self, interaction):
 		try:
-			async with self.bot.web_client.get(f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={TENOR}&client_key=tenor-api&limit=50&random=true") as r:
+			async with self.bot.web_client.get(
+					f"https://tenor.googleapis.com/v2/search?q=live-reaction&key={TENOR}&client_key=tenor-api&limit=50&random=true") as r:
 				result = await r.json()
 				result = result["results"][0]["itemurl"]
 				await interaction.response.send_message(result)
 		except Exception as e:
 			print(e)
+
 
 async def setup(bot):
 	await bot.add_cog(Tenor(bot))

@@ -5,12 +5,13 @@ import discord
 import re
 import time
 
+
 class OnMessageCmds(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
 		self.last_executed = time.time()
-	
+
 	def assert_cooldown(self):
 		if self.last_executed + 4.0 < time.time():
 			self.last_executed = time.time()
@@ -48,9 +49,12 @@ class OnMessageCmds(commands.Cog):
 					url=f"https://dummyimage.com/100x70/{color_hex}/{color_hex}.png")
 				fields = [
 					("Hex", f"`{data['colors'][0]['hex']}`", False),
-					("RGB", f"`{data['colors'][0]['rgb']['r']}`, `{data['colors'][0]['rgb']['g']}`, `{data['colors'][0]['rgb']['b']}`", False),
+					("RGB",
+					 f"`{data['colors'][0]['rgb']['r']}`, `{data['colors'][0]['rgb']['g']}`, `{data['colors'][0]['rgb']['b']}`",
+					 False),
 					("HSL",
-					 f"`{round(data['colors'][0]['hsl']['h'], 2)}`, `{round(data['colors'][0]['hsl']['s'], 2)}`, `{round(data['colors'][0]['hsl']['l'], 2)}`", False)
+					 f"`{round(data['colors'][0]['hsl']['h'], 2)}`, `{round(data['colors'][0]['hsl']['s'], 2)}`, `{round(data['colors'][0]['hsl']['l'], 2)}`",
+					 False)
 				]
 				for name, value, inline in fields:
 					embed.add_field(name=name, value=value, inline=inline)
@@ -70,6 +74,7 @@ class OnMessageCmds(commands.Cog):
 
 		if re.search(r'\boh\b', message.content.lower()):
 			await message.channel.send("oh")
+
 
 async def setup(bot) -> None:
 	await bot.add_cog(OnMessageCmds(bot))

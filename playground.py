@@ -15,14 +15,14 @@ config = toml.load("./config.toml")
 
 class Client(commands.AutoShardedBot):
 	def __init__(
-		self,
-		*args,
-		initial_extensions: List[str],
-		db_pool: asyncpg.Pool,
-		web_client: ClientSession,
-		testing_guild_id: Optional[int],
-		config: dict,
-		**kwargs
+			self,
+			*args,
+			initial_extensions: List[str],
+			db_pool: asyncpg.Pool,
+			web_client: ClientSession,
+			testing_guild_id: Optional[int],
+			config: dict,
+			**kwargs
 	):
 		super().__init__(*args, **kwargs)
 		self.db_pool = db_pool

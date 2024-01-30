@@ -64,7 +64,9 @@ async def mainPage(user, session):
 	embed.add_field(name=name, value=lastseen)
 	if "gameextrainfo" in userInfo:
 		embed.add_field(
-			name="Currently gaming", value=f"[{userInfo['gameextrainfo']}](https://store.steampowered.com/app/{userInfo['gameid']})", inline=False)
+			name="Currently gaming",
+			value=f"[{userInfo['gameextrainfo']}](https://store.steampowered.com/app/{userInfo['gameid']})",
+			inline=False)
 		embed.set_image(
 			url=f"https://cdn.cloudflare.steamstatic.com/steam/apps/{userInfo['gameid']}/header.jpg")
 
@@ -108,7 +110,8 @@ class Steam(commands.Cog):
 							raise Exception
 
 			except Exception as e:
-				await interaction.response.send_message(f"{g} linked a `Steam` account! Run </link:1080264642569441380> to do so", ephemeral=True)
+				await interaction.response.send_message(
+					f"{g} linked a `Steam` account! Run </link:1080264642569441380> to do so", ephemeral=True)
 				return
 
 		try:
@@ -116,7 +119,8 @@ class Steam(commands.Cog):
 			await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 		except Exception as e:
-			await interaction.response.send_message(f"I couldn't find the user. Did you use the vanity url of the user?", ephemeral=True)
+			await interaction.response.send_message(
+				f"I couldn't find the user. Did you use the vanity url of the user?", ephemeral=True)
 
 
 async def setup(bot):
