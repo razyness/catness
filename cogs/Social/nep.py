@@ -16,7 +16,7 @@ class Rep(commands.Cog):
 		if user == inter.user:
 			return await inter.response.send_message("You can't rep yourself! That'd be a little weird", ephemeral=True)
 		elif user.bot:
-			await inter.response.send_message("You can't rep bots. End of line.")
+			return await inter.response.send_message("You can't rep bots. End of line.", ephemeral=True)
 		
 		async with self.bot.db_pool.acquire() as connection:
 			async with connection.transaction():
