@@ -95,15 +95,11 @@ class Profile(commands.Cog):
 
 	@app_commands.command(name='profile', description='View anyone\'s profile almost')
 	@app_commands.describe(user="Hello pick a user or user id or mention leave empty for yourself")
-	async def discord_id(self, interaction, user: str = None, ephemeral:bool=False):
-		if user is None:
-			user = interaction.user.id
-		elif user.startswith("<@"):
-			user = int(user[2:-1])
-		try:
-			user = await self.bot.fetch_user(int(user))
-		except:
-			return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
+	async def discord_id(self, interaction, user: discord.User | discord.Member, ephemeral:bool=False):
+		user = user.id if user and isinstance(user, discord.User | discord.Member) else interaction.user.id
+
+		try: user = await self.bot.fetch_user(user)
+		except: return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
 
 		view = ProfileView(self.bot, user, interaction, False)
 
