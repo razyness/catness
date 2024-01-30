@@ -32,7 +32,7 @@ class Rep(commands.Cog):
 
 				expiration_time = datetime.datetime.utcfromtimestamp(ruser['rep_time']) + datetime.timedelta(hours=12)
 	
-				if expiration_time < datetime.datetime.utcnow() or inter.user.id == 1161982476143575051:
+				if expiration_time < datetime.datetime.utcnow() or inter.user.id == 809275012980539453:
 					await connection.execute("UPDATE profiles SET rep_value = rep_value + 1 WHERE id = $1", user.id)
 					await connection.execute("UPDATE profiles SET rep_time = $1 WHERE id = $2", int(time.time()), inter.user.id)
 					await inter.response.send_message(f"You gave {user.mention} a reputation point!!")
