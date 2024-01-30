@@ -3,6 +3,7 @@ from discord import app_commands
 
 import asyncpg
 
+
 class PGTools(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -32,7 +33,7 @@ class PGTools(commands.Cog):
 			except asyncpg.exceptions.PostgresError as e:
 				print(
 					f"🟥 I could not add the guild {guild.name} | {guild.id} to my database:", e)
-	
+
 	@tasks.loop(hours=24)
 	async def remove_guilds(self):
 		async with self.bot.db_pool.acquire() as conn:

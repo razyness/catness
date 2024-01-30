@@ -6,6 +6,7 @@ from discord import app_commands
 
 from utils import icons
 
+
 class DownloadButton(discord.ui.View):
 
 	def __init__(self, user):
@@ -96,7 +97,8 @@ class DownloadButton(discord.ui.View):
 
 	async def interaction_check(self, interaction) -> bool:
 		if interaction.user.id != self.author:
-			await interaction.response.send_message('This is not your menu, run </avatar:1064683905514487858> to open your own.', ephemeral=True)
+			await interaction.response.send_message(
+				'This is not your menu, run </avatar:1064683905514487858> to open your own.', ephemeral=True)
 			return False
 		return True
 
@@ -105,6 +107,7 @@ class Avatar(commands.Cog):
 	"""
 	Commands related to avatars
 	"""
+
 	def __init__(self, bot: commands.Bot):
 		self.bot = bot
 

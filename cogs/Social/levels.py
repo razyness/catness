@@ -46,91 +46,96 @@ def create_card(user_data):
 	background = get_image(user_data['banner'])
 	empty_canvas = easy_pil.Canvas(size=(1000, 620), color=(0, 0, 0, 0))
 	editor = easy_pil.Editor(image=background)
-	editor.resize(size=(1000//2, 620//2-40), crop=True)
+	editor.resize(size=(1000 // 2, 620 // 2 - 40), crop=True)
 
 	blur_editor = easy_pil.Editor(image=empty_canvas)
 
 	profile_shadow_editor = easy_pil.Editor(image=empty_canvas)
 	profile_shadow = profile_shadow_editor.rectangle(position=(
-		98//2, 98//2), width=287//2, height=287//2, color=(0, 0, 0, 90), radius=40//2)
-	blur_editor.paste(profile_shadow, (0, 0-10))
+		98 // 2, 98 // 2), width=287 // 2, height=287 // 2, color=(0, 0, 0, 90), radius=40 // 2)
+	blur_editor.paste(profile_shadow, (0, 0 - 10))
 
 	gradient_editor = easy_pil.Editor(image=empty_canvas)
 	gradient = gradient_editor.rectangle(position=(
-		0, 0), width=1000//2, height=600//2, color=(0, 0, 0, 30), radius=0)
-	editor.paste(gradient, (0, 0-10))
+		0, 0), width=1000 // 2, height=600 // 2, color=(0, 0, 0, 30), radius=0)
+	editor.paste(gradient, (0, 0 - 10))
 
 	rep_blur_editor = easy_pil.Editor(image=empty_canvas)
 	rep_shadow = rep_blur_editor.bar(position=(
-		682//2, 333//2), max_width=205//2, height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
-	blur_editor.paste(rep_shadow, (0, 0-10))
+		682 // 2, 333 // 2), max_width=205 // 2, height=57 // 2, percentage=100, color=(0, 0, 0, 90), radius=15 // 2)
+	blur_editor.paste(rep_shadow, (0, 0 - 10))
 
 	text_editor = easy_pil.Editor(image=empty_canvas)
-	font_large = easy_pil.Font.montserrat(size=45//2, variant="bold")
-	font_medium = easy_pil.Font.montserrat(size=32//2, variant="bold")
-	font_small = easy_pil.Font.poppins(size=30//2, variant="bold")
+	font_large = easy_pil.Font.montserrat(size=45 // 2, variant="bold")
+	font_medium = easy_pil.Font.montserrat(size=32 // 2, variant="bold")
+	font_small = easy_pil.Font.poppins(size=30 // 2, variant="bold")
 
 	username = text_editor.text(position=(
-		433//2, 133//2), text=user_data["name"], color=(0, 0, 0, 90), font=font_large)
+		433 // 2, 133 // 2), text=user_data["name"], color=(0, 0, 0, 90), font=font_large)
 	exp_text = text_editor.text(position=(
-		104//2, 468//2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90), font=font_small)
+		104 // 2, 468 // 2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(0, 0, 0, 90),
+		font=font_small)
 	level_text = text_editor.text(position=(
-		880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90), align="right", font=font_small)
+		880 // 2, 468 // 2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(0, 0, 0, 90),
+		align="right", font=font_small)
 	position_shadow = text_editor.text(position=(
-		880//2, 133//2), text=user_data['position'], color=(0, 0, 0, 90), align="right", font=font_large)
+		880 // 2, 133 // 2), text=user_data['position'], color=(0, 0, 0, 90), align="right", font=font_large)
 
-	blur_editor.paste(username, (0, 0-10))
-	blur_editor.paste(exp_text, (0, 0-10))
-	blur_editor.paste(level_text, (0, 0-10))
+	blur_editor.paste(username, (0, 0 - 10))
+	blur_editor.paste(exp_text, (0, 0 - 10))
+	blur_editor.paste(level_text, (0, 0 - 10))
 
 	bar_editor = easy_pil.Editor(image=empty_canvas)
-	bar_shadow = bar_editor.bar(position=(98//2, 404//2), max_width=787//2,
-								height=57//2, percentage=100, color=(0, 0, 0, 90), radius=15//2)
+	bar_shadow = bar_editor.bar(position=(98 // 2, 404 // 2), max_width=787 // 2,
+								height=57 // 2, percentage=100, color=(0, 0, 0, 90), radius=15 // 2)
 
-	blur_editor.paste(position_shadow, (0, 0-10))
+	blur_editor.paste(position_shadow, (0, 0 - 10))
 
-	blur_editor.paste(bar_shadow, (0, 0-10))
+	blur_editor.paste(bar_shadow, (0, 0 - 10))
 
-	blur_editor.blur(mode="gussian", amount=20//2)
+	blur_editor.blur(mode="gussian", amount=20 // 2)
 
 	editor.paste(blur_editor, (0, 5))
 
-	bar = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-						 percentage=100, color=(255, 255, 255, 70), radius=15//2)
-	editor.paste(bar, (0, 0-10))
-	bar_progress = bar_editor.bar(position=(98//2, 404//2), max_width=787//2, height=57//2,
-								  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15//2)
-	editor.paste(bar_progress, (0, 0-10))
+	bar = bar_editor.bar(position=(98 // 2, 404 // 2), max_width=787 // 2, height=57 // 2,
+						 percentage=100, color=(255, 255, 255, 70), radius=15 // 2)
+	editor.paste(bar, (0, 0 - 10))
+	bar_progress = bar_editor.bar(position=(98 // 2, 404 // 2), max_width=787 // 2, height=57 // 2,
+								  percentage=user_data['percentage'], color=(255, 255, 255, 230), radius=15 // 2)
+	editor.paste(bar_progress, (0, 0 - 10))
 
 	rep_bg_editor = easy_pil.Editor(image=empty_canvas)
-	rep_bg = rep_bg_editor.bar(position=(682//2, 333//2), max_width=205//2,
-							   height=57//2, percentage=100, color=(255, 255, 255, 180), radius=15//2)
-	editor.paste(rep_bg, (0, 0-10))
+	rep_bg = rep_bg_editor.bar(position=(682 // 2, 333 // 2), max_width=205 // 2,
+							   height=57 // 2, percentage=100, color=(255, 255, 255, 180), radius=15 // 2)
+	editor.paste(rep_bg, (0, 0 - 10))
 
 	avatar_image = get_image(user_data['avatar'])
 	avatar = easy_pil.Editor(avatar_image).resize(
-		(287//2, 287//2)).rounded_corners(radius=40//2)
-	editor.paste(avatar, (98//2, 98//2-10))
+		(287 // 2, 287 // 2)).rounded_corners(radius=40 // 2)
+	editor.paste(avatar, (98 // 2, 98 // 2 - 10))
 
 	username = text_editor.text(position=(
-		433//2, 133//2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
+		433 // 2, 133 // 2), text=user_data["name"], color=(255, 255, 255, 200), font=font_large)
 	exp_text = text_editor.text(position=(
-		104//2, 468//2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 140), font=font_small)
+		104 // 2, 468 // 2), text=f'{user_data["xp"]}/{user_data["next_level_xp"]}', color=(255, 255, 255, 140),
+		font=font_small)
 	level_text = text_editor.text(position=(
-		880//2, 468//2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 140), align="right", font=font_small)
+		880 // 2, 468 // 2), text=f'{user_data["level"]} > {user_data["level"] + 1}', color=(255, 255, 255, 140),
+		align="right", font=font_small)
 	rep_text = text_editor.text(position=(
-		782//2, 350//2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
+		782 // 2, 350 // 2), text=f"+ {user_data['rep']} rep", color=(30, 30, 30), align="center", font=font_medium)
 
 	position_text = text_editor.text(position=(
-		880//2, 133//2), text=user_data['position'], color=(255, 255, 255, 200), align="right", font=font_large)
+		880 // 2, 133 // 2), text=user_data['position'], color=(255, 255, 255, 200), align="right", font=font_large)
 
-	editor.paste(position_text, (0, 0-10))
-	editor.paste(username, (0, 0-10))
-	editor.paste(exp_text, (0, 0-10))
-	editor.paste(level_text, (0, 0-10))
-	editor.paste(rep_text, (0, 0-10))
+	editor.paste(position_text, (0, 0 - 10))
+	editor.paste(username, (0, 0 - 10))
+	editor.paste(exp_text, (0, 0 - 10))
+	editor.paste(level_text, (0, 0 - 10))
+	editor.paste(rep_text, (0, 0 - 10))
 
 	return editor.image_bytes
+
 
 class Levels(commands.Cog):
 	"""
@@ -163,7 +168,7 @@ class Levels(commands.Cog):
 		filled_chars = round(percent_progress * 30)
 		progress_bar = "▮" * filled_chars + "▯" * (30 - filled_chars)
 		max_value_str = f"{max_value}"
-		xp_level_str = f" xp: {progress_value}/{max_value}{' '*(13-len(max_value_str)-len(str(progress_value)))}level: {level} -> {level + 1}"
+		xp_level_str = f" xp: {progress_value}/{max_value}{' ' * (13 - len(max_value_str) - len(str(progress_value)))}level: {level} -> {level + 1}"
 		output_str = f"{xp_level_str}\n{' '}{progress_bar}"
 		return output_str
 
@@ -220,7 +225,8 @@ class Levels(commands.Cog):
 				user_data = await conn.fetchrow("SELECT * FROM profiles WHERE id = $1", message.author.id)
 				server_data = await conn.fetchrow("SELECT * FROM servers WHERE id = $1", message.guild.id)
 				if user_data is None:
-					await conn.execute("INSERT INTO profiles (id, exp, level) VALUES ($1, $2, $3)", message.author.id, 1, 0)
+					await conn.execute("INSERT INTO profiles (id, exp, level) VALUES ($1, $2, $3)", message.author.id,
+									   1, 0)
 				elif not user_data['levels_enabled'] or not server_data['levels_enabled']:
 					return
 				else:
@@ -229,16 +235,21 @@ class Levels(commands.Cog):
 						user_data['level'])
 
 					if user_data['exp'] + xp_to_add >= xp_required:
-						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add - xp_required, message.author.id)
-						await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1, message.author.id)
-						emoji = random.choice(["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶", "<:angle:1154534259462262815>", "🎈", "🎄", "🕊️", "⭐", "🍀"])
+						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2",
+										   user_data['exp'] + xp_to_add - xp_required, message.author.id)
+						await conn.execute("UPDATE profiles SET level = $1 WHERE id = $2", user_data['level'] + 1,
+										   message.author.id)
+						emoji = random.choice(
+							["🌞", "🌻", "🌼", "🎉", "🎊", "🎇", "🎁", "📚", "📬", "💌", "🎶", "<:angle:1154534259462262815>", "🎈",
+							 "🎄", "🕊️", "⭐", "🍀"])
 						embed = discord.Embed(
 							title=f"{emoji} You leveled up to **{user_data['level'] + 1}**!")
 						embed.set_footer(
 							text=f"You'll need {self.experience_curve(user_data['level'] + 1)}xp to level up again")
 						await message.reply(embed=embed, delete_after=60)
 					else:
-						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add, message.author.id)
+						await conn.execute("UPDATE profiles SET exp = $1 WHERE id = $2", user_data['exp'] + xp_to_add,
+										   message.author.id)
 
 	@app_commands.command(description="Display your total XP and the amount of XP needed to reach the next level.")
 	@app_commands.describe(user="i think you can figure it out")
@@ -265,7 +276,8 @@ class Levels(commands.Cog):
 					return
 
 				if inter.guild:
-					server_levels_on = await conn.fetchval("SELECT levels_enabled FROM servers WHERE id = $1", inter.guild.id)
+					server_levels_on = await conn.fetchval("SELECT levels_enabled FROM servers WHERE id = $1",
+														   inter.guild.id)
 					if server_levels_on == 0:
 						return await inter.response.send_message("Levels are disabled in this server", ephemeral=True)
 

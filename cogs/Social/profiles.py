@@ -37,11 +37,11 @@ class RemoveView(discord.ui.View):
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", inter_data, inter_user.id)
 					await conn.execute("UPDATE profiles SET follows = $1 WHERE id = $2", profile_data, profile_user.id)
 
-
 	@discord.ui.button(label="Cancel", emoji=icons.remove, style=discord.ButtonStyle.red)
 	async def remove_cake(self, inter, button):
 		await self.remove_birthday(self.profile_user, self.inter_user)
-		await inter.response.send_message(f"You will not be notified on {self.profile_user.mention}'s birthday", ephemeral=True)
+		await inter.response.send_message(f"You will not be notified on {self.profile_user.mention}'s birthday",
+										  ephemeral=True)
 
 
 class ProfileView(utils.ui.View):
@@ -57,7 +57,8 @@ class ProfileView(utils.ui.View):
 				inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
 
 				if inter_user_data is None:
-					await conn.execute("INSERT INTO profiles (id, follows) VALUES ($1, $2)", inter_user.id, {"followers": [], "following": []})
+					await conn.execute("INSERT INTO profiles (id, follows) VALUES ($1, $2)", inter_user.id,
+									   {"followers": [], "following": []})
 					inter_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", inter_user.id)
 
 				profile_user_data = await conn.fetchrow("SELECT follows FROM profiles WHERE id = $1", profile_user.id)
@@ -84,7 +85,8 @@ class ProfileView(utils.ui.View):
 		resp = await self.notify_action(self.profile_user, inter.user)
 		view = RemoveView(self.profile_user, inter.user, self.bot.db_pool)
 		if inter.user.id == self.profile_user.id:
-			return await inter.response.send_message("You can't follow your own birthday, you should remember it i think", ephemeral=True)
+			return await inter.response.send_message(
+				"You can't follow your own birthday, you should remember it i think", ephemeral=True)
 		await inter.response.send_message(resp, view=view, ephemeral=True)
 
 
@@ -95,11 +97,13 @@ class Profile(commands.Cog):
 
 	@app_commands.command(name='profile', description='View anyone\'s profile almost')
 	@app_commands.describe(user="Hello pick a user or user id or mention leave empty for yourself")
-	async def discord_id(self, interaction, user: discord.User | discord.Member = None, ephemeral:bool=False):
+	async def discord_id(self, interaction, user: discord.User | discord.Member = None, ephemeral: bool = False):
 		user = user.id if user and isinstance(user, discord.User | discord.Member) else interaction.user.id
 
-		try: user = await self.bot.fetch_user(user)
-		except: return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
+		try:
+			user = await self.bot.fetch_user(user)
+		except:
+			return await interaction.response.send_message("The user you entered is invalid :(", ephemeral=True)
 
 		view = ProfileView(self.bot, user, interaction, False)
 
@@ -180,12 +184,13 @@ class Profile(commands.Cog):
 
 				level = await conn.fetchval("SELECT level FROM profiles WHERE id = $1", user.id)
 				exp = await conn.fetchval("SELECT exp FROM profiles WHERE id = $1", user.id)
-				
+
 				if (level, exp) != (0, 0):
 					embed.add_field(name='Rank', value=f'Level `{level}` | `{exp}`xp')
 
 		await interaction.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
 		view.message = await interaction.original_response()
+
 
 async def setup(bot):
 	await bot.add_cog(Profile(bot))

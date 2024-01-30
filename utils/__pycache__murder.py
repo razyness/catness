@@ -28,13 +28,15 @@ you can kill as many people as you want, you can be standing over a body with a 
 so do heroin and kill somebody with a hammer this weekend!
 """
 
+
 def delete_pycache(dir_path):
-    for root, dirs, _ in os.walk(dir_path):
-        if "__pycache__" in dirs:
-            pycache_dir = os.path.join(root, "__pycache__")
-            print(f"Deleting {pycache_dir}")
-            shutil.rmtree(pycache_dir)
+	for root, dirs, _ in os.walk(dir_path):
+		if "__pycache__" in dirs:
+			pycache_dir = os.path.join(root, "__pycache__")
+			print(f"Deleting {pycache_dir}")
+			shutil.rmtree(pycache_dir)
+
 
 if __name__ == "__main__":
-    dir_path = "."
-    delete_pycache(dir_path)
+	dir_path = "."
+	delete_pycache(dir_path)

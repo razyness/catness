@@ -11,12 +11,13 @@ from utils import blocking
 from utils import confirm
 
 labels = {
-			'pomelo': 'profile_private',
-			'levels': 'levels_enabled',
-			'experiments': 'tests_enabled',
-			'welcomer': 'welcome_type'
+	'pomelo': 'profile_private',
+	'levels': 'levels_enabled',
+	'experiments': 'tests_enabled',
+	'welcomer': 'welcome_type'
 
-		}
+}
+
 
 async def load_db(db_pool, id, table):
 	async with db_pool.acquire() as conn:
@@ -50,7 +51,7 @@ async def main_menu(user, admin=False):
 	embed.set_footer(text="Select a value to toggle")
 	if admin:
 		embed.add_field(name="📂 Server",
-                  value="• Levels\n• Welcomer\n• Features", inline=True)
+						value="• Levels\n• Welcomer\n• Features", inline=True)
 	embed.set_thumbnail(url=user.display_avatar.url)
 	return embed
 
@@ -64,7 +65,7 @@ async def social_menu(settings, *args):
 		birthday = await blocking.run(lambda: json.loads(settings['cake']))
 
 	warn = None
-	
+
 	if birthday:
 		year_bool = True if birthday['consider'] else False
 	else:
@@ -72,7 +73,7 @@ async def social_menu(settings, *args):
 
 	embed.add_field(name=f"Birth year: {str('`Shown`' if year_bool else '`Hidden`')}",
 					value=f"{warn}Hiding your birth year will not reveal your age in reminders"
-					"and your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
+						  "and your profile.\nRun </unlink:1080271956496101467> to remove your birthday")
 	embed.set_footer(text="Select a value to toggle")
 	return embed
 
@@ -80,7 +81,7 @@ async def social_menu(settings, *args):
 async def server_menu(icon, server_name, server, server_obj):
 	if icon:
 		icon = icon.url
-		
+
 	patterns = ["general", "main", "chat"]
 	welc_channel = next((channel for channel in server_obj.text_channels if any(
 		name.lower() in channel.name.lower() for name in patterns)), None)
@@ -90,8 +91,9 @@ async def server_menu(icon, server_name, server, server_obj):
 	embed.description = f"Editing settings for `{server_name}`"
 	embed.add_field(name=f"Levels: {str('`Enabled`' if server['levels_enabled'] else '`Disabled`')}",
 					value="Disabling levels will prevent everyone in this server from gaining xp and leveling up")
-	embed.add_field(name=f"Welcomer: {str('`Disabled`' if server['welcome_type'] == 0 else '`Enabled`' if server['welcome_type'] == 1 else '`Enabled - Prompt`')}",
-					value=f"Greets new members with a random message.\nWelcome channel: {welc_channel}")
+	embed.add_field(
+		name=f"Welcomer: {str('`Disabled`' if server['welcome_type'] == 0 else '`Enabled`' if server['welcome_type'] == 1 else '`Enabled - Prompt`')}",
+		value=f"Greets new members with a random message.\nWelcome channel: {welc_channel}")
 	embed.add_field(name=f"Features: {str('`Enabled`' if server['features'] else '`Disabled`')}",
 					value="Enables on message features such as /#color previews, booster hearts, etc. for this server")
 	embed.set_thumbnail(url=icon)
@@ -179,6 +181,7 @@ class ServerMenu(ui.View):
 
 		await inter.response.edit_message(embed=embed, view=self)
 
+
 class AdvancedMenu(ui.View):
 	def __init__(self, user, settings, admin, db_pool):
 		super().__init__()
@@ -220,7 +223,7 @@ class AdvancedMenu(ui.View):
 		if not conf:
 			await inter.followup.send("Alright, come back if you change your mind!", ephemeral=True)
 			return
-		
+
 		await inter.followup.send(f"Wait while i delete everything i know about you...", ephemeral=True)
 		async with self.db_pool.acquire() as conn:
 			follows = await load_db(db_pool=self.db_pool, table="profiles", id=inter.user.id)
@@ -235,7 +238,7 @@ class AdvancedMenu(ui.View):
 				follow_list['followers'].remove(inter.user.id)
 				follow_list = await blocking.run(lambda: json.dumps(follow_list))
 				await conn.execute("UPDATE profiles SET follows=$1 WHERE id=$2", follow_list, i)
-			
+
 			for i in follows['followers']:
 				i = int(i)
 
@@ -248,7 +251,6 @@ class AdvancedMenu(ui.View):
 
 			await conn.execute("DELETE FROM profiles WHERE id=$1", inter.user.id)
 		await inter.followup.send("Everything is gone, bye-bye!", ephemeral=True)
-
 
 
 class SocialMenu(ui.View):
@@ -292,7 +294,7 @@ class SocialMenu(ui.View):
 				self.birthday['consider'] = False
 			else:
 				self.birthday['consider'] = True
-			
+
 			cake = await blocking.run(lambda: json.dumps(self.birthday))
 			await conn.execute(f"UPDATE profiles SET cake=$1 WHERE id=$2", cake, self.user.id)
 
@@ -398,7 +400,8 @@ class SettingsMenu(ui.View):
 	@ui.button(label="Server", emoji="📂", style=discord.ButtonStyle.blurple, row=2)
 	async def serv_button(self, inter, button):
 		data = await load_db(db_pool=self.db_pool, table="servers", id=inter.guild.id)
-		embed = await server_menu(icon=inter.guild.icon, server_name=inter.guild.name, server=data, server_obj=inter.guild)
+		embed = await server_menu(icon=inter.guild.icon, server_name=inter.guild.name, server=data,
+								  server_obj=inter.guild)
 
 		await inter.response.defer()
 		await self.msg.edit(embed=embed, view=ServerMenu(data, self.admin, self.db_pool))
@@ -407,6 +410,7 @@ class SettingsMenu(ui.View):
 class Settings(commands.Cog):
 	"""A cog for managing user settings, such as privacy, levels, etc. Chat interface.
 	"""
+
 	def __init__(self, bot: commands.Bot):
 		self.bot = bot
 
@@ -420,15 +424,16 @@ class Settings(commands.Cog):
 					settings = await conn.fetchrow("SELECT * FROM profiles WHERE id=$1", interaction.user.id)
 
 		def has_permissions(r): return (
-			r.guild_permissions.administrator or
-			r.guild_permissions.manage_roles or
-			r.guild_permissions.manage_channels or
-			r.guild_permissions.manage_messages or
-			r.guild_permissions.ban_members or
-			r.guild_permissions.kick_members
+				r.guild_permissions.administrator or
+				r.guild_permissions.manage_roles or
+				r.guild_permissions.manage_channels or
+				r.guild_permissions.manage_messages or
+				r.guild_permissions.ban_members or
+				r.guild_permissions.kick_members
 		)
 
-		admin = True if interaction.guild and (interaction.user.guild_permissions.administrator or has_permissions(interaction.user)) else False
+		admin = True if interaction.guild and (
+					interaction.user.guild_permissions.administrator or has_permissions(interaction.user)) else False
 		menu = SettingsMenu(interaction.user, admin, db_pool=self.bot.db_pool)
 		embed = await main_menu(interaction.user, admin=admin)
 		embed.set_thumbnail(url=interaction.user.display_avatar.url)
