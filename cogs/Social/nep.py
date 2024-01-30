@@ -16,7 +16,7 @@ class Rep(commands.Cog):
 		if user == inter.user:
 			return await inter.response.send_message("You can't rep yourself! That'd be a little weird", ephemeral=True)
 		elif user.bot:
-			await inter.response.send_message("You can't rep bots. End of line.")
+			return await inter.response.send_message("You can't rep bots. End of line.", ephemeral=True)
 		
 		async with self.bot.db_pool.acquire() as connection:
 			async with connection.transaction():
@@ -32,7 +32,7 @@ class Rep(commands.Cog):
 
 				expiration_time = datetime.datetime.utcfromtimestamp(ruser['rep_time']) + datetime.timedelta(hours=12)
 	
-				if expiration_time < datetime.datetime.utcnow() or inter.user.id == 809275012980539453:
+				if expiration_time < datetime.datetime.utcnow() or inter.user.id == 1161982476143575051:
 					await connection.execute("UPDATE profiles SET rep_value = rep_value + 1 WHERE id = $1", user.id)
 					await connection.execute("UPDATE profiles SET rep_time = $1 WHERE id = $2", int(time.time()), inter.user.id)
 					await inter.response.send_message(f"You gave {user.mention} a reputation point!!")
