@@ -110,35 +110,41 @@ Here's an example of how `config.toml` should look:
 
 ```toml
 ### super secret things
-TOKEN = "YOUR_DISCORD_BOT_TOKEN" # https://discord.com/developers/applications
-LASTFM = "YOUR_LASTFM_API_KEY" # https://www.last.fm/api/authentication
-STEAM = "YOUR_STEAM_API_KEY" # https://steamcommunity.com/dev/apikey
-OPENAI = "YOUR_OPENAI_API_KEY" # Not needed, https://platform.openai.com/overview
-TENOR = "YOUR_TENOR_API_KEY" # https://tenor.com/gifapi/documentation
-MAKESWEET = "YOUR_MAKESWEET_API_KEY" # Private, you should ask them personally (They are very nice)
+[keys]
+TOKEN = "YOUR_DISCORD_TOKEN_HERE"
+LASTFM = "YOUR_LASTFM_API_KEY_HERE"
+STEAM = "YOUR_STEAM_API_KEY_HERE"
+TENOR = "YOUR_TENOR_API_KEY_HERE"
+MAKESWEET = "YOUR_MAKESWEET_API_KEY_HERE"
+OPENAI = "YOUR_OPENAI_API_KEY_HERE"
 
 ### actual config
+[bot_config]
 prefix = "!"
 report_channel = 1234
+### statuses the bot will cycle through.
+catchphrases = [
+]
 
+[db_config]
+user = "postgres"
+password = "admin"
+database = "catness-db"
+command_timeout = 30
+max_size = 10
+min_size = 5
+
+[ids]
 ### user IDs for contributors
 contributors = [
-    # List of user IDs
 ]
 
 ### user IDs for friends
 special = [
-    # List of user IDs
 ]
 
 ### user IDs for the bot owners (Include yourself)
 owners = [
-    # List of user IDs
-]
-
-### statuses the bot will cycle through.
-catchphrases = [
-    # List of phrases
 ]
 ```
 
