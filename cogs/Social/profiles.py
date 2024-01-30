@@ -95,7 +95,7 @@ class Profile(commands.Cog):
 
 	@app_commands.command(name='profile', description='View anyone\'s profile almost')
 	@app_commands.describe(user="Hello pick a user or user id or mention leave empty for yourself")
-	async def discord_id(self, interaction, user: discord.User | discord.Member, ephemeral:bool=False):
+	async def discord_id(self, interaction, user: discord.User | discord.Member = None, ephemeral:bool=False):
 		user = user.id if user and isinstance(user, discord.User | discord.Member) else interaction.user.id
 
 		try: user = await self.bot.fetch_user(user)
