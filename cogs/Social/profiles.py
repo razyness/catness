@@ -134,7 +134,7 @@ class Profile(commands.Cog):
 		if user.id in self.bot.config["ids"]["contributors"]:
 			badges_list.append(f'[{icons.contributor}](https://github.com/razyness/catness)')
 		if user.id in self.bot.config["ids"]["special"]:
-			badges_list.append(":heart:")
+			badges_list.append(icons.special)
 
 		result = ' '.join(badges_list)
 		embed.description = result
