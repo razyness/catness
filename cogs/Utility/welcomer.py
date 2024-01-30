@@ -87,6 +87,7 @@ class Welcomer(commands.Cog):
 
 		async with self.bot.db_pool.acquire() as conn:
 			server_data = await conn.fetchrow("SELECT welcome_type FROM servers WHERE id = $1", member.guild.id)
+			server_data = int(server_data)
 			if server_data == WelcomeType.NO_WELCOME:
 				return
 
