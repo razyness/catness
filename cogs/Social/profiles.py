@@ -127,7 +127,7 @@ class Profile(commands.Cog):
 		badges_list = []
 		for flag in user.public_flags.all():
 			badges_list.append(icons[flag.name])
-		if user.avatar and user.avatar.url.startswith("a_") or user.banner is not None:
+		if user.avatar and user.avatar.url[:-10].endswith(".gif") or user.banner is not None:
 			badges_list.append(icons.nitro)
 		if user.bot:
 			badges_list.append(icons.bot)
