@@ -9,7 +9,8 @@
     <a href="https://github.com/razyness"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/97766343?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="Razy"></a>
     <a href="https://github.com/dazziedez"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/79106393?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="dazzie2load"></a>
     <a href="https://github.com/RegorForgot"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/55347112?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="Regor"></a>
-    <a href="https://github.com/crygup"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/65101093?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="crygup"></a
+    <a href="https://github.com/crygup"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/65101093?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="crygup"></a>
+    <a href="https://github.com/qrscann"><img src="https://images.weserv.nl/?url=https://avatars.githubusercontent.com/u/146302585?v=4&h=50&w=50&fit=cover&mask=circle&maxage=7d" title="qrscann"></a>
   </h2>
 </div>
 
